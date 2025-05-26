@@ -6,20 +6,28 @@ function normalise(str) {
   return str.toLocaleLowerCase('en').replace(/[\s\W_]+/g, '');
 }
 
-function buildDomainLookup(data) {
-  const lookup = {};
+function buildLookups(data) {
+  const nameLookup = {};
+  const domainMap = {};
   data.forEach(entry => {
     if (entry.name) {
-        lookup[normalise(entry.name)] = entry
+      nameLookup[normalise(entry.name)] = entry;
     }
     if (entry.aliases && Array.isArray(entry.aliases)) {
       entry.aliases.forEach(alias => {
-        lookup[normalise(alias)] = entry;
+        nameLookup[normalise(alias)] = entry;
+      });
+    }
+    if (entry.domains && Array.isArray(entry.domains)) {
+      entry.domains.forEach(d => {
+        domainMap[d.toLowerCase()] = entry;
       });
     }
   });
-  return lookup;
+  return { nameLookup, domainMap };
 }
 
-// Build the lookup once at module load and export it
-export const domainLookup = buildDomainLookup(data);
+// Build lookups once at module load and export them
+const { nameLookup, domainMap } = buildLookups(data);
+export const domainLookup = nameLookup;
+export { domainMap };

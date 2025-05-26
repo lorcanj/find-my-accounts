@@ -1,4 +1,4 @@
-import { domainLookup } from '../data/buildDomainLookup.js';
+import { domainLookup, domainMap } from '../data/buildDomainLookup.js';
 import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
@@ -281,8 +281,9 @@ function renderAccountList(accounts) {
 function enrichAccounts(accounts) {
   return accounts.map(account => {
     const lookupKey = getAccountName(account);
-    const domainInfo = domainLookup && domainLookup[lookupKey];
-    account.justDeleteMeData = domainInfo || NO_DATA_FOUND_MESSAGE;
+    const nameMatch = domainLookup && domainLookup[lookupKey];
+    const domainMatch = !nameMatch && account.domain && domainMap && domainMap[account.domain.toLowerCase()];
+    account.justDeleteMeData = nameMatch || domainMatch || NO_DATA_FOUND_MESSAGE;
     return account;
   });
 }
