@@ -66,17 +66,19 @@ export async function importMboxFile(file, onProgress, onBatch) {
       let bytesRead = 0;
       
       function readNext() {
-        reader.read().then(({ done, value }) => {
+        reader.read().then(({ done, value: chunk }) => {
           if (done) {
             worker.postMessage({ type: 'end' });
             return;
           }
-          
-          // value is a Uint8Array
+
+          // chunk is a Uint8Array
+          // Capture the length before transferring the buffer (transfer detaches it)
+          const len = chunk.byteLength;
           // We transfer the buffer to the worker
-          worker.postMessage({ type: 'chunk', buffer: value.buffer }, [value.buffer]);
-          
-          bytesRead += value.byteLength;
+          worker.postMessage({ type: 'chunk', buffer: chunk.buffer }, [chunk.buffer]);
+
+          bytesRead += len;
 
           readNext();
         }).catch(err => {
@@ -90,7 +92,6 @@ export async function importMboxFile(file, onProgress, onBatch) {
     } else {
       // Fallback for browsers without file.stream() (e.g. older Safari)
       // Use slice + FileReader
-      
       function readNextChunk() {
         if (offset >= totalSize) {
           worker.postMessage({ type: 'end' });
