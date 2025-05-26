@@ -45,7 +45,7 @@ function updateLastEmailDate(account, newDate) {
   }
 }
 
-function updateConfidence(account, newConfidence) {
+export function updateConfidence(account, newConfidence) {
   if (!newConfidence) return;
   if (!account.confidence || CONFIDENCE_RANK[newConfidence] > CONFIDENCE_RANK[account.confidence]) {
     account.confidence = newConfidence;

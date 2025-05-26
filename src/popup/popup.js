@@ -1,10 +1,9 @@
 import { domainLookup, domainMap } from '../data/buildDomainLookup.js';
 import { normaliseForLookup } from '../scanners/normalisers/utils.js';
 import { downloadAccountsAsCsv } from './download.js';
-import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
+import { extractAccountsFromMessages, updateConfidence } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
-import { CONFIDENCE_RANK } from '../constants/confidence.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
@@ -511,15 +510,14 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
 
       // Update confidence if this message has higher confidence
       const newConf = batchedAccount.confidence;
-      if (newConf && (!entry.account.confidence || CONFIDENCE_RANK[newConf] > CONFIDENCE_RANK[entry.account.confidence])) {
-        entry.account.confidence = newConf;
-        if (entry.li) {
-          entry.li.dataset.confidence = newConf;
-          const confCell = entry.li.querySelector('.confidence');
-          if (confCell) {
-            confCell.innerHTML = '';
-            confCell.appendChild(createConfidenceBadge(newConf));
-          }
+      const prevConf = entry.account.confidence;
+      updateConfidence(entry.account, newConf);
+      if (entry.account.confidence !== prevConf && entry.li) {
+        entry.li.dataset.confidence = newConf;
+        const confCell = entry.li.querySelector('.confidence');
+        if (confCell) {
+          confCell.innerHTML = '';
+          confCell.appendChild(createConfidenceBadge(newConf));
         }
       }
     }
