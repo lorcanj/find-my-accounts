@@ -32,7 +32,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 16px;
-    width: 360px;
+    width: 480px;
     color: #202124;
     line-height: 1.5;
     font-size: 16px;
@@ -137,10 +137,10 @@ h2#accounts-heading {
     color: #202124;
 }
 
-/* Layout for account list headers and rows: four columns */
+/* Layout for account list headers and rows: five columns */
 .account-list-headers {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     align-items: center;
     padding: 8px 4px;
@@ -153,7 +153,7 @@ h2#accounts-heading {
 
 .account-list li {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     align-items: center;
     padding: 10px 4px;
@@ -163,9 +163,55 @@ h2#accounts-heading {
 .account-list li:last-child { border-bottom: none; }
 .account-list li .col { padding: 0 6px; }
 
-.account-list .name { word-break: break-word; }
+.account-list .name { overflow: hidden; text-overflow: ellipsis; }
+.account-list .confidence { white-space: nowrap; text-align: left; }
+.account-list-headers .confidence { text-align: left; }
 .account-list .last-email { color: #555; white-space: nowrap; }
 .account-list .action { text-align: right; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.badge-high   { background: #e8f5e9; color: #2e7d32; }
+.badge-medium { background: #fff3e0; color: #e65100; }
+.badge-low    { background: #fce4ec; color: #c62828; }
+
+/* Confidence filter buttons */
+.confidence-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.filter-label {
+    font-size: 0.8rem;
+    color: #555;
+    font-weight: 500;
+}
+.filter-btn {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.filter-btn:hover { background: #eee; }
+.filter-btn.active[data-confidence="high"]   { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+.filter-btn.active[data-confidence="medium"] { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+.filter-btn.active[data-confidence="low"]    { background: #fce4ec; color: #c62828; border-color: #ef9a9a; }
 
 /* Results toolbar: heading + sort control */
 .results-toolbar {

@@ -1,13 +1,14 @@
 import { domainLookup, domainMap } from '../data/buildDomainLookup.js';
 import { normaliseForLookup } from '../scanners/normalisers/utils.js';
 import { downloadAccountsAsCsv } from './download.js';
-import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
+import { extractAccountsFromMessages, updateConfidence } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
+const activeConfidenceFilters = new Set(['high', 'medium', 'low']);
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -281,6 +282,24 @@ document.addEventListener('DOMContentLoaded', () => {
       rerenderAllAccounts(sortSelect.value);
     });
   }
+
+  // Confidence filter buttons
+  const filterContainer = document.getElementById(DOM_ID.CONFIDENCE_FILTER);
+  if (filterContainer) {
+    filterContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest(`.${CSS_CLASS.FILTER_BTN}`);
+      if (!btn) return;
+      const level = btn.dataset.confidence;
+      if (activeConfidenceFilters.has(level)) {
+        activeConfidenceFilters.delete(level);
+        btn.classList.remove(CSS_CLASS.FILTER_BTN_ACTIVE);
+      } else {
+        activeConfidenceFilters.add(level);
+        btn.classList.add(CSS_CLASS.FILTER_BTN_ACTIVE);
+      }
+      applyConfidenceFilter();
+    });
+  }
 });
 
 
@@ -296,6 +315,7 @@ function rerenderAllAccounts(sortOrder) {
       existingKeys.get(key).li = li;
     }
   });
+  applyConfidenceFilter();
 }
 
 function renderAccountList(accounts) {
@@ -309,6 +329,7 @@ function renderAccountList(accounts) {
       existingKeys.get(key).li = li;
     }
   });
+  applyConfidenceFilter();
 }
 
 // Enrich accounts with justdeleteme data
@@ -335,10 +356,20 @@ const normalise = normaliseForLookup;
 function createAccountListItem(account) {
   const li = document.createElement('li');
   li.setAttribute('role', 'row');
+  if (account.confidence) li.dataset.confidence = account.confidence;
 
   const nameDiv = document.createElement('div');
   nameDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_NAME}`;
   nameDiv.setAttribute('role', 'cell');
+
+  const confidenceDiv = document.createElement('div');
+  confidenceDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_CONFIDENCE}`;
+  confidenceDiv.setAttribute('role', 'cell');
+  if (account.confidence) {
+    confidenceDiv.appendChild(createConfidenceBadge(account.confidence));
+  } else {
+    confidenceDiv.textContent = '-';
+  }
 
   const dateDiv = document.createElement('div');
   dateDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_LAST_EMAIL}`;
@@ -377,11 +408,39 @@ function createAccountListItem(account) {
   }
 
   li.appendChild(nameDiv);
+  li.appendChild(confidenceDiv);
   li.appendChild(dateDiv);
   li.appendChild(diffDiv);
   li.appendChild(actionDiv);
 
   return li;
+}
+
+const CONFIDENCE_BADGE_CLASS = {
+  high:   CSS_CLASS.BADGE_HIGH,
+  medium: CSS_CLASS.BADGE_MED,
+  low:    CSS_CLASS.BADGE_LOW,
+};
+const CONFIDENCE_LABEL = { high: 'High', medium: 'Med', low: 'Low' };
+
+function applyConfidenceFilter() {
+  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
+  if (!list) return;
+  let visibleCount = 0;
+  for (const li of list.children) {
+    const conf = li.dataset.confidence;
+    const visible = !conf || activeConfidenceFilters.has(conf);
+    li.style.display = visible ? '' : 'none';
+    if (visible) visibleCount++;
+  }
+  updateAccountCount(visibleCount);
+}
+
+function createConfidenceBadge(confidence) {
+  const badge = document.createElement('span');
+  badge.className = `${CSS_CLASS.BADGE} ${CONFIDENCE_BADGE_CLASS[confidence]}`;
+  badge.textContent = CONFIDENCE_LABEL[confidence];
+  return badge;
 }
 
 // Normalises the account name for lookup matching
@@ -437,15 +496,28 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
       // Store reference; the li element is assigned later in renderAccountList
       existingKeys.set(key, { account: batchedAccount, li: null });
     } else if (key && existingKeys.has(key)) {
-      // Update lastEmailDate if this message is more recent
       const entry = existingKeys.get(key);
+
+      // Update lastEmailDate if this message is more recent
       const newDate = batchedAccount.lastEmailDate;
       if (newDate && (!entry.account.lastEmailDate || newDate > entry.account.lastEmailDate)) {
         entry.account.lastEmailDate = newDate;
-        // Update the already-rendered DOM element
         if (entry.li) {
           const dateCell = entry.li.querySelector('.last-email');
           if (dateCell) dateCell.textContent = formatEmailDate(newDate);
+        }
+      }
+
+      // Update confidence if this message has higher confidence
+      const newConf = batchedAccount.confidence;
+      const prevConf = entry.account.confidence;
+      updateConfidence(entry.account, newConf);
+      if (entry.account.confidence !== prevConf && entry.li) {
+        entry.li.dataset.confidence = newConf;
+        const confCell = entry.li.querySelector('.confidence');
+        if (confCell) {
+          confCell.innerHTML = '';
+          confCell.appendChild(createConfidenceBadge(newConf));
         }
       }
     }

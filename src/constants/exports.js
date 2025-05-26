@@ -8,6 +8,7 @@ export const CSV_HEADERS = Object.freeze([
   'Domain',
   'Sender',
   'Last Email Date',
+  'Confidence',
   'Difficulty',
   'Delete URL',
 ]);

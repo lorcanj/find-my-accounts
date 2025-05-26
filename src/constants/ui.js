@@ -16,7 +16,8 @@ export const CSS_CLASS = Object.freeze({
   MUTED:       'muted',
   MT_HALF:     'mt-0-5',
   COL:         'col',
-  COL_NAME:    'name',
+  COL_NAME:       'name',
+  COL_CONFIDENCE: 'confidence',
   COL_LAST_EMAIL: 'last-email',
   COL_DIFF:    'difficulty',
   COL_ACTION:  'action',
@@ -41,4 +42,5 @@ export const DOM_ID = Object.freeze({
   INSTRUCTIONS_TEXT:  'instructionsText',
   LARGE_FILE_WARNING: 'largeFileWarning',
   SORT_SELECT:        'sortSelect',
+  CONFIDENCE_FILTER:  'confidenceFilter',
 });

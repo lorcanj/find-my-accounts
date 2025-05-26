@@ -1,5 +1,5 @@
 import Account from '../models/Account.js';
-import { CONFIDENCE } from '../constants/confidence.js';
+import { CONFIDENCE, CONFIDENCE_RANK } from '../constants/confidence.js';
 
 const STRONG_SENDER_REGEX = /(?:^|[._+\-\s])(?:no[._+\-\s]?reply|do[._+\-\s]?not[._+\-\s]?reply|support|billing|accounts?|invoices?|security|privacy|auth)(?:$|[._+\-\s\d])/i;
 const WEAK_SENDER_REGEX = /(?:^|[._+\-\s])(?:team|hello|info|help|admin|sales|notifications?|updates?|alerts)(?:$|[._+\-\s\d])/i;
@@ -27,10 +27,12 @@ export function extractAccountsFromMessages(messages = []) {
     if (!key || !seen.has(key)) {
       const name = m.displayName || m.email || m.from || 'Unknown Sender';
       const idx = foundAccounts.length;
-      foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key, lastEmailDate }));
+      foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key, lastEmailDate, confidence }));
       if (key) seen.set(key, idx);
     } else {
-      updateLastEmailDate(foundAccounts[seen.get(key)], lastEmailDate);
+      const existing = foundAccounts[seen.get(key)];
+      updateLastEmailDate(existing, lastEmailDate);
+      updateConfidence(existing, confidence);
     }
   }
 
@@ -40,6 +42,13 @@ export function extractAccountsFromMessages(messages = []) {
 function updateLastEmailDate(account, newDate) {
   if (newDate && (!account.lastEmailDate || newDate > account.lastEmailDate)) {
     account.lastEmailDate = newDate;
+  }
+}
+
+export function updateConfidence(account, newConfidence) {
+  if (!newConfidence) return;
+  if (!account.confidence || CONFIDENCE_RANK[newConfidence] > CONFIDENCE_RANK[account.confidence]) {
+    account.confidence = newConfidence;
   }
 }
 

@@ -49,6 +49,9 @@ jest-coverage/
 .idea/
 *.iml
 
+# Claude Code local settings
+.claude/settings.json
+
 # Optional: lock files (uncomment if you want to ignore lock files)
 # package-lock.json
 # yarn.lock
