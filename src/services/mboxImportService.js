@@ -81,6 +81,11 @@ export async function importMboxFile(file, onProgress, onBatch) {
     const totalSize = file.size;
     
     worker.onmessage = (e) => {
+      // If the import has been cancelled or settled, ignore any late messages
+      if (perRunSession.cancelled || perRunSession.settled) {
+        return;
+      }
+
       const msg = e.data || {};
 
       // Basic runtime assertion for messages from worker
