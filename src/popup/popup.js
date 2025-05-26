@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
               
               const newUnique = deduplicateAccounts(enrichedAccounts);
               
-              // probably just want to append rather than keep making new one?
               accountsForDownload.push(...newUnique);
               renderAccountList(newUnique);
               updateAccountCount(accountsForDownload.length);
