@@ -1,6 +1,7 @@
 console.log('Service worker started');
 
 const GMAIL_API_BASE = 'https://www.googleapis.com/gmail/v1/users/me/messages';
+const ACTION_SCAN_GMAIL = 'scanGmail';
 
 function getAuthToken() {
   return new Promise((resolve, reject) => {
@@ -26,8 +27,7 @@ async function getMessageDetail(token, id) {
   return await res.json();
 }
 
-// Exported API for other modules
-export async function fetchRawMessages(maxResults = 50) {
+async function fetchRawMessages(maxResults = 50) {
   try {
     const token = await getAuthToken();
     const messages = await getMessageIds(token, maxResults);
@@ -36,9 +36,19 @@ export async function fetchRawMessages(maxResults = 50) {
       const fullMsg = await getMessageDetail(token, msg.id);
       details.push(fullMsg);
     }
-    return details; // Array of raw message objects
+    return details;
   } catch (error) {
     console.error('Error fetching Gmail messages:', error);
     throw error;
   }
 }
+
+chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
+  console.log('Received message:', request)
+  if (request.action === ACTION_SCAN_GMAIL) {
+    fetchRawMessages(50)
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => sendResponse({ success: false, error: error.toString() }));
+    return true;
+  }
+});
