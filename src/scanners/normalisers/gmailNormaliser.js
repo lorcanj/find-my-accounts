@@ -1,6 +1,6 @@
 
 import { parseOneAddress } from 'email-addresses';
-import { toIsoDate } from './utils.js';
+import { toIsoDate, normaliseEmail, normaliseText } from './utils.js';
 
 // Maps Gmail message detail objects to a canonical, plain JS object shape
 // Normaliser is pure and returns primitive fields only.
@@ -22,7 +22,7 @@ export default function normaliseGmailMessage(raw) {
 	// Use the RFC-aware `email-addresses` parser (ESM).
 	const parsed = parseOneAddress(from);
 	if (parsed && parsed.address) {
-		email = parsed.address.trim().toLowerCase();
+		email = normaliseEmail(parsed.address);
 		if (parsed.name) displayName = String(parsed.name).trim() || null;
 	} else {
 		// parsing failed or nothing useful; keep raw From as displayName
@@ -41,9 +41,9 @@ export default function normaliseGmailMessage(raw) {
 	const messageId = raw.id || null;
 	const labels = raw.labelIds || raw.labels || [];
 
-	// normalized subject/displayName for matching/dedupe
-	const normSubject = subject ? subject.toLowerCase().trim().replace(/\s+/g, ' ') : '';
-	const normDisplayName = displayName ? displayName.toLowerCase().trim() : null;
+	// normalized subject/displayName for matching/dedupe (use shared helpers)
+	const normSubject = normaliseText(subject);
+	const normDisplayName = displayName ? normaliseText(displayName) : null;
 
 	const normalised = {
 		provider: 'gmail',
@@ -55,6 +55,7 @@ export default function normaliseGmailMessage(raw) {
 		email: email || null,
 		displayName: displayName || null,
 		normDisplayName,
+		_normalised: true,
 		snippet: raw.snippet || '',
 		date: date || null,
 		dateIso,
