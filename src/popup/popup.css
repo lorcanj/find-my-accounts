@@ -267,3 +267,27 @@ h2#accounts-heading {
     vertical-align: middle;
     margin-left: 2px;
 }
+
+/* Footer details toggle */
+.footer-details > summary {
+    cursor: pointer;
+    color: #888;
+    font-size: 0.85rem;
+    list-style: none;
+    user-select: none;
+}
+
+.footer-details > summary::before {
+    content: '+ ';
+}
+
+.footer-details[open] > summary::before {
+    content: '− ';
+}
+
+.footer-details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
