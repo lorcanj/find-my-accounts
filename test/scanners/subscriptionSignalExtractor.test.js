@@ -140,12 +140,12 @@ describe('extractSubscriptionSignals', () => {
 
   describe('amount extraction', () => {
     it('extracts $9.99 from subject', () => {
-      const signals = extractSubscriptionSignals(msg('Payment of $9.99'));
+      const signals = extractSubscriptionSignals(msg('Your subscription renewed — $9.99'));
       expect(signals.amount).toBe('$9.99');
     });
 
     it('extracts €14.99/month from subject', () => {
-      const signals = extractSubscriptionSignals(msg('Your receipt: €14.99/month'));
+      const signals = extractSubscriptionSignals(msg('Subscription renewed — €14.99/month'));
       expect(signals.amount).toBe('€14.99/month');
     });
 
@@ -155,22 +155,52 @@ describe('extractSubscriptionSignals', () => {
     });
 
     it('extracts USD 9.99 from subject', () => {
-      const signals = extractSubscriptionSignals(msg('Charged USD 9.99 for your plan'));
+      const signals = extractSubscriptionSignals(msg('Subscription renewed — USD 9.99 for your plan'));
       expect(signals.amount).toBe('USD 9.99');
     });
 
     it('extracts £29.99 from subject', () => {
-      const signals = extractSubscriptionSignals(msg('Payment of £29.99 received'));
+      const signals = extractSubscriptionSignals(msg('Subscription renewed — £29.99'));
       expect(signals.amount).toBe('£29.99');
     });
 
     it('extracts A$14.99 from subject', () => {
-      const signals = extractSubscriptionSignals(msg('Charged A$14.99'));
+      const signals = extractSubscriptionSignals(msg('Charged A$14.99', { email: 'billing@example.com' }));
       expect(signals.amount).toBe('A$14.99');
     });
 
     it('returns null when no amount present', () => {
       const signals = extractSubscriptionSignals(msg('Welcome to our service'));
+      expect(signals.amount).toBeNull();
+    });
+
+    it('rejects amount with no subscription context', () => {
+      const signals = extractSubscriptionSignals(msg('Get £57.50 for your delayed train'));
+      expect(signals.amount).toBeNull();
+    });
+
+    it('keeps amount when subscription keyword present', () => {
+      const signals = extractSubscriptionSignals(msg('Your subscription renewed — $9.99'));
+      expect(signals.amount).toBe('$9.99');
+    });
+
+    it('keeps amount when billing sender present', () => {
+      const signals = extractSubscriptionSignals(msg('Charged $14.99', { email: 'billing@example.com' }));
+      expect(signals.amount).toBe('$14.99');
+    });
+
+    it('rejects amounts above upper bound', () => {
+      const signals = extractSubscriptionSignals(msg('Your subscription renewed — £120,000'));
+      expect(signals.amount).toBeNull();
+    });
+
+    it('rejects discount amounts: £50 OFF', () => {
+      const signals = extractSubscriptionSignals(msg('Your membership — £50 OFF'));
+      expect(signals.amount).toBeNull();
+    });
+
+    it('rejects salary pattern: $60,000', () => {
+      const signals = extractSubscriptionSignals(msg('Graduate Engineer - $60,000/year'));
       expect(signals.amount).toBeNull();
     });
   });
@@ -192,12 +222,12 @@ describe('extractSubscriptionSignals', () => {
     });
 
     it('detects monthly from /mo in amount', () => {
-      const signals = extractSubscriptionSignals(msg('Charged $4.99/mo'));
+      const signals = extractSubscriptionSignals(msg('Subscription renewed — $4.99/mo'));
       expect(signals.frequency).toBe('monthly');
     });
 
     it('detects monthly from /month in amount', () => {
-      const signals = extractSubscriptionSignals(msg('Receipt: €14.99/month'));
+      const signals = extractSubscriptionSignals(msg('Subscription renewed — €14.99/month'));
       expect(signals.frequency).toBe('monthly');
     });
 
@@ -207,7 +237,7 @@ describe('extractSubscriptionSignals', () => {
     });
 
     it('returns null when no frequency keywords present', () => {
-      const signals = extractSubscriptionSignals(msg('Payment of $9.99'));
+      const signals = extractSubscriptionSignals(msg('Subscription renewed — $9.99'));
       expect(signals.frequency).toBeNull();
     });
   });
