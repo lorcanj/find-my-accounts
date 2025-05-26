@@ -95,7 +95,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${Math.ceil(file.size/1024)} KB`;
+      let sizeText;
+      const sizeInMB = file.size / (1024 * 1024);
+      if (sizeInMB >= 1024) {
+        sizeText = `${(sizeInMB / 1024).toFixed(2)} GB`;
+      } else {
+        sizeText = `${sizeInMB.toFixed(1)} MB`;
+      }
+      
+      if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${sizeText}`;
 
       // Simple extension-only validation for now
       if (!/\.mbox$/i.test(file.name)) {
