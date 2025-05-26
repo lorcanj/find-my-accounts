@@ -1,3 +1,7 @@
+import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
+import { domainLookup } from '../data/buildDomainLookup.js';
+import { downloadAccountsAsJson } from './download.js';
+
 const ACTION_SCAN_GMAIL = 'scanGmail';
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
@@ -9,11 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadButton = document.getElementById('downloadAccounts');
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
-      window.downloadAccountsAsJson(accountsForDownload);
+      downloadAccountsAsJson(accountsForDownload);
     });
   }
 });
 
+// need to use chrome.runtime
+// for communication between the popup and service worker
 function handleScanClick() {
   chrome.runtime.sendMessage({ action: ACTION_SCAN_GMAIL }, handleScanResponse);
 }
@@ -65,7 +71,7 @@ function renderAccountList(accounts) {
 function enrichAccounts(accounts) {
   return accounts.map(account => {
     const lookupKey = getAccountName(account);
-    const domainInfo = window.domainLookup && window.domainLookup[lookupKey];
+    const domainInfo = domainLookup && domainLookup[lookupKey];
     account.justDeleteMeData = domainInfo || NO_DATA_FOUND_MESSAGE;
     return account;
   });

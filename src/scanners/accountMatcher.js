@@ -1,4 +1,6 @@
-function extractAccountsFromMessages(messages) {
+import Account from '../models/Account.js';
+
+export function extractAccountsFromMessages(messages) {
   const accountKeywords = ['welcome', 'account', 'registration', 'activate', 'verify', 'password reset'];
   const foundAccounts = [];
   const seen = new Set();
@@ -23,7 +25,7 @@ function extractAccountsFromMessages(messages) {
   return foundAccounts;
 }
 
-function parseNameFromFromHeader(fromHeader) {
+export function parseNameFromFromHeader(fromHeader) {
   // Try to extract the name before the <email>
   const match = fromHeader.match(/^"?([^"<>]*)"?\s*</);
   if (match && match[1]) {
@@ -36,6 +38,3 @@ function parseNameFromFromHeader(fromHeader) {
   }
   return fromHeader.trim();
 }
-
-window.extractAccountsFromMessages = extractAccountsFromMessages;
-window.parseNameFromFromHeader = parseNameFromFromHeader;

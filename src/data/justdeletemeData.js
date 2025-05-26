@@ -1,4 +1,4 @@
-window.justdeletemeData = [
+export const justdeletemeData = [
   {
     "name": "1Password",
     "url": "https://my.1password.com/profile",

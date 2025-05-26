@@ -18,7 +18,8 @@
   },
   
   "background": {
-    "service_worker": "src/services/authService.js"
+    "service_worker": "src/services/authService.js",
+    "type": "module"
   },
   
   "oauth2": {

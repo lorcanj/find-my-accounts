@@ -1,4 +1,5 @@
-const data = window.justdeletemeData;
+import { justdeletemeData } from './justdeletemeData.js';
+const data = justdeletemeData;
 
 // Helper to normalize strings: lowercase and remove punctuation/spaces
 function normalise(str) {
@@ -20,8 +21,5 @@ function buildDomainLookup(data) {
   return lookup;
 }
 
-// Build the lookup once at module load
-const domainLookup = buildDomainLookup(data);
-
-window.domainLookup = domainLookup;
-delete window.justdeletemeData;
+// Build the lookup once at module load and export it
+export const domainLookup = buildDomainLookup(data);
