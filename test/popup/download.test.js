@@ -87,12 +87,111 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
     const csvText = await capturedBlob.text();
     const [headerRow, dataRow] = csvText.split('\n');
 
-    expect(headerRow).toBe('Account Name,Domain,Sender,Last Email Date,Confidence,Difficulty,Delete URL');
+    expect(headerRow).toBe('Account Name,Domain,Sender,Last Email Date,Confidence,Difficulty,Delete URL,Is Subscription,Subscription Confidence,Amount,Frequency,Status');
     expect(dataRow).toContain('Example Account');
     expect(dataRow).toContain('example.com');
     expect(dataRow).toContain('"Alice ""A"" <alice@example.com>"');
     expect(dataRow).toContain('"https://example.com/delete,now"');
     expect(dataRow).not.toContain("'=Example Account");
+  });
+
+  it('includes subscription fields when account has subscription data', async () => {
+    downloadAccountsAsCsv([
+      {
+        name: 'Spotify',
+        domain: 'spotify.com',
+        from: 'billing@spotify.com',
+        lastEmailDate: '2024-06-01',
+        confidence: 'high',
+        justDeleteMeData: { difficulty: 'medium', url: 'https://spotify.com/account/close' },
+        subscription: { confidence: 'high', amount: '$9.99/mo', frequency: 'monthly', status: 'active' },
+      },
+    ]);
+
+    const csvText = await capturedBlob.text();
+    const [headerRow, dataRow] = csvText.split('\n');
+
+    expect(headerRow).toContain('Is Subscription,Subscription Confidence,Amount,Frequency,Status');
+    expect(dataRow).toContain('Yes');
+    expect(dataRow).toContain('high');
+    expect(dataRow).toContain('$9.99/mo');
+    expect(dataRow).toContain('monthly');
+    expect(dataRow).toContain('active');
+  });
+
+  it('exports No and empty strings for accounts without subscription data', async () => {
+    downloadAccountsAsCsv([
+      {
+        name: 'Example',
+        domain: 'example.com',
+        from: 'noreply@example.com',
+        lastEmailDate: null,
+        confidence: 'medium',
+        justDeleteMeData: null,
+        subscription: null,
+      },
+    ]);
+
+    const csvText = await capturedBlob.text();
+    const [, dataRow] = csvText.split('\n');
+    const cols = dataRow.split(',');
+
+    // Last 5 columns: Is Subscription, Sub Confidence, Amount, Frequency, Status
+    expect(cols[7]).toBe('No');
+    expect(cols[8]).toBe('');
+    expect(cols[9]).toBe('');
+    expect(cols[10]).toBe('');
+    expect(cols[11]).toBe('');
+  });
+
+  it('escapes formula injection in amount field', async () => {
+    downloadAccountsAsCsv([
+      {
+        name: 'Tricky',
+        domain: 'tricky.com',
+        from: 'billing@tricky.com',
+        lastEmailDate: null,
+        confidence: 'high',
+        justDeleteMeData: null,
+        subscription: { confidence: 'high', amount: '=$9.99', frequency: 'monthly', status: 'active' },
+      },
+    ]);
+
+    const csvText = await capturedBlob.text();
+    const [, dataRow] = csvText.split('\n');
+
+    expect(dataRow).toContain("'=$9.99");
+  });
+
+  it('preserves existing column positions (subscription columns appended at end)', async () => {
+    downloadAccountsAsCsv([
+      {
+        name: 'Test',
+        domain: 'test.com',
+        from: 'noreply@test.com',
+        lastEmailDate: '2024-01-01',
+        confidence: 'low',
+        justDeleteMeData: { difficulty: 'hard', url: 'https://test.com/delete' },
+        subscription: null,
+      },
+    ]);
+
+    const csvText = await capturedBlob.text();
+    const [headerRow, dataRow] = csvText.split('\n');
+    const headers = headerRow.split(',');
+    const cols = dataRow.split(',');
+
+    // Existing columns stay in position
+    expect(headers[0]).toBe('Account Name');
+    expect(headers[4]).toBe('Confidence');
+    expect(headers[6]).toBe('Delete URL');
+    // Subscription columns at end
+    expect(headers[7]).toBe('Is Subscription');
+    expect(headers[11]).toBe('Status');
+    // Data values aligned
+    expect(cols[0]).toBe('Test');
+    expect(cols[4]).toBe('low');
+    expect(cols[7]).toBe('No');
   });
 });
 
