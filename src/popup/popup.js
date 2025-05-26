@@ -41,8 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'popup',
         width: 800,
         height: 600
+      }, () => {
+        if (!chrome.runtime.lastError) {
+          window.close();
+        } else {
+          console.error('Window creation failed:', chrome.runtime.lastError);
+        }
       });
-      window.close();
     });
   }
   
