@@ -12,10 +12,6 @@
     <div class="header">
       <h1>find my accounts</h1>
       <div class="header-actions">
-        <a href="https://ko-fi.com/findmyaccounts" target="_blank" rel="noopener noreferrer" class="kofi-button" title="Support me on Ko-fi">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          <span>Support</span>
-        </a>
         <button id="popOutBtn" class="btn-link" title="Pop out" aria-label="Pop out">
           <img src="../assets/pop-out.svg" width="16" height="16">
         </button>
@@ -99,15 +95,24 @@
       <!-- Error messages will appear here -->
     </div>
     <!-- Add this to popup.html, e.g., at the bottom of the popup -->
-    <div class="acknowledgement ack">
-      Account deletion info powered by <a href="https://justdeleteme.xyz/" target="_blank" rel="noopener noreferrer" title="justdeleteme.xyz — a directory of account deletion pages">justdeleteme</a>
-    </div>
-    <div class="bug-report ack">
-      <span id="bugReportText"></span>
-      <button id="copyEmailBtn" class="btn-icon" title="Copy email address" aria-label="Copy email address">
-        <img src="../assets/copy.svg" width="14" height="14" alt="">
-      </button>
-    </div>
+    <details class="footer-details ack">
+      <summary>about</summary>
+      <div class="footer-details-content">
+        <div>Account deletion info powered by <a href="https://justdeleteme.xyz/" target="_blank" rel="noopener noreferrer" title="justdeleteme.xyz — a directory of account deletion pages">justdeleteme</a></div>
+        <div>
+          <a href="https://ko-fi.com/findmyaccounts" target="_blank" rel="noopener noreferrer" class="kofi-button" title="Support me on Ko-fi">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span>Support</span>
+          </a>
+        </div>
+        <div class="bug-report">
+          <span id="bugReportText"></span>
+          <button id="copyEmailBtn" class="btn-icon" title="Copy email address" aria-label="Copy email address">
+            <img src="../assets/copy.svg" width="14" height="14" alt="">
+          </button>
+        </div>
+      </div>
+    </details>
   </div>
   <!-- Load the bundled popup script from dist so bare imports are resolved at build time -->
   <script type="module" src="../../dist/popup.js"></script>
