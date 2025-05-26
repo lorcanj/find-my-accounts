@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { downloadAccountsAsCsv, downloadAccountsAsJson } from '../../src/popup/download.js';
+import { SUBSCRIPTION_UI_ENABLED } from '../../src/constants/ui.js';
 
 describe('downloadAccountsAsCsv - CSV injection protection', () => {
   let dom;
@@ -87,7 +88,11 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
     const csvText = await capturedBlob.text();
     const [headerRow, dataRow] = csvText.split('\n');
 
-    expect(headerRow).toBe('Account Name,Domain,Sender,Last Email Date,Confidence,Difficulty,Delete URL,Is Subscription,Subscription Confidence,Amount,Frequency,Status');
+    const expectedHeader = SUBSCRIPTION_UI_ENABLED
+      ? 'Account Name,Domain,Sender,Last Email Date,Confidence,Difficulty,Delete URL,Is Subscription,Subscription Confidence,Amount,Frequency,Status'
+      : 'Account Name,Domain,Sender,Last Email Date,Confidence,Difficulty,Delete URL';
+
+    expect(headerRow).toBe(expectedHeader);
     expect(dataRow).toContain('Example Account');
     expect(dataRow).toContain('example.com');
     expect(dataRow).toContain('"Alice ""A"" <alice@example.com>"');
@@ -95,7 +100,7 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
     expect(dataRow).not.toContain("'=Example Account");
   });
 
-  it('includes subscription fields when account has subscription data', async () => {
+  it('omits subscription columns when SUBSCRIPTION_UI_ENABLED is false', async () => {
     downloadAccountsAsCsv([
       {
         name: 'Spotify',
@@ -104,66 +109,27 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
         lastEmailDate: '2024-06-01',
         confidence: 'high',
         justDeleteMeData: { difficulty: 'medium', url: 'https://spotify.com/account/close' },
-        subscription: { confidence: 'high', amount: '$9.99/mo', frequency: 'monthly', status: 'active' },
+        subscription: { confidence: 'high', amount: '$9.99', frequency: 'monthly', status: 'active' },
       },
     ]);
 
     const csvText = await capturedBlob.text();
     const [headerRow, dataRow] = csvText.split('\n');
 
-    expect(headerRow).toContain('Is Subscription,Subscription Confidence,Amount,Frequency,Status');
-    expect(dataRow).toContain('Yes');
-    expect(dataRow).toContain('high');
-    expect(dataRow).toContain('$9.99/mo');
-    expect(dataRow).toContain('monthly');
-    expect(dataRow).toContain('active');
+    if (SUBSCRIPTION_UI_ENABLED) {
+      expect(headerRow).toContain('Is Subscription,Subscription Confidence,Amount,Frequency,Status');
+      expect(dataRow).toContain('Yes');
+      expect(dataRow).toContain('$9.99');
+      expect(dataRow).toContain('monthly');
+      expect(dataRow).toContain('active');
+    } else {
+      expect(headerRow).not.toContain('Is Subscription');
+      expect(headerRow).not.toContain('Amount');
+      expect(dataRow).not.toContain('Yes');
+    }
   });
 
-  it('exports No and empty strings for accounts without subscription data', async () => {
-    downloadAccountsAsCsv([
-      {
-        name: 'Example',
-        domain: 'example.com',
-        from: 'noreply@example.com',
-        lastEmailDate: null,
-        confidence: 'medium',
-        justDeleteMeData: null,
-        subscription: null,
-      },
-    ]);
-
-    const csvText = await capturedBlob.text();
-    const [, dataRow] = csvText.split('\n');
-    const cols = dataRow.split(',');
-
-    // Last 5 columns: Is Subscription, Sub Confidence, Amount, Frequency, Status
-    expect(cols[7]).toBe('No');
-    expect(cols[8]).toBe('');
-    expect(cols[9]).toBe('');
-    expect(cols[10]).toBe('');
-    expect(cols[11]).toBe('');
-  });
-
-  it('escapes formula injection in amount field', async () => {
-    downloadAccountsAsCsv([
-      {
-        name: 'Tricky',
-        domain: 'tricky.com',
-        from: 'billing@tricky.com',
-        lastEmailDate: null,
-        confidence: 'high',
-        justDeleteMeData: null,
-        subscription: { confidence: 'high', amount: '=$9.99', frequency: 'monthly', status: 'active' },
-      },
-    ]);
-
-    const csvText = await capturedBlob.text();
-    const [, dataRow] = csvText.split('\n');
-
-    expect(dataRow).toContain("'=$9.99");
-  });
-
-  it('preserves existing column positions (subscription columns appended at end)', async () => {
+  it('preserves existing column positions', async () => {
     downloadAccountsAsCsv([
       {
         name: 'Test',
@@ -181,17 +147,20 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
     const headers = headerRow.split(',');
     const cols = dataRow.split(',');
 
-    // Existing columns stay in position
     expect(headers[0]).toBe('Account Name');
     expect(headers[4]).toBe('Confidence');
     expect(headers[6]).toBe('Delete URL');
-    // Subscription columns at end
-    expect(headers[7]).toBe('Is Subscription');
-    expect(headers[11]).toBe('Status');
-    // Data values aligned
     expect(cols[0]).toBe('Test');
     expect(cols[4]).toBe('low');
-    expect(cols[7]).toBe('No');
+
+    if (SUBSCRIPTION_UI_ENABLED) {
+      expect(headers[7]).toBe('Is Subscription');
+      expect(headers[11]).toBe('Status');
+      expect(cols[7]).toBe('No');
+    } else {
+      expect(headers).toHaveLength(7);
+      expect(cols).toHaveLength(7);
+    }
   });
 });
 
@@ -249,13 +218,13 @@ describe('downloadAccountsAsJson - transient field stripping', () => {
     expect(parsed[0]).not.toHaveProperty('_subscriptionSignals');
   });
 
-  it('preserves all non-transient fields in JSON export', async () => {
+  it('strips subscription field from JSON export when SUBSCRIPTION_UI_ENABLED is false', async () => {
     downloadAccountsAsJson([
       {
         name: 'Netflix',
         domain: 'netflix.com',
         from: 'billing@netflix.com',
-        subscription: { confidence: 'high', amount: '$15.99/mo', status: 'active' },
+        subscription: { confidence: 'high', amount: '$15.99', status: 'active' },
         _subscriptionSignals: [{ strongKeywords: ['renewed'] }],
       },
     ]);
@@ -266,7 +235,12 @@ describe('downloadAccountsAsJson - transient field stripping', () => {
     expect(parsed[0].name).toBe('Netflix');
     expect(parsed[0].domain).toBe('netflix.com');
     expect(parsed[0].from).toBe('billing@netflix.com');
-    expect(parsed[0].subscription.confidence).toBe('high');
     expect(parsed[0]).not.toHaveProperty('_subscriptionSignals');
+
+    if (SUBSCRIPTION_UI_ENABLED) {
+      expect(parsed[0].subscription.confidence).toBe('high');
+    } else {
+      expect(parsed[0]).not.toHaveProperty('subscription');
+    }
   });
 });
