@@ -29,6 +29,7 @@ async function handleImportRequest(request) {
       worker.onmessage = (e) => {
         const msg = e.data || {};
         if (msg.type === 'progress') {
+          // TODO: not correct, progress is being output
           // currently we just log progress; later we can forward to popup
           console.log('mbox parse progress:', msg.percent);
         } else if (msg.type === 'done') {
