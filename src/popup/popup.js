@@ -68,13 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (progressBar) progressBar.style.width = `${pct}%`;
             selectedFileInfo.textContent = `Parsing ${file.name}: ${pct}%`;
           } else if (msg.type === 'done') {
-            if (progressEl) progressEl.style.display = 'none';
-            if (progressBar) progressBar.style.width = '0%';
+            resetProgressIndicator();
             handleImportResponse({ success: true, data: msg.messages || [] });
             worker.terminate();
           } else if (msg.type === 'error') {
-            if (progressEl) progressEl.style.display = 'none';
-            if (progressBar) progressBar.style.width = '0%';
+            resetProgressIndicator();
             selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
             importBtn.disabled = false;
             worker.terminate();
@@ -83,10 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         worker.onerror = (ev) => {
           console.error('Worker onerror event:', ev);
-          const progressEl = document.getElementById('importProgress');
-          const progressBar = document.getElementById('importProgressBar');
-          if (progressEl) progressEl.style.display = 'none';
-          if (progressBar) progressBar.style.width = '0%';
+          resetProgressIndicator();
           // ErrorEvent in workers contains message/filename/lineno/colno
           const message = (ev && (ev.message || (ev.error && ev.error.message))) || String(ev);
           selectedFileInfo.textContent = `Worker error: ${message}`;
@@ -196,6 +191,13 @@ function readFileAsArrayBuffer(file) {
     fr.onload = () => resolve(fr.result);
     fr.readAsArrayBuffer(file);
   });
+}
+
+function resetProgressIndicator() {
+  const progressEl = document.getElementById('importProgress');
+  const progressBar = document.getElementById('importProgressBar');
+  if (progressEl) progressEl.style.display = 'none';
+  if (progressBar) progressBar.style.width = '0%';
 }
 
 function handleImportResponse(response) {
