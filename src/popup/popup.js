@@ -344,7 +344,7 @@ function createAccountListItem(account) {
   nameDiv.setAttribute('role', 'cell');
 
   const confDiv = document.createElement('div');
-  confDiv.className = `${CSS_CLASS.COL} col-confidence`;
+  confDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_CONF}`;
   confDiv.setAttribute('role', 'cell');
   const BADGE_CLASS_MAP = {
     high: CSS_CLASS.BADGE_HIGH,

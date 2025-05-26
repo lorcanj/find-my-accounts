@@ -17,6 +17,7 @@ export const CSS_CLASS = Object.freeze({
   MT_HALF:     'mt-0-5',
   COL:         'col',
   COL_NAME:    'name',
+  COL_CONF:    'confidence',
   COL_DIFF:    'difficulty',
   COL_ACTION:  'action',
   BADGE:       'badge',
