@@ -118,15 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
       downloadAccountsAsJson(accountsForDownload);
     });
   }
-
-  // Top duplicate import control removed; use the main file picker (`mboxFileInput`) instead.
 });
 
-// The dedicated top-file input and handler were removed in favor of the
-// consolidated import UI (`mboxFileInput` + `importMboxBtn`).
-
-// need to use chrome.runtime
-// for communication between the popup and service worker
 function handleScanClick() {
   // send the generic 'scan' action (service worker expects 'scan')
   chrome.runtime.sendMessage({ action: 'scan' }, handleScanResponse);
