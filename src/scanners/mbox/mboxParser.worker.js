@@ -36,9 +36,20 @@ function getHeaderValue(parsedHeaders, name) {
     if (Array.isArray(entry.value)) {
       return entry.value.map(v => {
         if (typeof v === 'string') return v;
-        if (v && v.name) return `${v.name} <${v.address || ''}>`;
+        // Handle email address objects from the parser
+        if (v && typeof v === 'object') {
+          if (v.name && v.address) return `${v.name} <${v.address}>`;
+          if (v.name) return v.name;
+          if (v.address) return v.address;
+        }
         return String(v);
       }).join(', ');
+    }
+    // Handle single object values (not in an array)
+    if (typeof entry.value === 'object' && entry.value !== null) {
+      if (entry.value.name && entry.value.address) return `${entry.value.name} <${entry.value.address}>`;
+      if (entry.value.name) return entry.value.name;
+      if (entry.value.address) return entry.value.address;
     }
     return String(entry.value);
   }
