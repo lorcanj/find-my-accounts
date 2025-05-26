@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
-
+      accountsForDownload = [];
       try {
         await importMboxFile(
           file,
