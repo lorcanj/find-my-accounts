@@ -1,60 +1,41 @@
-# Test Gaps — find-my-accounts
+# Test Gaps — prioritized for release
 
-This document lists modules in `src/` that lack tests or have partial coverage, with concise test suggestions and suggested test filenames.
+This file lists missing or partial tests ordered by priority for release. Implement high-priority tests first.
 
-## Data
-- `src/data/buildDomainLookup.js` — No tests.
-  - Tests: `domainLookup` contains normalized keys from `justdeletemeData`; alias handling; `normalise` strips punctuation/whitespace.
-  - Suggested file: `test/buildDomainLookup.test.js`.
+1. Critical — mbox parsing & import
+   - `src/scanners/mbox/mboxParser.worker.js` — test message processing, batch emission, progress messages, and error paths.
+     - Suggested test: `test/mboxParser.worker.test.js`.
+   - `src/services/mboxImportService.js` — test `importMboxFile` for both `file.stream()` and the `slice`+`FileReader` fallback, progress/onBatch callbacks, and worker error handling (mock `Worker`).
+     - Suggested test: `test/mboxImportService.test.js`.
 
-- `src/data/justdeletemeData.js` — No tests (data file).
-  - Tests: sample entry shape (name, domains), aliases array existence.
-  - Suggested file: `test/justdeletemeData.test.js`.
+2. Core logic — account extraction & dedupe
+   - `src/scanners/accountMatcher.js` — canonicalKey handling, field extraction, and edge cases (missing headers); add edge-case coverage if not already present.
+     - Suggested test: `test/accountMatcher.test.js`.
 
-## Models
-- `src/models/Account.js` — No tests.
-  - Tests: constructing `Account` and `JustDeleteMeInfo` sets properties and defaults.
-  - Suggested file: `test/Account.test.js`.
+3. Models (low effort, high value)
+   - `src/models/Account.js` — constructor defaults and property assignment; `JustDeleteMeInfo` fields.
+     - Suggested test: `test/Account.test.js`.
 
-## Popup UI logic
-- `src/popup/popup.js` — No tests.
-  - Tests: `getAccountName`/`normalise` behaviour, `deduplicateAccounts` (uses `canonicalKey`), `createAccountListItem` DOM output, `enrichAccounts` uses `domainLookup`.
-  - Suggested file: `test/popup.test.js` (use JSDOM).
+4. Normalisers
+   - `src/scanners/normalisers/utils.js` — `normaliseText` (diacritics, reply/forward prefixes, punctuation, whitespace, null/empty) and `toIsoDate` (numeric timestamp, ISO string, invalid -> `null`).
+     - Suggested test: `test/normalisers.utils.test.js`.
 
-- `src/popup/download.js` — No tests.
-  - Tests: `downloadAccountsAsJson` creates blob/url and triggers anchor click (mock `URL.createObjectURL` and DOM).
-  - Suggested file: `test/download.test.js`.
+5. Popup UI (unit tests, run in jsdom)
+   - `src/popup/popup.js` — key helpers: name normalization, deduplication, `createAccountListItem` DOM output, and `enrichAccounts` interaction with `domainLookup`.
+     - Suggested test: `test/popup.test.js`.
+   - `src/popup/download.js` — `downloadAccountsAsJson` behaviour (mock `URL.createObjectURL` and DOM anchor click).
+     - Suggested test: `test/download.test.js`.
 
-## Scanners / Import
-- `src/scanners/storage.js` — Empty file. Confirm intent; if implemented, add tests.
-  - Action: either implement or remove; add `test/storage.test.js` later.
+6. Integration smoke
+   - One end-to-end smoke test that mocks `Worker` and verifies import -> normalise -> account extraction -> simple storage/UI pipeline.
+     - Suggested test: `test/integration/smoke.test.js`.
 
-- `src/scanners/mbox/mboxParser.worker.js` — No tests.
-  - Tests: `processMessage`/`extractAndProcessMessages` and helpers (`findTextNode`, `getHeaderValue`) with mocked `parse` and `normaliseMboxMessage`; batch emission, progress messages, error handling.
-  - Suggested file: `test/mboxParser.worker.test.js`.
+7. Optional / low priority
+   - `src/scanners/storage.js` — confirm intent; implement or remove. If implemented, add `test/storage.test.js`.
+   - `src/vendors/emailjs-mime-parser.bundle.js` — large vendor file; skip unit tests, consider an integration test only for critical parsing scenarios.
 
-- `src/services/mboxImportService.js` — No tests.
-  - Tests: `importMboxFile` handles `file.stream()` path and fallback `slice`+`FileReader`, progress and onBatch callbacks, worker error handling (mock `Worker`).
-  - Suggested file: `test/mboxImportService.test.js`.
+Already covered (no immediate action)
+   - `src/scanners/keyGenerator.js` — `test/keyGenerator.test.js` present.
+   - `src/vendors/emailjs-mime-parser-wrapper.js` — wrapper tests present (`test/emailjsWrapper.test.js`).
 
-## Normalisers (partial)
-- `src/scanners/normalisers/utils.js`
-  - `normaliseEmail` — already tested.
-  - Missing tests:
-    - `normaliseText`: diacritics removal, reply/forward prefix removal, punctuation removal, whitespace collapse, null/empty input.
-    - `toIsoDate`: numeric timestamp, ISO string, invalid inputs -> `null`, zero timestamp.
-  - Suggested file: `test/normalisers.utils.test.js` or split into `test/normaliseText.test.js` and `test/toIsoDate.test.js`.
-
-## Vendors / Wrapper
-- `src/vendors/emailjs-mime-parser-wrapper.js` — wrapper has tests. The large `emailjs-mime-parser.bundle.js` can remain untested; optionally add an integration test.
-
-## Already covered
-- `src/scanners/accountMatcher.js` — tested (`test/accountMatcher.test.js`).
-- `src/scanners/keyGenerator.js` — tested (`test/keyGenerator.test.js`).
-- `src/services/authService.js` — tested (`test/authService.test.js`).
-- `src/vendors/emailjs-mime-parser-wrapper.js` — tested (`test/emailjsWrapper.test.js`).
-
----
-
-Next steps
-- I can scaffold any of the suggested tests (Vitest) — tell me which files to create first.
+Recommended implementation order: Critical mbox/import -> Core extraction -> Models -> Normalisers -> Popup units -> Integration smoke -> Optional tests.
