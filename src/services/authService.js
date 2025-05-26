@@ -1,4 +1,3 @@
-import generateCanonicalKey from '../scanners/keyGenerator.js';
 import normaliseMboxMessage from '../scanners/mbox/normaliser.js';
 
 console.log('Service worker started');
