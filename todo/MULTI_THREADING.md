@@ -76,3 +76,34 @@ Transferring raw message strings between workers via `postMessage` is straightfo
 - Keeping the splitter and parser pool in sync during cancellation (all workers must be terminated)
 - Handling backpressure so the splitter doesn't outpace the parsers and exhaust memory
 - Merging out-of-order results correctly before deduplication
+
+---
+
+## Future consideration — body parsing
+
+If the pipeline is ever extended to parse email bodies (e.g. for richer account detection via body content), the cost profile changes substantially.
+
+### Impact on the worker pool decision
+
+Full MIME tree traversal — multipart boundary splitting, base64/quoted-printable decoding, HTML extraction — is likely **5–20x more expensive per message** than header-only parsing. The worker pool becomes even more justified.
+
+### ArrayBuffer transfer between workers
+
+Currently, once the splitter decodes bytes to a JS string, the data can only be **cloned** (copied) when sent to a parser worker — strings are not transferable. For header blocks (1–5 KB each), clone cost is negligible and not worth addressing.
+
+For full message bodies (potentially 100 KB+), the copy cost becomes meaningful. The right pattern at that point is:
+
+- Splitter keeps message data as raw bytes (`ArrayBuffer` slices) rather than decoded strings
+- Transfers the buffer (zero-copy, ownership moves) to a parser worker
+- Each parser worker runs `TextDecoder.decode()` locally
+
+This is a **retrofit**, not a design constraint — nothing in the current architecture blocks it. Implement when body parsing is introduced, not before.
+
+### Pre-filtering pattern
+
+With body parsing, naively parsing every message's body would be expensive. The right approach is a two-stage pipeline:
+
+1. Run the cheap header-based filter first (already implemented in `accountMatcher.js`)
+2. Only pass messages that clear the header filter to the expensive body parser
+
+The splitter (or a lightweight pre-filter worker) makes the routing decision. Parser workers only receive messages worth full processing. This keeps the expensive parse step proportional to actual matches, not total email volume.
