@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chrome.windows.create({
         url: chrome.runtime.getURL('src/popup/popup.html?popped=true'),
         type: 'popup',
-        width: 800,
+        width: 400,
         height: 600
       }, () => {
         if (!chrome.runtime.lastError) {

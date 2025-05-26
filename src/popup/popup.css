@@ -23,7 +23,8 @@ body {
 
 body.popped-out {
     width: auto;
-    max-width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
 }
 .header {
     display: flex;
