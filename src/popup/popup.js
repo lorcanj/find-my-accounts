@@ -53,8 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedFileInfo.textContent = `Reading ${file.name}...`;
       try {
         const ab = await readFileAsArrayBuffer(file);
-        // Send the raw ArrayBuffer to the background/service worker for parsing
-        chrome.runtime.sendMessage({ action: 'importMbox', fileName: file.name, buffer: ab }, handleImportResponse);
+
+        // Create the parser worker in the popup (Worker is defined in window scope)
+        const workerUrl = chrome.runtime.getURL('src/scanners/mboxParser.worker.js');
+        const worker = new Worker(workerUrl, { type: 'module' });
+
+        worker.onmessage = (e) => {
+          const msg = e.data || {};
+          if (msg.type === 'progress') {
+            selectedFileInfo.textContent = `Parsing ${file.name}: ${msg.percent}%`;
+          } else if (msg.type === 'done') {
+            handleImportResponse({ success: true, data: msg.messages || [] });
+            worker.terminate();
+          } else if (msg.type === 'error') {
+            selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
+            importBtn.disabled = false;
+            worker.terminate();
+          }
+        };
+
+        worker.onerror = (err) => {
+          selectedFileInfo.textContent = `Worker error: ${err && err.message ? err.message : String(err)}`;
+          importBtn.disabled = false;
+          try { worker.terminate(); } catch (e) {}
+        };
+
+        try {
+          // Transfer buffer where supported
+          worker.postMessage({ buffer: ab, fileName: file.name }, [ab]);
+        } catch (e) {
+          worker.postMessage({ buffer: ab, fileName: file.name });
+        }
+
         selectedFileInfo.textContent = `Imported ${file.name}, parsing...`;
       } catch (err) {
         selectedFileInfo.textContent = `Failed to read file: ${err.message}`;
