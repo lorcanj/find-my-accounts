@@ -5,11 +5,13 @@
     "vitest": "4.0.16"
   },
   "dependencies": {
-    "email-addresses": "^3.1.0"
+    "email-addresses": "^3.1.0",
+    "emailjs-mime-parser": "^2.0.7"
   },
   "scripts": {
-    "test": "vitest",
+    "test": "vitest --run",
     "build": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm",
+    "bundle:emailjs": "esbuild node_modules/emailjs-mime-parser/dist/mimeparser.js --bundle --outfile=src/vendors/emailjs-mime-parser.bundle.js --platform=browser --format=esm",
     "build:watch": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm --watch"
   }
 }
