@@ -36,7 +36,6 @@ body {
     width: 100%;
 }
 .account-list { list-style: none; padding: 0; margin: 8px 0 0 0; }
-.account-list li { padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
 
 /* Layout for account list headers and rows: three columns */
 .account-list-headers {
