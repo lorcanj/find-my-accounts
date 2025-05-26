@@ -7,13 +7,13 @@ class JustDeleteMeInfo {
 }
 
 class Account {
-  constructor({ name = '', subject = '', from = '', snippet = '', domain = '', justDeleteMeInfo = null } = {}) {
+  constructor({ name = '', subject = '', from = '', snippet = '', domain = '', justDeleteMeData = null } = {}) {
     this.name = this.name;
     this.subject = subject;
     this.from = from;
     this.snippet = snippet;
     this.domain = domain;
-    this.justDeleteMeInfo = justDeleteMeInfo;
+    this.justDeleteMeData = justDeleteMeData;
   }
 }
 

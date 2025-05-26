@@ -59,10 +59,8 @@ function enrichAccounts(accounts) {
   return accounts.map(account => {
     const lookupKey = getAccountName(account);
     const domainInfo = window.domainLookup && window.domainLookup[lookupKey];
-    return {
-      ...account,
-      justDeleteMe: domainInfo || null
-    };
+    account.justDeleteMeData = domainInfo || 'No data found.';
+    return account;
   });
 }
 
