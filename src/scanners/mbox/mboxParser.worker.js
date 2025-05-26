@@ -10,6 +10,7 @@ let batch = [];
 let count = 0;
 let totalBytesProcessed = 0;
 const BATCH_SIZE = 50;
+const MAX_HEADER_CHARS = 256 * 1024;
 
 // Resolve callable parse function once (prefer the named `parse` export)
 const parseFn = parseNamed || null;
@@ -48,6 +49,32 @@ function getHeaderValue(parsedHeaders, name) {
   return String(entry.initial || '');
 }
 
+function extractHeaderBlock(mimeMessage) {
+  if (!mimeMessage) return '';
+
+  let boundaryIndex = mimeMessage.indexOf('\r\n\r\n');
+  let boundaryLength = 4;
+
+  if (boundaryIndex === -1) {
+    boundaryIndex = mimeMessage.indexOf('\n\n');
+    boundaryLength = 2;
+  }
+
+  let headerBlock;
+  if (boundaryIndex === -1) {
+    headerBlock = mimeMessage;
+  } else {
+    // Include the header/body delimiter so parser receives a complete header section.
+    headerBlock = mimeMessage.slice(0, boundaryIndex + boundaryLength);
+  }
+
+  if (headerBlock.length > MAX_HEADER_CHARS) {
+    return headerBlock.slice(0, MAX_HEADER_CHARS);
+  }
+
+  return headerBlock;
+}
+
 function extractAndProcessMessages(inputBuffer, delimiterRegex) {
   let remainingBuffer = inputBuffer;
   while (true) {
@@ -75,8 +102,9 @@ function processMessage(part) {
       throw new Error('emailjs-mime-parser.parse not found');
     }
 
-    // Parse the cleaned MIME message
-    const parsed = parseFn(mimeMessage);
+    // Parse only headers to avoid parsing large bodies/attachments.
+    const headerOnlyMessage = extractHeaderBlock(mimeMessage);
+    const parsed = parseFn(headerOnlyMessage);
 
     // Use the structured headers produced by the parser when available
     const parsedHeaders = parsed.headers || {};
@@ -93,7 +121,7 @@ function processMessage(part) {
       messageId: getHeaderValue(parsedHeaders, 'Message-ID') || null,
       threadId: getHeaderValue(parsedHeaders, 'Thread-Index') || null,
       headers: parsedHeaders || {},
-      raw: mimeMessage
+      raw: headerOnlyMessage
     };
 
     // Normalise to produce canonicalKey and consistent output
