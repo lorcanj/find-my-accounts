@@ -228,6 +228,7 @@ h2#accounts-heading {
     align-items: center;
     margin-bottom: 8px;
 }
+.sub-toggle-bar[hidden] { display: none; }
 .sub-toggle {
     font-size: 0.8rem;
     font-weight: 500;
