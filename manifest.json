@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Account Scanner",
   "version": "1.0.0",
-  "description": "Scan your Gmail inbox and password manager to discover all accounts associated with your email",
+  "description": "Scan your Gmail inbox to discover all accounts associated with your email",
   
   "permissions": [
     "identity",
@@ -28,3 +28,4 @@
     ]
   }
 }
+
