@@ -1,14 +1,14 @@
-class JustDeleteMeInfo {
-  constructor({ difficulty, url, notes }) {
+export class JustDeleteMeInfo {
+  constructor({ difficulty, url, notes } = {}) {
     this.difficulty = difficulty;
     this.url = url;
     this.notes = notes;
   }
 }
 
-class Account {
+export default class Account {
   constructor({ name = '', subject = '', from = '', snippet = '', domain = '', justDeleteMeData = null } = {}) {
-    this.name = this.name;
+    this.name = name;
     this.subject = subject;
     this.from = from;
     this.snippet = snippet;
@@ -16,5 +16,3 @@ class Account {
     this.justDeleteMeData = justDeleteMeData;
   }
 }
-
-window.Account = Account;

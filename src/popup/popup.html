@@ -43,19 +43,7 @@
       Account deletion info powered by <a href="https://justdeleteme.xyz/" target="_blank" rel="noopener">justdeleteme</a>
     </div>
   </div>
-    <!--
-    This popup loads several scripts in a specific order to ensure global functions and data are available:
-    - justdeletemeData.js: Provides account deletion info.
-    - buildDomainLookup.js: Builds a lookup table for account domains.
-    - accountMatcher.js: Defines extractAccountsFromMessages and attaches it to window for global access.
-    - popup.js: Handles UI logic and relies on extractAccountsFromMessages being available globally.
-    Make sure to maintain this order so that popup.js can access the required functions and data.
-  -->
-  <script src="../models/Account.js"></script>
-  <script src="../data/justdeletemeData.js"></script>
-  <script src="../data/buildDomainLookup.js"></script>
-  <script src="../scanners/accountMatcher.js"></script>
-  <script src="download.js"></script>
-  <script src="popup.js"></script>
+  <!-- Load the popup entry as an ES module; other modules are imported from popup.js -->
+  <script type="module" src="popup.js"></script>
 </body>
 </html>
