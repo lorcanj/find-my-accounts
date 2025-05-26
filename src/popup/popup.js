@@ -6,37 +6,51 @@ const ACTION_SCAN_GMAIL = 'scanGmail';
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
 
+// Cached DOM elements (assigned in DOMContentLoaded)
+let scanButton;
+let mboxInput;
+let selectedFileInfo;
+let importBtn;
+let progress;
+let progressBar;
+let downloadButton;
+let accountList;
+let accountCount;
+let error;
+
 document.addEventListener('DOMContentLoaded', () => {
-  const scanButton = document.getElementById(ACTION_SCAN_GMAIL);
-  scanButton.addEventListener('click', handleScanClick);
+  scanButton = document.getElementById(ACTION_SCAN_GMAIL);
+  scanButton?.addEventListener('click', handleScanClick);
 
   // File import UI elements
-  const mboxInput = document.getElementById('mboxFileInput');
-  const selectedFileInfo = document.getElementById('selectedFileInfo');
-  const importBtn = document.getElementById('importMboxBtn');
+  mboxInput = document.getElementById('mboxFileInput');
+  selectedFileInfo = document.getElementById('selectedFileInfo');
+  importBtn = document.getElementById('importMboxBtn');
+  progress = document.getElementById('importProgress');
+  progressBar = document.getElementById('importProgressBar');
   let currentMboxFileValid = false;
 
   if (mboxInput) {
     mboxInput.addEventListener('change', () => {
       const file = mboxInput.files && mboxInput.files[0];
       if (!file) {
-        selectedFileInfo.textContent = '';
-        importBtn.disabled = true;
+        if (selectedFileInfo) selectedFileInfo.textContent = '';
+        if (importBtn) importBtn.disabled = true;
         currentMboxFileValid = false;
         return;
       }
 
-      selectedFileInfo.textContent = `${file.name} — ${Math.ceil(file.size/1024)} KB`;
+      if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${Math.ceil(file.size/1024)} KB`;
 
       // Simple extension-only validation for now
       if (!/\.mbox$/i.test(file.name)) {
-        selectedFileInfo.textContent = `Invalid file type. Please select a .mbox file.`;
-        importBtn.disabled = true;
+        if (selectedFileInfo) selectedFileInfo.textContent = `Invalid file type. Please select a .mbox file.`;
+        if (importBtn) importBtn.disabled = true;
         currentMboxFileValid = false;
         return;
       }
 
-      importBtn.disabled = false;
+      if (importBtn) importBtn.disabled = false;
       currentMboxFileValid = true;
     });
   }
@@ -46,11 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = mboxInput.files && mboxInput.files[0];
       if (!file) return;
       if (!currentMboxFileValid) {
-        selectedFileInfo.textContent = 'Selected file is not a valid .mbox. Import cancelled.';
+        if (selectedFileInfo) selectedFileInfo.textContent = 'Selected file is not a valid .mbox. Import cancelled.';
         return;
       }
       importBtn.disabled = true;
-      selectedFileInfo.textContent = `Reading ${file.name}...`;
+      if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       try {
         const ab = await readFileAsArrayBuffer(file);
 
@@ -60,21 +74,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         worker.onmessage = (e) => {
           const msg = e.data || {};
-          const progressEl = document.getElementById('importProgress');
-          const progressBar = document.getElementById('importProgressBar');
           if (msg.type === 'progress') {
             const pct = Math.max(0, Math.min(100, Number(msg.percent) || 0));
-            if (progressEl) progressEl.style.display = 'block';
+            if (progress) progress.style.display = 'block';
             if (progressBar) progressBar.style.width = `${pct}%`;
-            selectedFileInfo.textContent = `Parsing ${file.name}: ${pct}%`;
+            if (selectedFileInfo) selectedFileInfo.textContent = `Parsing ${file.name}: ${pct}%`;
           } else if (msg.type === 'done') {
             resetProgressIndicator();
             handleImportResponse({ success: true, data: msg.messages || [] });
             worker.terminate();
           } else if (msg.type === 'error') {
             resetProgressIndicator();
-            selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
-            importBtn.disabled = false;
+            if (selectedFileInfo) selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
+            if (importBtn) importBtn.disabled = false;
             worker.terminate();
           }
         };
@@ -84,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
           resetProgressIndicator();
           // ErrorEvent in workers contains message/filename/lineno/colno
           const message = (ev && (ev.message || (ev.error && ev.error.message))) || String(ev);
-          selectedFileInfo.textContent = `Worker error: ${message}`;
-          importBtn.disabled = false;
+          if (selectedFileInfo) selectedFileInfo.textContent = `Worker error: ${message}`;
+          if (importBtn) importBtn.disabled = false;
           try { worker.terminate(); } catch (e) {}
         };
 
@@ -96,19 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
           worker.postMessage({ buffer: ab, fileName: file.name });
         }
 
-        selectedFileInfo.textContent = `Imported ${file.name}, parsing...`;
-        const progressEl = document.getElementById('importProgress');
-        const progressBar = document.getElementById('importProgressBar');
-        if (progressEl) progressEl.style.display = 'block';
+        if (selectedFileInfo) selectedFileInfo.textContent = `Imported ${file.name}, parsing...`;
+        if (progress) progress.style.display = 'block';
         if (progressBar) progressBar.style.width = '0%';
       } catch (err) {
-        selectedFileInfo.textContent = `Failed to read file: ${err.message}`;
-        importBtn.disabled = false;
+        if (selectedFileInfo) selectedFileInfo.textContent = `Failed to read file: ${err.message}`;
+        if (importBtn) importBtn.disabled = false;
       }
     });
   }
 
-  const downloadButton = document.getElementById('downloadAccounts');
+  downloadButton = document.getElementById('downloadAccounts');
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
       downloadAccountsAsJson(accountsForDownload);
@@ -127,7 +137,7 @@ function handleScanResponse(response) {
   if (response && response.success) {
     const accounts = extractAccountsFromMessages(response.data);
     const enrichedAccounts = enrichAccounts(accounts);
-    renderAccountList(enrichedAccounts);
+      renderAccountList(enrichedAccounts);
     // Store the enriched, deduplicated accounts for download/export
     accountsForDownload = enrichedAccounts;
     updateAccountCount(enrichedAccounts.length);
@@ -138,7 +148,7 @@ function handleScanResponse(response) {
 
 function renderAccountList(accounts) {
   const list = document.getElementById('accountList');
-  list.innerHTML = '';
+    list.innerHTML = '';
   accounts.forEach(account => {
     const li = createAccountListItem(account);
     list.appendChild(li);
@@ -196,7 +206,7 @@ function readFileAsArrayBuffer(file) {
 function resetProgressIndicator() {
   const progressEl = document.getElementById('importProgress');
   const progressBar = document.getElementById('importProgressBar');
-  if (progressEl) progressEl.style.display = 'none';
+    if (progressEl) progressEl.style.display = 'none';
   if (progressBar) progressBar.style.width = '0%';
 }
 
