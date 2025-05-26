@@ -1,5 +1,5 @@
 const ACTION_SCAN_GMAIL = 'scanGmail';
-let lastAccounts = [];
+let accountsForDownload = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   const scanButton = document.getElementById(ACTION_SCAN_GMAIL);
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadButton = document.getElementById('downloadAccounts');
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
-      window.downloadAccountsAsJson(lastAccounts); // lastAccounts should be your current accounts array
+      window.downloadAccountsAsJson(accountsForDownload);
     });
   }
 });
@@ -20,17 +20,17 @@ function handleScanClick() {
 function handleScanResponse(response) {
   if (response && response.success) {
     const accounts = extractAccountsFromMessages(response.data);
-    const filteredAccounts = updateAccountList(accounts); // Get filtered list
-    lastAccounts = filteredAccounts; // Use for download
+    const filteredAccounts = filterAccounts(accounts);
+    renderAccountList(filteredAccounts);
+    // Store the filtered, deduplicated accounts for download/export
+    accountsForDownload = filteredAccounts;
     updateAccountCount(filteredAccounts.length);
   } else {
     console.log('Scan failed:', response && response.error);
   }
 }
 
-function updateAccountList(accounts) {
-  const list = document.getElementById('accountList');
-  list.innerHTML = '';
+function filterAccounts(accounts) {
   const seenAccount = new Set();
   const filtered = [];
   accounts.forEach(account => {
@@ -39,10 +39,17 @@ function updateAccountList(accounts) {
     account.name = accountName;
     seenAccount.add(accountName);
     filtered.push(account);
-    const li = createAccountListItem(account, seenAccount);
-    list.appendChild(li);
   });
   return filtered;
+}
+
+function renderAccountList(accounts) {
+  const list = document.getElementById('accountList');
+  list.innerHTML = '';
+  accounts.forEach(account => {
+    const li = createAccountListItem(account);
+    list.appendChild(li);
+  });
 }
 
 function updateAccountCount(count) {
