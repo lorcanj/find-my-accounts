@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Open new window with ?popped=true param
       chrome.windows.create({
         url: chrome.runtime.getURL('src/popup/popup.html?popped=true'),
-        type: 'popup',
+        type: 'normal',
         width: 400,
         height: 600
       }, () => {
