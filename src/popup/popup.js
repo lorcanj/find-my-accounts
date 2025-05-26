@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
           setImportUiState(IMPORT_UI_STATE.ERROR, { hasValidFile: currentMboxFileValid });
         }
-      } 
+      }
     });
   }
   downloadButton = document.getElementById('downloadAccounts');
