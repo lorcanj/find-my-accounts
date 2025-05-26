@@ -1,5 +1,5 @@
 import { domainLookup } from '../data/buildDomainLookup.js';
-import { downloadAccountsAsJson } from './download.js';
+import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   downloadButton = document.getElementById('downloadAccounts');
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
-      downloadAccountsAsJson(accountsForDownload);
+      downloadAccountsAsCsv(accountsForDownload);
     });
   }
 });
