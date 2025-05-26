@@ -8,6 +8,3 @@ What it does
 - Normalises email addresses and service domains from headers and message content.
 - Matches discovered domains/services to the bundled JustDeleteMe data to annotate deletion difficulty and provide links.
 - Provides a simple UI to import an mbox and view matched results; large files are parsed in a web worker.
-
----
-
