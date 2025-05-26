@@ -1,7 +1,7 @@
 import { justdeletemeData } from './justdeletemeData.js';
 const data = justdeletemeData;
 
-// Helper to normalize strings: lowercase and remove punctuation/spaces
+// Helper to normalise strings: lowercase and remove punctuation/spaces
 function normalise(str) {
   return str.toLowerCase().replace(/[\s\W_]+/g, '');
 }

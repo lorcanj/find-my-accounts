@@ -1,4 +1,3 @@
-import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { domainLookup } from '../data/buildDomainLookup.js';
 import { downloadAccountsAsJson } from './download.js';
 
@@ -21,12 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // need to use chrome.runtime
 // for communication between the popup and service worker
 function handleScanClick() {
-  chrome.runtime.sendMessage({ action: ACTION_SCAN_GMAIL }, handleScanResponse);
+  // send the generic 'scan' action (service worker expects 'scan')
+  chrome.runtime.sendMessage({ action: 'scan' }, handleScanResponse);
 }
 
 function handleScanResponse(response) {
   if (response && response.success) {
-    const accounts = extractAccountsFromMessages(response.data);
+    const accounts = response.data || [];
+
     const filteredAccounts = filterAccounts(accounts);
     const enrichedAccounts = enrichAccounts(filteredAccounts);
     renderAccountList(enrichedAccounts);

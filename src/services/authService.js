@@ -1,54 +1,39 @@
+import providerManager from '../scanners/ProviderManager.js';
+
 console.log('Service worker started');
 
-const GMAIL_API_BASE = 'https://www.googleapis.com/gmail/v1/users/me/messages';
-const ACTION_SCAN_GMAIL = 'scanGmail';
+const ACTION_SCAN = 'scan';
 
-function getAuthToken() {
-  return new Promise((resolve, reject) => {
-    chrome.identity.getAuthToken({ interactive: true }, function(token) {
-      if (token) resolve(token);
-      else reject('No token');
-    });
-  });
-}
-
-async function getMessageIds(token, maxResults = 50) {
-  const res = await fetch(`${GMAIL_API_BASE}?maxResults=${maxResults}`, {
-    headers: { Authorization: 'Bearer ' + token }
-  });
-  const data = await res.json();
-  return data.messages || [];
-}
-
-async function getMessageDetail(token, id) {
-  const res = await fetch(`${GMAIL_API_BASE}/${id}`, {
-    headers: { Authorization: 'Bearer ' + token }
-  });
-  return await res.json();
-}
-
-async function fetchRawMessages(maxResults = 50) {
-  try {
-    const token = await getAuthToken();
-    const messages = await getMessageIds(token, maxResults);
-    const details = [];
-    for (const msg of messages) {
-      const fullMsg = await getMessageDetail(token, msg.id);
-      details.push(fullMsg);
-    }
-    return details;
-  } catch (error) {
-    console.error('Error fetching Gmail messages:', error);
-    throw error;
-  }
-}
-
-// might move this, not sure if it should sit here
-chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
-  if (request.action === ACTION_SCAN_GMAIL) {
-    fetchRawMessages(50)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === ACTION_SCAN) {
+    handleScanRequest(request)
       .then(data => sendResponse({ success: true, data }))
-      .catch(error => sendResponse({ success: false, error: error.toString() }));
-    return true;
+      .catch(err => sendResponse({ success: false, error: err.message }));
+    
+    return true; // Keep channel open for async response
   }
 });
+
+async function handleScanRequest(request) {
+  const providerName = request.provider || 'gmail'; // Default to gmail
+  const provider = providerManager.getProvider(providerName);
+
+  console.log(`Starting scan for provider: ${providerName}`);
+
+  // 1. Authenticate
+  const token = await provider.authenticate();
+  
+  // 2. Scan
+  const accounts = await provider.scan(token);
+
+  // Runtime assertion: ensure providers return normalised Account objects
+  function isNormalisedAccount(a) {
+    return a && typeof a.from === 'string' && (typeof a.subject === 'string' || typeof a.name === 'string');
+  }
+
+  if (!Array.isArray(accounts) || !accounts.every(isNormalisedAccount)) {
+    throw new Error(`Provider '${providerName}' returned unexpected data shape; expected Account[]`);
+  }
+
+  return accounts;
+}
