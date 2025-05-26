@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normaliseEmail } from '../src/scanners/normalisers/utils.js';
+import { normaliseEmail } from '../../../src/scanners/normalisers/utils.js';
 
 describe('normaliseEmail', () => {
   it('normalises Alice+tag@Sub.Domain.COM to current behaviour', () => {

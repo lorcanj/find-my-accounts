@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parse as parseNamed } from '../src/vendors/emailjs-mime-parser-wrapper.js';
+import { parse as parseNamed } from '../../src/vendors/emailjs-mime-parser-wrapper.js';
 
 describe('emailjs-mime-parser-wrapper', () => {
   it('exports a named parse function', () => {

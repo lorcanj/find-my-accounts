@@ -35,7 +35,7 @@ describe('authService handleImportRequest (skeleton)', () => {
   });
 
   it('calls sendResponse with success and data on worker done', async () => {
-    await import('../src/services/authService.js');
+    await import('../../src/services/authService.js');
     expect(typeof listener).toBe('function');
 
     const sendResponsePromise = new Promise((resolve) => {

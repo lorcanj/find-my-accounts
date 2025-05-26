@@ -1,4 +1,4 @@
-import normaliseMboxMessage from '../src/scanners/mbox/normaliser.js';
+import normaliseMboxMessage from '../../../src/scanners/mbox/normaliser.js';
 import { describe, it, expect } from 'vitest';
 
 describe('normaliseMboxMessage', () => {

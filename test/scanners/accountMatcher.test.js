@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractAccountsFromMessages } from '../src/scanners/accountMatcher.js';
+import { extractAccountsFromMessages } from '../../src/scanners/accountMatcher.js';
 
 describe('extractAccountsFromMessages (simple)', () => {
   it('returns two accounts for distinct canonicalKey', () => {
