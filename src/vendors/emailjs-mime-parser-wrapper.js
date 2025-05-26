@@ -33,8 +33,7 @@ else if (lib && typeof lib.parse === 'function') parseFn = lib.parse;
 const exportedDefault = parseFn || lib || raw;
 
 // Ensure we always export a usable `parse` function.
-// Try multiple fallbacks (lib, exportedDefault, raw) and otherwise provide
-// a clear function that throws so consumers fail fast and get a helpful message.
+// Try multiple fallbacks (lib, exportedDefault, raw)
 let ensuredParse = parseFn;
 if (!ensuredParse) {
   if (typeof exportedDefault === 'function') ensuredParse = exportedDefault;
@@ -47,16 +46,18 @@ if (!ensuredParse) {
     // Warn early so developers see a clear message in console when loading the module
     // rather than only failing later when `parse` is called.
     try {
-      // Use console.warn if available in the environment
       console && console.warn && console.warn('emailjs-mime-parser wrapper: no callable parse() detected on the bundled module — parse() will throw if called');
     } catch (e) {
-      // swallow console errors to avoid breaking environments without console
     }
   }
 }
 
-export default exportedDefault;
+// Export `parse`: guaranteed callable function for consumers.
+// It will be a direct parser function or the library's `.parse` method when available.
+// If no parser could be discovered during module initialization, this function
+// will throw with a clear error message when called — so consumers get a fast,
+// informative failure.
 export const parse = ensuredParse;
 
-// Also expose raw exports for debugging if needed
+// Also expose `_raw` to allow inspection of the original bundled module shape.
 export const _raw = raw;
