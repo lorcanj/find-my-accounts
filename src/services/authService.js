@@ -63,8 +63,13 @@ async function handleImportRequest(request) {
               const nm = normaliseMboxMessage(m);
               return nm;
             } catch (err) {
-              // fallback: ensure there's at least a canonicalKey
-              try { m.canonicalKey = generateCanonicalKey(m); } catch (e) { m.canonicalKey = null; }
+              console.warn('normaliseMboxMessage failed, falling back to generateCanonicalKey', err);
+              try {
+                m.canonicalKey = generateCanonicalKey(m);
+              } catch (e) {
+                console.warn('generateCanonicalKey failed during fallback', e);
+                m.canonicalKey = null;
+              }
               return m;
             }
           }) : [];
