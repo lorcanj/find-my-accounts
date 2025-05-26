@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const platformName = PLATFORM_BRAND_MAP.get(account.canonicalKey);
           account.isPlatform = !!platformName;
           if (platformName) account.name = platformName;
-          enrichAccountWithSubscription(account, account._subscriptionSignals || [], { isPlatform: account.isPlatform });
+          enrichAccountWithSubscription(account, account._subscriptionSignals || []);
         }
 
         // Re-render so subscription badges appear on the now-enriched accounts

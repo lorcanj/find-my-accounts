@@ -237,4 +237,17 @@ describe('enrichAccountWithSubscription', () => {
       expect(acc.subscription.frequency).toBeNull();
     });
   });
+
+  // ── Platform suppression ────────────────────────────────────
+
+  describe('platform suppression', () => {
+    it('leaves account.subscription untouched when account.isPlatform is true', () => {
+      const acc = freshAccount();
+      acc.isPlatform = true;
+      enrichAccountWithSubscription(acc, [
+        signal({ strongKeywords: ['renewed'], amount: '$9.99', isBillingSender: true }),
+      ]);
+      expect(acc.subscription).toBeNull();
+    });
+  });
 });
