@@ -21,9 +21,18 @@
       <p style="font-size:0.9em; color:#444;">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
       <div class="file-picker">
         <input id="mboxFileInput" type="file" accept=".mbox" />
-        <div id="selectedFileInfo" style="margin-top:0.5em; font-size:0.9em; color:#222;"></div>
+        <div id="selectedFileInfo" aria-live="polite" style="margin-top:0.5em; font-size:0.9em; color:#222;"></div>
         <div id="importProgress" class="progress" style="display:none; margin-top:0.5em;">
-          <div id="importProgressBar" class="progress-bar" style="width:0%"></div>
+          <div
+            id="importProgressBar"
+            class="progress-bar"
+            role="progressbar"
+            aria-label="MBOX import progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            style="width:0%">
+          </div>
         </div>
       </div>
       <div style="margin-top:0.5em;">
