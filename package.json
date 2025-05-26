@@ -1,14 +1,15 @@
 {
+  "type": "module",
   "devDependencies": {
-    "jest": "^30.2.0",
-    "esbuild": "^0.19.0"
+    "esbuild": "^0.27.2",
+    "vitest": "4.0.16"
   },
   "dependencies": {
     "email-addresses": "^3.1.0"
   },
   "scripts": {
-  "test": "jest",
-  "build": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm",
-  "build:watch": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm --watch"
+    "test": "vitest",
+    "build": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm",
+    "build:watch": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm --watch"
   }
 }
