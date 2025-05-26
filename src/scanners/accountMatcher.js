@@ -1,5 +1,6 @@
 import Account from '../models/Account.js';
 import { CONFIDENCE, CONFIDENCE_RANK } from '../constants/confidence.js';
+import { extractSubscriptionSignals } from './subscriptionSignalExtractor.js';
 
 const STRONG_SENDER_REGEX = /(?:^|[._+\-\s])(?:no[._+\-\s]?reply|do[._+\-\s]?not[._+\-\s]?reply|support|billing|accounts?|invoices?|security|privacy|auth)(?:$|[._+\-\s\d])/i;
 const WEAK_SENDER_REGEX = /(?:^|[._+\-\s])(?:team|hello|info|help|admin|sales|notifications?|updates?|alerts)(?:$|[._+\-\s\d])/i;
@@ -24,15 +25,20 @@ export function extractAccountsFromMessages(messages = []) {
     const domain = m.domain || '';
     const lastEmailDate = m.dateIso || null;
 
+    const subSignal = extractSubscriptionSignals(m);
+
     if (!key || !seen.has(key)) {
       const name = m.displayName || m.email || m.from || 'Unknown Sender';
       const idx = foundAccounts.length;
-      foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key, lastEmailDate, confidence }));
+      const account = new Account({ name, subject, from, domain, canonicalKey: key, lastEmailDate, confidence });
+      account._subscriptionSignals = [subSignal];
+      foundAccounts.push(account);
       if (key) seen.set(key, idx);
     } else {
       const existing = foundAccounts[seen.get(key)];
       updateLastEmailDate(existing, lastEmailDate);
       updateConfidence(existing, confidence);
+      existing._subscriptionSignals.push(subSignal);
     }
   }
 

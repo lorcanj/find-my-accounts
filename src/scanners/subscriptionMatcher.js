@@ -49,7 +49,7 @@ export function enrichAccountWithSubscription(account, signalsArray) {
   else if (hasStrong && anyBillingSender) confidence = CONFIDENCE.HIGH;
   else if (countStrongOrBilling > 1)      confidence = CONFIDENCE.HIGH;
   else if (hasStrong)                     confidence = CONFIDENCE.MEDIUM;
-  else if (hasAmount)                     confidence = CONFIDENCE.MEDIUM;
+  else if (hasAmount)                     confidence = CONFIDENCE.MEDIUM; // also covers weak+amount — both map to medium, so no separate branch needed
   else if (hasWeak && anyBillingSender)   confidence = CONFIDENCE.MEDIUM;
   else if (hasWeak)                       confidence = CONFIDENCE.LOW;
 

@@ -2,6 +2,7 @@ import { domainLookup, domainMap } from '../data/buildDomainLookup.js';
 import { normaliseForLookup } from '../scanners/normalisers/utils.js';
 import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages, updateConfidence } from '../scanners/accountMatcher.js';
+import { enrichAccountWithSubscription } from '../scanners/subscriptionMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
@@ -240,7 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         );
 
-        // Success (resolved)
+        // Success (resolved) — enrich accounts with subscription data
+        for (const { account } of existingKeys.values()) {
+          enrichAccountWithSubscription(account, account._subscriptionSignals || []);
+          delete account._subscriptionSignals;
+        }
+
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
@@ -506,6 +512,11 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
           const dateCell = entry.li.querySelector('.last-email');
           if (dateCell) dateCell.textContent = formatEmailDate(newDate);
         }
+      }
+
+      // Merge subscription signals across batches
+      if (batchedAccount._subscriptionSignals?.length) {
+        entry.account._subscriptionSignals = (entry.account._subscriptionSignals || []).concat(batchedAccount._subscriptionSignals);
       }
 
       // Update confidence if this message has higher confidence
