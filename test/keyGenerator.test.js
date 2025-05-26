@@ -59,5 +59,9 @@ describe('generateCanonicalKey', () => {
   it('ignores trailing dots in domain', () => {
     expect(generateCanonicalKey({ email: 'user@example.com.' })).toBe('brand:example');
   });
+
+  it('handles missing @ symbol', () => {
+    expect(generateCanonicalKey({email: 'userexample.com'})).toBe('e:userexample.com');
+  })
 });
 
