@@ -4,6 +4,9 @@ const SENDER_REGEX = /(?:^|[._+\-\s])(?:no[._+\-\s]?reply|do[._+\-\s]?not[._+\-\
 const SUBJECT_REGEX = /(welcome|verify|verification|confirm|activate|activation|subscription|invoice|receipt|order|billing|payment|received|security alert|password|login|sign[ -]?in|account|regist)/i;
 
 export function extractAccountsFromMessages(messages = []) {
+  if (messages === null) {
+    throw new TypeError('extractAccountsFromMessages: `messages` must not be null');
+  }
   if (!Array.isArray(messages)) messages = [messages];
   const foundAccounts = [];
   const seen = new Set();

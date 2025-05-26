@@ -1,4 +1,4 @@
-import generateCanonicalKey from '../src/scanners/keyGenerator.js';
+import generateCanonicalKey from '../../src/scanners/keyGenerator.js';
 import { describe, it, expect } from 'vitest';
 
 describe('generateCanonicalKey', () => {

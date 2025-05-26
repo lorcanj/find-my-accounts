@@ -55,8 +55,8 @@ function extractAndProcessMessages(inputBuffer, delimiterRegex) {
     const messageChunk = remainingBuffer.slice(0, matchIndex);
     processMessage(messageChunk);
 
-    const delimiterNewlineLength = match[0].length - 5;
-    remainingBuffer = remainingBuffer.slice(matchIndex + delimiterNewlineLength);
+    // Skip past the matched separator (newline/start), leaving "From" line in buffer
+    remainingBuffer = remainingBuffer.slice(matchIndex + match[0].length);
   }
   return remainingBuffer;
 }
@@ -140,9 +140,13 @@ self.onmessage = (e) => {
       const decoded = decoder.decode(buffer, { stream: true });
       let currentBuffer = remainder + decoded;
       
-      let searchStartIndex = 0;
-      
-      currentBuffer = extractAndProcessMessages(currentBuffer, /\r?\nFrom /);
+      // Delimiter pattern uses lookahead to match separator but not "From" line itself.
+      // Matches: newline followed by "From <sender> <TIMESTAMP>"
+      // - <sender>: email (user@domain.com) OR special token (MAILER-DAEMON, -, etc.)
+      // - <TIMESTAMP>: starts with a 3-letter day name (Mon, Tue, etc.)
+      //   We enforce specific day names to avoid false matches on body text like "From that Day..."
+      // Note: We deliberately exclude start-of-string anchor (^) to avoid infinite loops.
+      currentBuffer = extractAndProcessMessages(currentBuffer, /(?:\r?\n)(?=From \S+(?:@\S+)? (?:Mon|Tue|Wed|Thu|Fri|Sat|Sun))/);
       
       remainder = currentBuffer;
       totalBytesProcessed += buffer.byteLength;
@@ -153,7 +157,8 @@ self.onmessage = (e) => {
       const finalDecoded = decoder.decode();
       let finalBuffer = remainder + finalDecoded;
       
-      finalBuffer = extractAndProcessMessages(finalBuffer, /\r?\nFrom /);
+      // Use the same delimiter pattern as in chunk processing
+      finalBuffer = extractAndProcessMessages(finalBuffer, /(?:\r?\n)(?=From \S+(?:@\S+)? (?:Mon|Tue|Wed|Thu|Fri|Sat|Sun))/);
       
       // Process the very last part
       if (finalBuffer && finalBuffer.trim()) {
