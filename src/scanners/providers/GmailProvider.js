@@ -1,5 +1,6 @@
 import BaseProvider from './BaseProvider.js';
 import Account from '../../models/Account.js'; // Assuming you want to return Account objects
+import { filterGmailBySubject } from '../filters/gmailFilter.js';
 
 const GMAIL_API_BASE = 'https://www.googleapis.com/gmail/v1/users/me/messages';
 
@@ -40,6 +41,9 @@ export default class GmailProvider extends BaseProvider {
         detailResponses.map((res) => res.json())
       );
 
+      const filteredAccounts = filterGmailBySubject(detailDataArray);
+
+      // now need to call normalise
       const accounts = detailDataArray.map((detailData) =>
         this.normaliseAccount(detailData)
       );
@@ -53,17 +57,6 @@ export default class GmailProvider extends BaseProvider {
 
   // this isn't normalising
   normaliseAccount(gmailData) {
-    // Extract headers
-    const headers = gmailData.payload?.headers || [];
-    const getHeader = (name) => headers.find(h => h.name === name)?.value || '';
 
-    return new Account({
-      name: getHeader('From'), // Simplified logic
-      subject: getHeader('Subject'),
-      from: getHeader('From'),
-      snippet: gmailData.snippet,
-      // You would add your domain extraction logic here
-      domain: 'todo-extract-domain.com' 
-    });
   }
 }

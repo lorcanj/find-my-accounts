@@ -2,6 +2,9 @@
   "devDependencies": {
     "jest": "^30.2.0"
   },
+  "dependencies": {
+    "email-addresses": "^3.1.0"
+  },
   "scripts": {
   "test": "jest"
   },
