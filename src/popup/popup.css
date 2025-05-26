@@ -39,7 +39,7 @@ body.popped-out {
 .btn-link {
     background: none;
     border: none;
-    color: #1976d2;
+    color: #000;
     cursor: pointer;
     font-size: 0.9rem;
     padding: 4px 8px;
