@@ -29,9 +29,9 @@ export default class BaseProvider {
   }
 
   /**
-  * Convert provider-specific data to your app's Account model.
-  * @param {object} rawData 
-  * @returns {object} Account-compatible object
+   * Convert provider-specific data to your app's Account model.
+   * @param {object} rawData
+   * @returns {object} Account-compatible object
    */
   normaliseAccount(rawData) {
     throw new Error("Method 'normaliseAccount()' must be implemented.");

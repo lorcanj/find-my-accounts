@@ -4,7 +4,7 @@ console.log('Service worker started');
 
 const ACTION_SCAN = 'scan';
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === ACTION_SCAN) {
     handleScanRequest(request)
       .then(data => sendResponse({ success: true, data }))

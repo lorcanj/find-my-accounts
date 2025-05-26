@@ -39,7 +39,7 @@ export default class GmailProvider extends BaseProvider {
       const detailDataArray = await Promise.all(
         detailResponses.map((res) => res.json())
       );
-      
+
       const accounts = detailDataArray.map((detailData) =>
         this.normaliseAccount(detailData)
       );
@@ -51,6 +51,7 @@ export default class GmailProvider extends BaseProvider {
     }
   }
 
+  // this isn't normalising
   normaliseAccount(gmailData) {
     // Extract headers
     const headers = gmailData.payload?.headers || [];
