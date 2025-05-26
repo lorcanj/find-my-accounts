@@ -5,6 +5,15 @@
 /* Basic niceties for popup layout (kept minimal) */
 .loading { font-size: 0.95em; color: #333; }
 .error { color: #b00020; font-size: 0.95em; }
+
+/* Utility spacing and text helpers moved from inline styles */
+.mt-1 { margin-top: 1em; }
+.mt-0-5 { margin-top: 0.5em; }
+.muted { font-size: 0.9em; color: #444; }
+.file-info { margin-top: 0.5em; font-size: 0.9em; color: #222; }
+.download-container { margin-top: 1em; text-align: center; }
+.hidden { display: none; }
+.ack { font-size: 0.9em; margin-top: 1em; }
 body {
     font-family: Arial, Helvetica, sans-serif;
     margin: 0;

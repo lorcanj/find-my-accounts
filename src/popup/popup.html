@@ -16,13 +16,13 @@
       </button>
     </div>
 
-    <div id="importContainer" style="margin-top:1em;">
+    <div id="importContainer" class="mt-1">
       <h3>Import .mbox file (processed locally)</h3>
-      <p style="font-size:0.9em; color:#444;">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
+      <p class="muted">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
       <div class="file-picker">
         <input id="mboxFileInput" type="file" accept=".mbox" />
-        <div id="selectedFileInfo" aria-live="polite" style="margin-top:0.5em; font-size:0.9em; color:#222;"></div>
-        <div id="importProgress" class="progress" style="display:none; margin-top:0.5em;">
+        <div id="selectedFileInfo" aria-live="polite" class="file-info"></div>
+        <div id="importProgress" class="progress hidden mt-0-5">
           <div
             id="importProgressBar"
             class="progress-bar"
@@ -30,12 +30,11 @@
             aria-label="MBOX import progress"
             aria-valuemin="0"
             aria-valuemax="100"
-            aria-valuenow="0"
-            style="width:0%">
+            aria-valuenow="0">
           </div>
         </div>
       </div>
-      <div style="margin-top:0.5em;">
+      <div class="mt-0-5">
         <button id="importMboxBtn" class="btn btn-primary" disabled>Import .mbox</button>
       </div>
     </div>
@@ -44,11 +43,11 @@
       <ul id="accountListPlaceholder"></ul>
     </div>
 
-    <div id="downloadContainer" style="margin-top: 1em; text-align: center;">
+    <div id="downloadContainer" class="download-container">
       <button id="downloadAccounts" class="btn btn-secondary">Download Accounts</button>
     </div>
     
-    <div id="loading" class="loading" style="display: none;">
+    <div id="loading" class="loading hidden">
       <p>Scanning...</p>
     </div>
 
@@ -59,11 +58,11 @@
       </ul>
     </div>
 
-    <div id="error" class="error" style="display: none;">
+    <div id="error" class="error hidden">
       <!-- Error messages will appear here -->
     </div>
     <!-- Add this to popup.html, e.g., at the bottom of the popup -->
-    <div class="acknowledgement" style="font-size: 0.9em; margin-top: 1em;">
+    <div class="acknowledgement ack">
       Account deletion info powered by <a href="https://justdeleteme.xyz/" target="_blank" rel="noopener">justdeleteme</a>
     </div>
   </div>
