@@ -24,17 +24,3 @@ export function extractAccountsFromMessages(messages) {
   });
   return foundAccounts;
 }
-
-export function parseNameFromFromHeader(fromHeader) {
-  // Try to extract the name before the <email>
-  const match = fromHeader.match(/^"?([^"<>]*)"?\s*</);
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-  // If no angle brackets, return the whole string or just the email
-  const emailMatch = fromHeader.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-  if (emailMatch) {
-    return emailMatch[1];
-  }
-  return fromHeader.trim();
-}
