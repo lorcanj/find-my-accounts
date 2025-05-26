@@ -80,9 +80,12 @@ async function handleImportRequest(request) {
         }
       };
 
-      worker.onerror = (err) => {
+      worker.onerror = (event) => {
         worker.terminate();
-        reject(err || new Error('Worker error'));
+        const error = (event && event.error instanceof Error)
+          ? event.error
+          : new Error((event && event.message) || 'Worker error');
+        reject(error);
       };
 
       // Try to transfer the buffer where possible for efficiency
