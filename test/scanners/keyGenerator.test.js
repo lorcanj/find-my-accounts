@@ -62,6 +62,27 @@ describe('generateCanonicalKey', () => {
 
   it('handles missing @ symbol', () => {
     expect(generateCanonicalKey({email: 'userexample.com'})).toBe('e:userexample.com');
-  })
+  });
+
+  it('uses subdomain brand if it matches display name (Lenovo/Aftership)', () => {
+    expect(generateCanonicalKey({ 
+      email: 'no-reply@lenovo.aftershiptracking.com',
+      displayName: 'Lenovo Order Tracking' 
+    })).toBe('brand:lenovo');
+  });
+
+  it('ignores subdomain if it does NOT match display name (Netflix)', () => {
+    expect(generateCanonicalKey({ 
+      email: 'info@members.netflix.com',
+      displayName: 'Netflix' 
+    })).toBe('brand:netflix');
+  });
+
+  it('ignores subdomain matching display name if subdomain is too short', () => {
+    expect(generateCanonicalKey({ 
+      email: 'notifications@hr.company.com',
+      displayName: 'HR Department' 
+    })).toBe('brand:company');
+  });
 });
 

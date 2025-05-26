@@ -36,6 +36,23 @@ export function generateCanonicalKey(item = {}) {
         }
       }
 
+      // HEURISTIC: If we have subdomains, check if one of them appears in the sender's name.
+      // This helps with cases like "Lenovo Order Tracking" <no-reply@lenovo.aftershiptracking.com>
+      // where the specific brand is in the subdomain rather than the service domain.
+      if (res.subdomain) {
+        const displayName = (item.displayName || item.name || '').toLowerCase();
+        if (displayName) {
+          const subParts = res.subdomain.split('.');
+          for (const part of subParts) {
+            // Check for significant parts (avoid 1-2 char parts) that appear in the name
+            if (part && part.length > 2 && displayName.includes(part)) {
+              brandStem = part;
+              break;
+            }
+          }
+        }
+      }
+
       // using English locale rules, 
       // may mis-handle locale‑specific letters (e.g. Turkish İ/ı)
       return `brand:${brandStem.toLocaleLowerCase('en')}`;
