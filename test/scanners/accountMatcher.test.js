@@ -35,8 +35,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         from: 'sender@example.com',
         subject: 'Welcome to Service',
-        displayName: 'Test Sender',
-        snippet: 'Test snippet'
+        displayName: 'Test Sender'
       };
       const result = extractAccountsFromMessages(message);
       
@@ -50,8 +49,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'unique-key',
         from: 'noreply@service.com',
         subject: 'Welcome to Service',
-        displayName: 'Service Name',
-        snippet: 'Welcome to our service'
+        displayName: 'Service Name'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -63,9 +61,9 @@ describe('extractAccountsFromMessages', () => {
     it('returns multiple accounts for distinct canonicalKeys', () => {
       // Test that messages with different canonicalKeys create separate accounts
       const messages = [
-        { canonicalKey: 'key-a', from: 'User One <one@example.com>', subject: 'Welcome', snippet: 'hey' },
-        { canonicalKey: 'key-b', from: 'User Two <two@example.com>', subject: 'Account created', snippet: 'hello' },
-        { canonicalKey: 'key-c', from: 'User Three <three@example.com>', subject: 'Welcome Hi', snippet: 'test' }
+        { canonicalKey: 'key-a', from: 'User One <one@example.com>', subject: 'Welcome' },
+        { canonicalKey: 'key-b', from: 'User Two <two@example.com>', subject: 'Account created' },
+        { canonicalKey: 'key-c', from: 'User Three <three@example.com>', subject: 'Welcome Hi' }
       ];
       
       const result = extractAccountsFromMessages(messages);
@@ -86,8 +84,8 @@ describe('extractAccountsFromMessages', () => {
       // Test that duplicate canonicalKeys only create one account
       // This is critical for avoiding duplicate accounts from the same service
       const messages = [
-        { canonicalKey: 'same-key', from: 'service@example.com', subject: 'Welcome', snippet: 'first' },
-        { canonicalKey: 'same-key', from: 'service@example.com', subject: 'Welcome', snippet: 'second' }
+        { canonicalKey: 'same-key', from: 'service@example.com', subject: 'Welcome' },
+        { canonicalKey: 'same-key', from: 'service@example.com', subject: 'Welcome' }
       ];
       
       const result = extractAccountsFromMessages(messages);
@@ -102,15 +100,13 @@ describe('extractAccountsFromMessages', () => {
           canonicalKey: 'duplicate', 
           from: 'first@example.com', 
           subject: 'First Welcome', 
-          displayName: 'First Name',
-          snippet: 'First snippet' 
+          displayName: 'First Name'
         },
         { 
           canonicalKey: 'duplicate', 
           from: 'second@example.com', 
           subject: 'Second Welcome', 
-          displayName: 'Second Name',
-          snippet: 'Second snippet' 
+          displayName: 'Second Name'
         }
       ];
       
@@ -120,7 +116,6 @@ describe('extractAccountsFromMessages', () => {
       expect(result[0].name).toBe('First Name');
       expect(result[0].subject).toBe('First Welcome');
       expect(result[0].from).toBe('first@example.com');
-      expect(result[0].snippet).toBe('First snippet');
     });
 
     it('handles many messages with same canonicalKey efficiently', () => {
@@ -129,8 +124,7 @@ describe('extractAccountsFromMessages', () => {
       const messages = Array.from({ length: 100 }, (_, i) => ({
         canonicalKey: 'same-key',
         from: `sender${i}@example.com`,
-        subject: `Welcome Subject ${i}`,
-        snippet: `Snippet ${i}`
+        subject: `Welcome Subject ${i}`
       }));
       
       const result = extractAccountsFromMessages(messages);
@@ -141,12 +135,12 @@ describe('extractAccountsFromMessages', () => {
     it('correctly deduplicates mixed unique and duplicate keys', () => {
       // Test a realistic scenario with some unique and some duplicate keys
       const messages = [
-        { canonicalKey: 'unique1', from: 'a@example.com', subject: 'Welcome A', snippet: 'a' },
-        { canonicalKey: 'duplicate', from: 'b@example.com', subject: 'Welcome B', snippet: 'b' },
-        { canonicalKey: 'unique2', from: 'c@example.com', subject: 'Welcome C', snippet: 'c' },
-        { canonicalKey: 'duplicate', from: 'd@example.com', subject: 'Welcome D', snippet: 'd' },
-        { canonicalKey: 'unique3', from: 'e@example.com', subject: 'Welcome E', snippet: 'e' },
-        { canonicalKey: 'duplicate', from: 'f@example.com', subject: 'Welcome F', snippet: 'f' }
+        { canonicalKey: 'unique1', from: 'a@example.com', subject: 'Welcome A' },
+        { canonicalKey: 'duplicate', from: 'b@example.com', subject: 'Welcome B' },
+        { canonicalKey: 'unique2', from: 'c@example.com', subject: 'Welcome C' },
+        { canonicalKey: 'duplicate', from: 'd@example.com', subject: 'Welcome D' },
+        { canonicalKey: 'unique3', from: 'e@example.com', subject: 'Welcome E' },
+        { canonicalKey: 'duplicate', from: 'f@example.com', subject: 'Welcome F' }
       ];
       
       const result = extractAccountsFromMessages(messages);
@@ -167,8 +161,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: 'Company Name',
         from: 'noreply@company.com',
-        subject: 'Welcome',
-        snippet: 'Thanks for signing up'
+        subject: 'Welcome'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -181,8 +174,7 @@ describe('extractAccountsFromMessages', () => {
       const messages = [{
         canonicalKey: 'key1',
         from: 'support@service.com',
-        subject: 'Welcome',
-        snippet: 'Test'
+        subject: 'Welcome'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -195,8 +187,7 @@ describe('extractAccountsFromMessages', () => {
       const messages = [{
         canonicalKey: 'key1',
         from: 'test@example.com',
-        subject: 'Welcome to Our Service',
-        snippet: 'Thanks'
+        subject: 'Welcome to Our Service'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -204,19 +195,6 @@ describe('extractAccountsFromMessages', () => {
       expect(result[0].subject).toBe('Welcome to Our Service');
     });
 
-    it('correctly extracts snippet field', () => {
-      // Test that the snippet field is properly extracted
-      const messages = [{
-        canonicalKey: 'key1',
-        from: 'test@example.com',
-        subject: 'Welcome',
-        snippet: 'This is the email preview snippet'
-      }];
-      
-      const result = extractAccountsFromMessages(messages);
-      
-      expect(result[0].snippet).toBe('This is the email preview snippet');
-    });
 
     it('extracts all fields correctly in a complete message', () => {
       // Test that all fields are extracted together in a realistic scenario
@@ -224,8 +202,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'complete-key',
         displayName: 'GitHub',
         from: 'noreply@github.com',
-        subject: '[GitHub] Please verify your email address',
-        snippet: 'Welcome to GitHub! Please verify your email address to get started.'
+        subject: '[GitHub] Please verify your email address'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -234,7 +211,6 @@ describe('extractAccountsFromMessages', () => {
       expect(result[0].name).toBe('GitHub');
       expect(result[0].from).toBe('noreply@github.com');
       expect(result[0].subject).toBe('[GitHub] Please verify your email address');
-      expect(result[0].snippet).toBe('Welcome to GitHub! Please verify your email address to get started.');
     });
   });
 
@@ -248,8 +224,7 @@ describe('extractAccountsFromMessages', () => {
       const messages = [{
         canonicalKey: 'key1',
         from: 'test@example.com',
-        subject: 'Welcome',
-        snippet: 'Test'
+        subject: 'Welcome'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -262,8 +237,7 @@ describe('extractAccountsFromMessages', () => {
       const messages = [{
         canonicalKey: 'key1',
         displayName: 'Test',
-        subject: 'Welcome',
-        snippet: 'Test'
+        subject: 'Welcome'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -276,30 +250,12 @@ describe('extractAccountsFromMessages', () => {
       const messages = [{
         canonicalKey: 'key1',
         displayName: 'Support Team',
-        from: 'test@example.com',
-        snippet: 'Test'
+        from: 'test@example.com'
       }];
       
       const result = extractAccountsFromMessages(messages);
       
       expect(result[0].subject).toBe('');
-    });
-
-    it('handles missing snippet field with Account constructor default', () => {
-      // Test that when snippet is missing, the Account constructor's default is used
-      // When message.snippet is undefined, the Account constructor's default
-      // parameter value (an empty string) will be applied
-      const messages = [{
-        canonicalKey: 'key1',
-        displayName: 'Test',
-        from: 'test@example.com',
-        subject: 'Welcome'
-      }];
-      
-      const result = extractAccountsFromMessages(messages);
-      
-      // Account constructor default for snippet is '', so undefined becomes ''
-      expect(result[0].snippet).toBe('');
     });
 
     it('handles empty string values for all fields', () => {
@@ -308,8 +264,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: '',
         from: '',
-        subject: '',
-        snippet: ''
+        subject: ''
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -334,8 +289,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: null,
         from: null,
-        subject: null,
-        snippet: null
+        subject: null
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -347,8 +301,8 @@ describe('extractAccountsFromMessages', () => {
       // Test that messages without canonicalKey are still processed
       // Note: undefined canonicalKey will be used as the key
       const messages = [
-        { from: 'test1@example.com', subject: 'Welcome 1', snippet: 'one' },
-        { from: 'test2@example.com', subject: 'Welcome 2', snippet: 'two' }
+        { from: 'test1@example.com', subject: 'Welcome 1' },
+        { from: 'test2@example.com', subject: 'Welcome 2' }
       ];
       
       const result = extractAccountsFromMessages(messages);
@@ -385,8 +339,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: 'Company™ & Partners® — Official',
         from: 'noreply@example.com',
-        subject: 'Welcome',
-        snippet: 'Test'
+        subject: 'Welcome'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -399,8 +352,7 @@ describe('extractAccountsFromMessages', () => {
       const messages = [{
         canonicalKey: 'key1',
         from: 'test@example.com',
-        subject: 'Re: Your order #12345 — Status: ✓ Confirmed',
-        snippet: 'Test'
+        subject: 'Re: Your order #12345 — Status: ✓ Confirmed'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -414,15 +366,13 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: '🚀 Startup Inc',
         from: 'hello@startup.com',
-        subject: '🎉 Welcome! 你好',
-        snippet: 'Unicode test: café, naïve, 日本語'
+        subject: '🎉 Welcome! 你好'
       }];
       
       const result = extractAccountsFromMessages(messages);
       
       expect(result[0].name).toBe('🚀 Startup Inc');
       expect(result[0].subject).toBe('🎉 Welcome! 你好');
-      expect(result[0].snippet).toBe('Unicode test: café, naïve, 日本語');
     });
 
     it('handles very long field values', () => {
@@ -432,8 +382,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: longString,
         from: 'test@example.com',
-        subject: longString,
-        snippet: longString
+        subject: longString
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -441,7 +390,6 @@ describe('extractAccountsFromMessages', () => {
       expect(result).toHaveLength(1);
       expect(result[0].name).toHaveLength(700);
       expect(result[0].subject).toHaveLength(700);
-      expect(result[0].snippet).toHaveLength(700);
     });
 
     it('handles HTML entities in fields', () => {
@@ -450,15 +398,13 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'key1',
         displayName: 'Company &amp; Co',
         from: 'noreply@example.com',
-        subject: 'Welcome &lt;important&gt;',
-        snippet: 'Hello &quot;world&quot;'
+        subject: 'Welcome &lt;important&gt;'
       }];
       
       const result = extractAccountsFromMessages(messages);
       
       expect(result[0].name).toBe('Company &amp; Co');
       expect(result[0].subject).toBe('Welcome &lt;important&gt;');
-      expect(result[0].snippet).toBe('Hello &quot;world&quot;');
     });
   });
 
@@ -473,8 +419,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: 'netflix|verify|signup',
         displayName: 'Netflix',
         from: 'info@account.netflix.com',
-        subject: 'Welcome to Netflix!',
-        snippet: 'You\'re all set! Start watching today.'
+        subject: 'Welcome to Netflix!'
       }];
       
       const result = extractAccountsFromMessages(messages);
@@ -491,15 +436,13 @@ describe('extractAccountsFromMessages', () => {
           canonicalKey: 'github|verify',
           displayName: 'GitHub',
           from: 'noreply@github.com',
-          subject: '[GitHub] Please verify your device',
-          snippet: 'Verify your device to continue'
+          subject: '[GitHub] Please verify your device'
         },
         {
           canonicalKey: 'google|verify',
           displayName: 'Google',
           from: 'no-reply@accounts.google.com',
-          subject: 'Verify your Google Account',
-          snippet: 'Please confirm your email address'
+          subject: 'Verify your Google Account'
         }
       ];
       
@@ -517,22 +460,19 @@ describe('extractAccountsFromMessages', () => {
           canonicalKey: 'amazon|account',
           displayName: 'Amazon',
           from: 'account-update@amazon.com',
-          subject: 'Welcome to Amazon',
-          snippet: 'Thanks for creating an account'
+          subject: 'Welcome to Amazon'
         },
         {
           canonicalKey: 'amazon|account',
           displayName: 'Amazon',
           from: 'order-update@amazon.com',
-          subject: 'Your order has shipped',
-          snippet: 'Track your package'
+          subject: 'Your order has shipped'
         },
         {
           canonicalKey: 'amazon|account',
           displayName: 'Amazon.com',
           from: 'marketing@amazon.com',
-          subject: 'Daily deals for you',
-          snippet: 'Check out today\'s offers'
+          subject: 'Daily deals for you'
         }
       ];
       
@@ -548,11 +488,11 @@ describe('extractAccountsFromMessages', () => {
     it('handles mixed services with various canonicalKey formats', () => {
       // Test multiple different services with different key formats
       const messages = [
-        { canonicalKey: 'simple', displayName: 'Service A', from: 'a@example.com', subject: 'Welcome A', snippet: 'a' },
-        { canonicalKey: 'with|pipes', displayName: 'Service B', from: 'b@example.com', subject: 'Welcome B', snippet: 'b' },
-        { canonicalKey: 'with-dashes', displayName: 'Service C', from: 'c@example.com', subject: 'Welcome C', snippet: 'c' },
-        { canonicalKey: 'with_underscores', displayName: 'Service D', from: 'd@example.com', subject: 'Welcome D', snippet: 'd' },
-        { canonicalKey: 'MixedCase123', displayName: 'Service E', from: 'e@example.com', subject: 'Welcome E', snippet: 'e' }
+        { canonicalKey: 'simple', displayName: 'Service A', from: 'a@example.com', subject: 'Welcome A' },
+        { canonicalKey: 'with|pipes', displayName: 'Service B', from: 'b@example.com', subject: 'Welcome B' },
+        { canonicalKey: 'with-dashes', displayName: 'Service C', from: 'c@example.com', subject: 'Welcome C' },
+        { canonicalKey: 'with_underscores', displayName: 'Service D', from: 'd@example.com', subject: 'Welcome D' },
+        { canonicalKey: 'MixedCase123', displayName: 'Service E', from: 'e@example.com', subject: 'Welcome E' }
       ];
       
       const result = extractAccountsFromMessages(messages);
@@ -573,8 +513,7 @@ describe('extractAccountsFromMessages', () => {
         canonicalKey: `key-${i}`,
         displayName: `Service ${i}`,
         from: `service${i}@example.com`,
-        subject: `Welcome ${i}`,
-        snippet: `Snippet ${i}`
+        subject: `Welcome ${i}`
       }));
       
       const result = extractAccountsFromMessages(messages);
@@ -606,8 +545,7 @@ describe('extractAccountsFromMessages', () => {
           canonicalKey: 'complete',
           displayName: 'Complete Service',
           from: 'noreply@complete.com',
-          subject: 'Welcome Subject',
-          snippet: 'Complete snippet'
+          subject: 'Welcome Subject'
         },
         {
           canonicalKey: 'minimal',
@@ -616,8 +554,7 @@ describe('extractAccountsFromMessages', () => {
         },
         {
           canonicalKey: 'partial',
-          displayName: 'Partial Service',
-          snippet: 'Just a snippet'
+          displayName: 'Partial Service'
         }
       ];
       

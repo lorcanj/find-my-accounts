@@ -13,20 +13,6 @@ const BATCH_SIZE = 50;
 // Resolve callable parse function once (prefer the named `parse` export)
 const parseFn = parseNamed || null;
 
-// Helper: recursively find a preferred `text/plain` node in the parsed MIME tree.
-function findTextNode(node) {
-  if (!node) return null;
-  const ct = node.contentType && node.contentType.value ? node.contentType.value : '';
-  if (/^text\/plain/i.test(ct)) return node;
-  if (node.childNodes && node.childNodes.length) {
-    for (const c of node.childNodes) {
-      const r = findTextNode(c);
-      if (r) return r;
-    }
-  }
-  return null;
-}
-
 // Helper to format a single header value (address object, date, or string)
 function formatHeaderValue(v) {
   if (typeof v === 'string') return v;
@@ -98,21 +84,10 @@ function processMessage(part) {
     const subject = getHeaderValue(parsedHeaders, 'Subject') || '';
     const from = getHeaderValue(parsedHeaders, 'From') || '';
 
-    // Find preferred text/plain content node from the parsed tree
-    const textNode = findTextNode(parsed) || null;
-    let decodedText = '';
-    if (textNode && textNode.body) {
-      if (typeof textNode.body === 'string') decodedText = textNode.body;
-      else if (textNode.body instanceof Uint8Array) decodedText = new TextDecoder(textNode.charset || 'utf-8').decode(textNode.body);
-    }
-
-    const snippet = decodedText ? decodedText.slice(0, 200) : '';
-
     // Build a minimal raw message shape for the normaliser
     const rawMsg = {
       subject: subject || '',
       from: from || '',
-      snippet: snippet || '',
       date: getHeaderValue(parsedHeaders, 'Date') || null,
       messageId: getHeaderValue(parsedHeaders, 'Message-ID') || null,
       threadId: getHeaderValue(parsedHeaders, 'Thread-Index') || null,
