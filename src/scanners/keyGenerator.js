@@ -1,6 +1,8 @@
 import { parse } from 'tldts';
 import { normaliseEmail, normaliseText } from './normalisers/utils.js';
 
+let _fallbackId = 0;
+
 // TODO: add documentation for how the key is generated
 export function generateCanonicalKey(item = {}) {
   // Prefer already-normalised fields from provider normalisers; fall back to helpers
@@ -78,6 +80,7 @@ export function generateCanonicalKey(item = {}) {
     item.normSubject || item.subject || ''
   ].join(' | ');
   const normalisedFallback = normaliseText(fallback).replace(/\s+/g, '_');
+  if (!normalisedFallback) return `u:${_fallbackId++}`;
   return `u:${normalisedFallback}`;
 }
 
