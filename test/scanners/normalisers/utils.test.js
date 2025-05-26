@@ -66,6 +66,22 @@ describe('normaliseText', () => {
     expect(normaliseText("don't")).toBe("don't");
   });
 
+  it('preserves CJK characters', () => {
+    expect(normaliseText('你好世界')).toBe('你好世界');
+  });
+
+  it('preserves Cyrillic characters', () => {
+    expect(normaliseText('Привет мир')).toBe('привет мир');
+  });
+
+  it('preserves Arabic characters', () => {
+    expect(normaliseText('مرحبا')).toBe('مرحبا');
+  });
+
+  it('preserves mixed Latin and non-Latin characters', () => {
+    expect(normaliseText('Hello 你好 World')).toBe('hello 你好 world');
+  });
+
   it('returns empty string for falsy input', () => {
     expect(normaliseText('')).toBe('');
     expect(normaliseText(null)).toBe('');

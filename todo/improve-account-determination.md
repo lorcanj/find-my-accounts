@@ -23,8 +23,8 @@ Replace binary matching with weighted signal scoring.
 ## Chunk 3 — Fix i18n text normalisation
 Allow non-Latin characters through `normaliseText`.
 
-- [ ] Replace `[^a-z0-9\s']` with Unicode-aware `[\p{L}\p{N}]` pattern
-- [ ] Add tests for CJK, Cyrillic, Arabic preservation
+- [x] Replace `[^a-z0-9\s']` with Unicode-aware `[\p{L}\p{N}]` pattern
+- [x] Add tests for CJK, Cyrillic, Arabic preservation
 
 ## Chunk 4 — UI: confidence badges & filtering
 Show confidence in the account list and let users filter by it.
