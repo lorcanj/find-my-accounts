@@ -17,6 +17,14 @@
 .file-info { margin-top: 0.5em; font-size: 0.95rem; color: #222; }
 .download-container { margin-top: 1em; text-align: center; }
 .hidden { display: none; }
+.hidden-file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
 .ack { font-size: 0.9rem; margin-top: 1em; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

@@ -25,7 +25,8 @@
     <div id="importContainer" class="mt-1">
       <p class="muted">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
       <div class="file-picker">
-        <input id="mboxFileInput" type="file" accept=".mbox" />
+        <input id="mboxFileInput" type="file" accept=".mbox" class="hidden-file-input" />
+        <label for="mboxFileInput" class="btn btn-primary" style="display: inline-block; text-align: center;">Choose file</label>
         <div id="selectedFileInfo" aria-live="polite" class="file-info"></div>
         <div id="importProgress" class="progress hidden mt-0-5">
           <div
