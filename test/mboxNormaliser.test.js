@@ -20,7 +20,7 @@ describe('normaliseMboxMessage', () => {
     expect(n.date).toBe(ts);
     expect(n.dateIso).toBe(new Date(ts).toISOString());
     expect(n.subject).toBe('Hello World');
-    expect(n.canonicalKey).toBe('e:alice+tag@domain.com');
+    expect(n.canonicalKey).toBe('brand:domain');
   });
 
   it('falls back to displayName when no email present', () => {

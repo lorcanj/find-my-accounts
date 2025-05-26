@@ -3,12 +3,10 @@ import { downloadAccountsAsJson } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile } from '../services/mboxImportService.js';
 
-const ACTION_SCAN_GMAIL = 'scanGmail';
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
 
 // Cached DOM elements (assigned in DOMContentLoaded)
-let scanButton;
 let mboxInput;
 let selectedFileInfo;
 let importBtn;
@@ -17,9 +15,6 @@ let progressBar;
 let downloadButton;
 
 document.addEventListener('DOMContentLoaded', () => {
-  scanButton = document.getElementById(ACTION_SCAN_GMAIL);
-  scanButton?.addEventListener('click', handleScanClick);
-
   // File import UI elements
   mboxInput = document.getElementById('mboxFileInput');
   selectedFileInfo = document.getElementById('selectedFileInfo');
@@ -113,24 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-function handleScanClick() {
-  // send the generic 'scan' action (service worker expects 'scan')
-  chrome.runtime.sendMessage({ action: 'scan' }, handleScanResponse);
-}
-
-function handleScanResponse(response) {
-  if (response && response.success) {
-    const accounts = extractAccountsFromMessages(response.data);
-    const enrichedAccounts = enrichAccounts(accounts);
-      renderAccountList(enrichedAccounts);
-    // Store the enriched, deduplicated accounts for download/export
-    accountsForDownload = enrichedAccounts;
-    updateAccountCount(enrichedAccounts.length);
-  } else {
-    console.log('Scan failed:', response && response.error);
-  }
-}
 
 function renderAccountList(accounts) {
   const list = document.getElementById('accountList');

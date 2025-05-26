@@ -1,21 +1,10 @@
-import providerManager from '../scanners/ProviderManager.js';
-import generateCanonicalKey from '../scanners/keyGenerator.js';
 import normaliseMboxMessage from '../scanners/mbox/normaliser.js';
 
 console.log('Service worker started');
 
-const ACTION_SCAN = 'scan';
 const ACTION_IMPORT_MBOX = 'importMbox';
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  if (request.action === ACTION_SCAN) {
-    handleScanRequest(request)
-      .then(data => sendResponse({ success: true, data }))
-      .catch(err => sendResponse({ success: false, error: err.message }));
-    
-    return true; // Keep channel open for async response
-  }
-  
   if (request.action === ACTION_IMPORT_MBOX) {
     handleImportRequest(request)
       .then(data => sendResponse({ success: true, data }))
@@ -24,21 +13,6 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     return true;
   }
 });
-
-async function handleScanRequest(request) {
-  const providerName = request.provider || 'gmail'; // Default to gmail
-  const provider = providerManager.getProvider(providerName);
-
-  console.log(`Starting scan for provider: ${providerName}`);
-
-  // 1. Authenticate
-  const token = await provider.authenticate();
-  
-  // 2. Scan
-  const normalisedAccounts = await provider.scan(token);
-
-  return normalisedAccounts;
-}
 
 // Import handler — spawn the mbox parser Web Worker and return normalised-like messages
 async function handleImportRequest(request) {

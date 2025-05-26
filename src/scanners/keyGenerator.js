@@ -1,26 +1,44 @@
+import { parse } from 'tldts';
 import { normaliseEmail, normaliseText } from './normalisers/utils.js';
 
+// TODO: add documentation for how the key is generated
 export function generateCanonicalKey(item = {}) {
   // Prefer already-normalised fields from provider normalisers; fall back to helpers
-  // TODO: improve this as matching is a bit weird currently
   const email = item.email ?? normaliseEmail(item.from || item.address || null);
-  if (email) {
-    // Simple registrable-domain heuristic: reduce multi-label domains to last two labels
-    // e.g. accounts.google.com -> google.com. This is a lightweight fallback and
-    // won't handle complex public suffixes (co.uk). For precise results use a
-    // PSL library in a future branch.
-    const registrableDomain = (d) => {
-      if (!d) return d;
-      const parts = d.toLowerCase().split('.').filter(Boolean);
-      if (parts.length <= 2) return parts.join('.');
-      return parts.slice(-2).join('.');
-    };
 
-    const parts = String(email).split('@');
+  if (email) {
+    // if multiple @ symbols then the parsing doesn't work properly
+    const parts = email.split('@');
     if (parts.length === 2) {
-      const local = parts[0];
-      const domain = registrableDomain(parts[1]);
-      return `e:${local}@${domain}`;
+      const hostname = (parts[1] || '').trim();
+      
+      if (!hostname) {
+        return `e:${email}`;
+      }
+
+      const res = parse(hostname);
+
+      // registrableDomain is the domain + public suffix
+      const registrableDomain = res.domain || hostname;
+      
+      let brandStem = registrableDomain;
+      
+      // TODO: check and move to function
+      if (res.domain && res.publicSuffix) {
+        if (registrableDomain.endsWith('.' + res.publicSuffix)) {
+          brandStem = registrableDomain.slice(0, -(res.publicSuffix.length + 1));
+        }
+      } else {
+        // Fallback: take first part before the last dot if no formal domain found
+        const lastDot = registrableDomain.lastIndexOf('.');
+        if (lastDot > 0) {
+          brandStem = registrableDomain.substring(0, lastDot);
+        }
+      }
+
+      // using English locale rules, 
+      // may mis-handle locale‑specific letters (e.g. Turkish İ/ı)
+      return `brand:${brandStem.toLocaleLowerCase('en')}`;
     }
     return `e:${email}`;
   }
