@@ -744,7 +744,8 @@ describe('mboxImportService', () => {
     beforeEach(() => {
       mockFile.stream = vi.fn(() => ({
         getReader: () => ({
-          read: vi.fn(() => Promise.resolve({ done: true }))
+          read: vi.fn(() => Promise.resolve({ done: true })),
+          cancel: vi.fn().mockResolvedValue(undefined)
         })
       }));
     });
