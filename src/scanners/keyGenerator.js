@@ -1,6 +1,7 @@
 import { parse } from 'tldts';
 import { normaliseEmail, normaliseText } from './normalisers/utils.js';
 
+// TODO: add documentation for how the key is generated
 export function generateCanonicalKey(item = {}) {
   // Prefer already-normalised fields from provider normalisers; fall back to helpers
   const email = item.email ?? normaliseEmail(item.from || item.address || null);
@@ -17,7 +18,7 @@ export function generateCanonicalKey(item = {}) {
 
       const res = parse(hostname);
 
-      // registrableDomain is the second-level domain + top-level domain (e.g. github.com)
+      // registrableDomain is the domain + public suffix
       const registrableDomain = res.domain || hostname;
       
       let brandStem = registrableDomain;
