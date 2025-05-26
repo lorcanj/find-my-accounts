@@ -278,11 +278,11 @@ h2#accounts-heading {
 }
 
 .footer-details > summary::before {
-    content: '▸ ';
+    content: '+ ';
 }
 
 .footer-details[open] > summary::before {
-    content: '▾ ';
+    content: '− ';
 }
 
 .footer-details-content {
