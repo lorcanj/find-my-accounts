@@ -141,15 +141,19 @@ function normalise(str) {
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
+  li.setAttribute('role', 'row');
   
   const nameDiv = document.createElement('div');
   nameDiv.className = 'col name';
+  nameDiv.setAttribute('role', 'cell');
   
   const diffDiv = document.createElement('div');
   diffDiv.className = 'col difficulty';
+  diffDiv.setAttribute('role', 'cell');
   
   const actionDiv = document.createElement('div');
   actionDiv.className = 'col action';
+  actionDiv.setAttribute('role', 'cell');
 
   if (account.justDeleteMeData !== NO_DATA_FOUND_MESSAGE) {
     nameDiv.textContent = account.justDeleteMeData.name;
@@ -159,14 +163,18 @@ function createAccountListItem(account) {
       const link = document.createElement('a');
       link.href = account.justDeleteMeData.url;
       link.textContent = 'Delete';
+      link.setAttribute('aria-label', `Delete ${account.justDeleteMeData.name}`);
       link.title = account.justDeleteMeData.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       actionDiv.appendChild(link);
+    } else {
+      actionDiv.textContent = '-';
     }
   } else {
     nameDiv.textContent = account.name;
     diffDiv.textContent = '-';
+    actionDiv.textContent = '-';
   }
 
   li.appendChild(nameDiv);

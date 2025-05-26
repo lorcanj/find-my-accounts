@@ -46,15 +46,17 @@
     </div>
 
     <div id="results" class="results">
-      <h2>Found Accounts: <span id="accountCount">0</span></h2>
-      <div class="account-list-headers">
-        <div class="col name">Account name</div>
-        <div class="col difficulty">Deletion difficulty</div>
-        <div class="col action">Link to delete</div>
+      <h2 id="accounts-heading">Found Accounts: <span id="accountCount">0</span></h2>
+      <div role="table" aria-labelledby="accounts-heading">
+        <div class="account-list-headers" role="row">
+          <div class="col name" role="columnheader">Account name</div>
+          <div class="col difficulty" role="columnheader">Deletion difficulty</div>
+          <div class="col action" role="columnheader">Link to delete</div>
+        </div>
+        <ul id="accountList" class="account-list" role="rowgroup">
+          <!-- Accounts will be added here by popup.js -->
+        </ul>
       </div>
-      <ul id="accountList" class="account-list">
-        <!-- Accounts will be added here by popup.js -->
-      </ul>
     </div>
 
     <div id="error" class="error hidden">
