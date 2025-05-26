@@ -25,7 +25,7 @@ export default class BaseProvider {
    * @returns {Promise<Array>} List of normalised Account objects.
    */
   async scan(token, options = {}) {
-      throw new Error("Method 'scan()' must be implemented.");
+    throw new Error("Method 'scan()' must be implemented.");
   }
 
   /**

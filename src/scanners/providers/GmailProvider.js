@@ -30,16 +30,19 @@ export default class GmailProvider extends BaseProvider {
       const listData = await listRes.json();
       const messages = listData.messages || [];
 
-      // 2. Fetch details for each message
-      // Note: In a real app, you might want to batch this or use a batch API
-      const accounts = [];
-      for (const msg of messages) {
-        const detailRes = await fetch(`${GMAIL_API_BASE}/${msg.id}`, {
+      const detailPromises = messages.map((msg) =>
+        fetch(`${GMAIL_API_BASE}/${msg.id}`, {
           headers: { Authorization: `Bearer ${token}` }
-        });
-        const detailData = await detailRes.json();
-        accounts.push(this.normaliseAccount(detailData));
-      }
+        })
+      );
+      const detailResponses = await Promise.all(detailPromises);
+      const detailDataArray = await Promise.all(
+        detailResponses.map((res) => res.json())
+      );
+      
+      const accounts = detailDataArray.map((detailData) =>
+        this.normaliseAccount(detailData)
+      );
 
       return accounts;
     } catch (error) {
