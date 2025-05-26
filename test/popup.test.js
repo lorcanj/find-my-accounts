@@ -312,7 +312,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     await vi.waitFor(() => {
       expect(importBtn.textContent).toBe('Cancel scan');
       expect(importBtn.classList.contains('btn-cancel')).toBe(true);
-      expect(fileInput.disabled).toBe(false);
+      expect(fileInput.disabled).toBe(true);
     });
 
     importBtn.click();
@@ -327,7 +327,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     });
   });
 
-  it('keeps cancel button enabled when file input changes during an in-progress scan', async () => {
+  it('disables file input and keeps cancel button enabled during an in-progress scan', async () => {
     importMboxFileMock.mockImplementation(() => new Promise(() => {}));
 
     await import('../src/popup/popup.js');
@@ -346,17 +346,13 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     await vi.waitFor(() => {
       expect(importBtn.textContent).toBe('Cancel scan');
       expect(importBtn.disabled).toBe(false);
+      expect(fileInput.disabled).toBe(true);
     });
 
-    const invalidFile = new window.File(['not mbox'], 'test.txt', { type: 'text/plain' });
-    setInputFiles(fileInput, [invalidFile]);
-
+    // Simulate a programmatic change to ensure it doesn't disrupt the state (even though input is disabled)
+    setInputFiles(fileInput, [validFile]);
+    
     expect(importBtn.textContent).toBe('Cancel scan');
-    expect(importBtn.disabled).toBe(false);
-
-    setInputFiles(fileInput, []);
-
-    expect(importBtn.textContent).toBe('Cancel scan');
-    expect(importBtn.disabled).toBe(false);
+    expect(fileInput.disabled).toBe(true);
   });
 });

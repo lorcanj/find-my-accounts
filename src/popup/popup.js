@@ -4,8 +4,11 @@ import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
-const DEFAULT_IMPORT_BUTTON_TEXT = 'Import .mbox';
-const CANCEL_SCAN_IN_PROGRESS_BUTTON_TEXT = 'Cancel scan';
+const IMPORT_UI_STATE = Object.freeze({
+  IDLE: 'idle',
+  SCANNING: 'scanning'
+});
+
 let accountsForDownload = [];
 const existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
@@ -15,7 +18,7 @@ let importBtn;
 let progress;
 let progressBar;
 let downloadButton;
-let importInProgress = false;
+let importUiState = IMPORT_UI_STATE.IDLE;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Check if we are in a popped-out window
@@ -76,13 +79,19 @@ document.addEventListener('DOMContentLoaded', () => {
   progressBar = document.getElementById('importProgressBar');
   let currentMboxFileValid = false;
 
+  setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
+
   if (mboxInput) {
     mboxInput.addEventListener('change', () => {
+      if (importUiState === IMPORT_UI_STATE.SCANNING) {
+        return;
+      }
+
       const file = mboxInput.files && mboxInput.files[0];
       if (!file) {
         if (selectedFileInfo) selectedFileInfo.textContent = '';
-        if (importBtn && !importInProgress) importBtn.disabled = true;
         currentMboxFileValid = false;
+        setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         return;
       }
 
@@ -91,19 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
       // Simple extension-only validation for now
       if (!/\.mbox$/i.test(file.name)) {
         if (selectedFileInfo) selectedFileInfo.textContent = `Invalid file type. Please select a .mbox file.`;
-        if (importBtn && !importInProgress) importBtn.disabled = true;
         currentMboxFileValid = false;
+        setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         return;
       }
 
-      if (importBtn) importBtn.disabled = false;
       currentMboxFileValid = true;
+      setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
     });
   }
 
   if (importBtn) {
     importBtn.addEventListener('click', async () => {
-      if (importInProgress) {
+      if (importUiState === IMPORT_UI_STATE.SCANNING) {
         const cancelled = cancelMboxImport();
         if (cancelled && selectedFileInfo) {
           selectedFileInfo.textContent = 'Cancelling import...';
@@ -118,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      setImportUiState(true);
+      setImportUiState(IMPORT_UI_STATE.SCANNING, { hasValidFile: currentMboxFileValid });
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
@@ -154,22 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Success (resolved)
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
+        setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
       } catch (err) {
         // Error (rejected) or cancellation
         resetProgressIndicator();
         if (isImportCancelledError(err)) {
           if (selectedFileInfo) selectedFileInfo.textContent = 'Import cancelled.';
+          setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         } else {
           console.error('Import error:', err);
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
+          setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         }
-      } finally {
-        const hasValidSelection =
-          currentMboxFileValid &&
-          mboxInput &&
-          mboxInput.files &&
-          mboxInput.files.length > 0;
-        setImportUiState(false, hasValidSelection);
       }
     });
   }
@@ -270,14 +275,26 @@ function resetProgressIndicator() {
   if (progressBar) progressBar.style.width = '0%';
 }
 
-function setImportUiState(scanning, hasValidFile = false) {
-  importInProgress = scanning;
+function setImportUiState(state, options = {}) {
+  importUiState = state;
+  const hasValidFile = options.hasValidFile === true;
 
-  if (!importBtn) return;
+  if (mboxInput) {
+    mboxInput.disabled = state === IMPORT_UI_STATE.SCANNING;
+  }
 
-  importBtn.textContent = scanning ? CANCEL_SCAN_IN_PROGRESS_BUTTON_TEXT : DEFAULT_IMPORT_BUTTON_TEXT;
-  importBtn.classList.toggle('btn-cancel', scanning);
-  importBtn.disabled = scanning ? false : !hasValidFile;
+  if (importBtn) {
+    if (state === IMPORT_UI_STATE.SCANNING) {
+      importBtn.textContent = 'Cancel scan';
+      importBtn.classList.add('btn-cancel');
+      importBtn.disabled = false;
+      return;
+    }
+
+    importBtn.textContent = 'Import .mbox';
+    importBtn.classList.remove('btn-cancel');
+    importBtn.disabled = !hasValidFile;
+  }
 }
 
 function isImportCancelledError(error) {
