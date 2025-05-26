@@ -12,15 +12,7 @@ export function cancelMboxImport() {
   activeGlobalSession.cancelled = true;
 
   if (activeGlobalSession.reader && typeof activeGlobalSession.reader.cancel === 'function') {
-    activeGlobalSession.reader.cancel().catch(() => {});
-  }
-
-  if (activeGlobalSession.fileReader && typeof activeGlobalSession.fileReader.abort === 'function') {
-    try {
-      activeGlobalSession.fileReader.abort();
-    } catch {
-      // noop
-    }
+    activeGlobalSession.reader.cancel().catch(e => console.debug('[mboxImport] reader cancel failed:', e));
   }
 
   if (activeGlobalSession.worker) {
@@ -42,6 +34,9 @@ export function cancelMboxImport() {
  * @returns {Promise<void>} - Resolves when import is complete.
  */
 export async function importMboxFile(file, onProgress, onBatch) {
+  // Terminate any still-active previous import to avoid orphaned workers
+  cancelMboxImport();
+
   return new Promise((resolve, reject) => {
     const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
     const worker = new Worker(workerUrl, { type: 'module' });
@@ -52,7 +47,6 @@ export async function importMboxFile(file, onProgress, onBatch) {
     const perRunSession = {
       worker,
       reader: null,
-      fileReader: null,
       reject,
       cancelled: false,
       settled: false
@@ -81,8 +75,6 @@ export async function importMboxFile(file, onProgress, onBatch) {
       reject(error);
     }
     
-    const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB chunks
-    let offset = 0;
     const totalSize = file.size;
     
     worker.onmessage = (e) => {
@@ -129,75 +121,35 @@ export async function importMboxFile(file, onProgress, onBatch) {
       settleReject(new Error(event.message || 'Worker error'));
     };
 
-    if (file.stream) {
-      const stream = file.stream();
-      const reader = stream.getReader();
-      perRunSession.reader = reader;
-      
-      function readNext() {
+    const stream = file.stream();
+    const reader = stream.getReader();
+    perRunSession.reader = reader;
+
+    function readNext() {
+      if (perRunSession.cancelled) {
+        return;
+      }
+
+      reader.read().then(({ done, value: chunk }) => {
         if (perRunSession.cancelled) {
           return;
         }
 
-        reader.read().then(({ done, value: chunk }) => {
-          if (perRunSession.cancelled) {
-            return;
-          }
-
-          if (done) {
-            worker.postMessage({ type: 'end' });
-            return;
-          }
-
-          // Transfer the buffer to the worker
-          worker.postMessage({ type: 'chunk', buffer: chunk.buffer }, [chunk.buffer]);
-
-          readNext();
-        }).catch(err => {
-          worker.terminate();
-          settleReject(err);
-        });
-      }
-      
-      readNext();
-      
-    } else {
-      // Fallback for browsers without file.stream() (e.g. older Safari)
-      // Use slice + FileReader
-      function readNextChunk() {
-        if (offset >= totalSize) {
+        if (done) {
           worker.postMessage({ type: 'end' });
           return;
         }
-        
-        const end = Math.min(offset + CHUNK_SIZE, totalSize);
-        const blob = file.slice(offset, end);
-        const reader = new FileReader();
-        perRunSession.fileReader = reader;
-        
-        reader.onload = (e) => {
-          if (perRunSession.cancelled) {
-            return;
-          }
 
-          const buffer = e.target.result;
-          worker.postMessage({ type: 'chunk', buffer }, [buffer]);
-          
-          offset = end;
-          
-          readNextChunk();
-        };
-        
-        reader.onerror = (event) => {
-          worker.terminate();
-          const error = event?.target?.error || new Error('Failed to read file');
-          settleReject(error);
-        };
-        
-        reader.readAsArrayBuffer(blob);
-      }
-      
-      readNextChunk();
+        // Transfer the buffer to the worker
+        worker.postMessage({ type: 'chunk', buffer: chunk.buffer }, [chunk.buffer]);
+
+        readNext();
+      }).catch(err => {
+        worker.terminate();
+        settleReject(err);
+      });
     }
+
+    readNext();
   });
 }
