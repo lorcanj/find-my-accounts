@@ -21,6 +21,12 @@ let downloadButton;
 let importUiState = IMPORT_UI_STATE.IDLE;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Load i18n strings
+  const instructionsTextEl = document.getElementById('instructionsText');
+  if (instructionsTextEl) {
+    instructionsTextEl.textContent = chrome.i18n.getMessage('instructionsText');
+  }
+
   // Check if we are in a popped-out window
   const urlParams = new URLSearchParams(window.location.search);
   const isPopped = urlParams.get('popped') === 'true';

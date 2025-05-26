@@ -3,6 +3,7 @@
   "name": "find my accounts",
   "version": "1.0.0",
   "description": "Scan uploaded .mbox files to discover accounts associated with your email",
+  "default_locale": "en",
   
   "permissions": [],
   "icons": {
