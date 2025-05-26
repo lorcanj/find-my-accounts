@@ -51,7 +51,7 @@ self.onmessage = (e) => {
     }
 
     // Split messages by lines that start with "From " (mbox separator)
-    const parts = text.split(/\n(?=From )/m);
+    const parts = text.split(/\n(?=From )/);
     const nonEmptyParts = parts.filter(p => p && p.trim());
     const total = nonEmptyParts.length || 0;
     const messages = [];
