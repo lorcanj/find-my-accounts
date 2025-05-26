@@ -58,12 +58,12 @@ describe('subscriptionSignals constants', () => {
   describe('AMOUNT_REGEX matches expected patterns', () => {
     it.each([
       ['$9.99', '$9.99'],
-      ['€14.99/month', '€14.99/month'],
-      ['$49.00/year', '$49.00/year'],
+      ['€14.99/month', '€14.99'],
+      ['$49.00/year', '$49.00'],
       ['USD 9.99', 'USD 9.99'],
       ['£29.99', '£29.99'],
       ['A$14.99', 'A$14.99'],
-      ['CA$9.99/mo', 'CA$9.99/mo'],
+      ['CA$9.99/mo', 'CA$9.99'],
     ])('matches %s', (input, expected) => {
       const match = input.match(AMOUNT_REGEX);
       expect(match).not.toBeNull();

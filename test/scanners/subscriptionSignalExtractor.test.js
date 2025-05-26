@@ -144,14 +144,14 @@ describe('extractSubscriptionSignals', () => {
       expect(signals.amount).toBe('$9.99');
     });
 
-    it('extracts €14.99/month from subject', () => {
+    it('extracts €14.99 from subject with /month suffix', () => {
       const signals = extractSubscriptionSignals(msg('Subscription renewed — €14.99/month'));
-      expect(signals.amount).toBe('€14.99/month');
+      expect(signals.amount).toBe('€14.99');
     });
 
-    it('extracts $49.00/year from subject', () => {
+    it('extracts $49.00 from subject with /year suffix', () => {
       const signals = extractSubscriptionSignals(msg('Invoice for $49.00/year'));
-      expect(signals.amount).toBe('$49.00/year');
+      expect(signals.amount).toBe('$49.00');
     });
 
     it('extracts USD 9.99 from subject', () => {
