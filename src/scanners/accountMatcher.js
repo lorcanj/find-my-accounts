@@ -14,7 +14,7 @@ export function extractAccountsFromMessages(messages = []) {
     const from = m.from || '';
     const subject = m.subject || '';
     const key = m.canonicalKey;
-    console.log(key);
+
     if (!seen.has(key)) {
       foundAccounts.push(new Account({ name: m.displayName || '', subject, from, snippet: m.snippet }));
       seen.add(key);
@@ -25,7 +25,6 @@ export function extractAccountsFromMessages(messages = []) {
 }
 
 function isAccountRelated(message) {
-
   const emailLocalPart = (message.email || '').split('@')[0];
   const displayName = message.displayName || '';
   const subject = message.subject || '';
