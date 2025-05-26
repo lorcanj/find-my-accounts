@@ -1,7 +1,7 @@
 {
     "compact": true,
     "controlFlowFlattening": true,
-    "controlFlowFlatteningThreshold": 0.1,
+    "controlFlowFlatteningThreshold": 0.15,
     "deadCodeInjection": true,
     "deadCodeInjectionThreshold": 0.2,
     "debugProtection": false,
