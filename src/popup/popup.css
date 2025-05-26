@@ -37,3 +37,28 @@ body {
 }
 .account-list { list-style: none; padding: 0; margin: 8px 0 0 0; }
 .account-list li { padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
+
+/* Layout for account list headers and rows: three columns */
+.account-list-headers {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 4px;
+    font-weight: normal;
+    border-bottom: 1px solid #ddd;
+}
+.account-list-headers .col { padding: 0 6px; }
+
+.account-list li {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.account-list li .col { padding: 0 6px; }
+
+.account-list .name { word-break: break-word; }
+.account-list .action { text-align: right; }
