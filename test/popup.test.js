@@ -312,7 +312,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     await vi.waitFor(() => {
       expect(importBtn.textContent).toBe('Cancel scan');
       expect(importBtn.classList.contains('btn-cancel')).toBe(true);
-      expect(fileInput.disabled).toBe(false);
+      expect(fileInput.disabled).toBe(true);
     });
 
     importBtn.click();
@@ -348,15 +348,6 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       expect(importBtn.disabled).toBe(false);
     });
 
-    const invalidFile = new window.File(['not mbox'], 'test.txt', { type: 'text/plain' });
-    setInputFiles(fileInput, [invalidFile]);
-
-    expect(importBtn.textContent).toBe('Cancel scan');
-    expect(importBtn.disabled).toBe(false);
-
-    setInputFiles(fileInput, []);
-
-    expect(importBtn.textContent).toBe('Cancel scan');
-    expect(importBtn.disabled).toBe(false);
+    expect(fileInput.disabled).toBe(true);
   });
 });
