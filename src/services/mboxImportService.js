@@ -55,15 +55,9 @@ export async function importMboxFile(file, onProgress, onBatch) {
       reject(new Error(event.message || 'Worker error'));
     };
 
-    // Start reading and sending chunks
-    // We use file.stream() if available, or slice fallback.
-    // Since we are in a browser environment (popup), file.stream() should be supported in modern browsers.
-    
     if (file.stream) {
       const stream = file.stream();
       const reader = stream.getReader();
-      
-      let bytesRead = 0;
       
       function readNext() {
         reader.read().then(({ done, value: chunk }) => {
@@ -72,13 +66,8 @@ export async function importMboxFile(file, onProgress, onBatch) {
             return;
           }
 
-          // chunk is a Uint8Array
-          // Capture the length before transferring the buffer (transfer detaches it)
-          const len = chunk.byteLength;
-          // We transfer the buffer to the worker
+          // Transfer the buffer to the worker
           worker.postMessage({ type: 'chunk', buffer: chunk.buffer }, [chunk.buffer]);
-
-          bytesRead += len;
 
           readNext();
         }).catch(err => {
