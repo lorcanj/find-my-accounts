@@ -271,6 +271,7 @@ function setImportUiState(scanning, hasValidFile = false) {
   if (!importBtn) return;
 
   importBtn.textContent = scanning ? CANCEL_IMPORT_BUTTON_TEXT : DEFAULT_IMPORT_BUTTON_TEXT;
+  importBtn.classList.toggle('btn-cancel', scanning);
   importBtn.disabled = scanning ? false : !hasValidFile;
 }
 

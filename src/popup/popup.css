@@ -56,6 +56,7 @@ body.popped-out {
 }
 .btn-primary { background: #1976d2; color: white; }
 .btn-secondary { background: #eee; color: #222; }
+.btn-cancel { background: #c62828; color: white; }
 .file-picker input[type="file"] {
     width: 100%;
 }

@@ -306,6 +306,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     await vi.waitFor(() => {
       expect(importBtn.textContent).toBe('Cancel scan');
+      expect(importBtn.classList.contains('btn-cancel')).toBe(true);
       expect(fileInput.disabled).toBe(false);
     });
 
@@ -315,6 +316,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     await vi.waitFor(() => {
       expect(importBtn.textContent).toBe('Import .mbox');
+      expect(importBtn.classList.contains('btn-cancel')).toBe(false);
       expect(fileInput.disabled).toBe(false);
       expect(selectedFileInfo.textContent).toBe('Import cancelled.');
     });
