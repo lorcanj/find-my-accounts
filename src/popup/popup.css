@@ -9,6 +9,8 @@
 /* Utility spacing and text helpers moved from inline styles */
 .mt-1 { margin-top: 1em; }
 .mt-0-5 { margin-top: 0.5em; }
+.mb-1 { margin-bottom: 1em; }
+.instructions-dropdown summary { cursor: pointer; font-weight: 500; color: #1976d2; }
 .muted { 
     font-size: 0.95rem; 
     color: #444; 

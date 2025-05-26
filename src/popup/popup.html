@@ -23,7 +23,10 @@
     </div>
     
     <div id="importContainer" class="mt-1">
-      <p class="muted">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
+      <details class="instructions-dropdown mb-1">
+        <summary>Instructions</summary>
+        <p class="muted mt-0-5">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
+      </details>
       <div class="file-picker">
         <input id="mboxFileInput" type="file" accept=".mbox" class="hidden-file-input" />
         <label for="mboxFileInput" class="btn btn-primary" style="display: inline-block; text-align: center;">Choose file</label>
