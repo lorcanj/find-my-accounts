@@ -5,7 +5,7 @@ import { importMboxFile } from '../services/mboxImportService.js';
 
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
-let existingKeys = new Set();
+const existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
