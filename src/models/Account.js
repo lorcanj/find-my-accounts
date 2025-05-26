@@ -1,5 +1,5 @@
 export class JustDeleteMeInfo {
-  constructor({ difficulty, url, notes } = {}) {
+  constructor({ difficulty = null, url = null, notes = null } = {}) {
     this.difficulty = difficulty;
     this.url = url;
     this.notes = notes;

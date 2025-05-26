@@ -8,6 +8,7 @@ describe('Account model', () => {
     expect(a.subject).toBe('');
     expect(a.from).toBe('');
     expect(a.domain).toBe('');
+    expect(a.canonicalKey).toBeNull();
     expect(a.justDeleteMeData).toBeNull();
   });
 
@@ -17,6 +18,7 @@ describe('Account model', () => {
       subject: 'Hello',
       from: 'joe.bloggs@example.co.uk',
       domain: 'example.co.uk',
+      canonicalKey: 'example.co.uk',
       justDeleteMeData: { difficulty: 'easy', url: 'https://jdme.example', notes: 'ok' }
     };
     const a = new Account(data);
@@ -24,6 +26,7 @@ describe('Account model', () => {
     expect(a.subject).toBe(data.subject);
     expect(a.from).toBe(data.from);
     expect(a.domain).toBe(data.domain);
+    expect(a.canonicalKey).toBe(data.canonicalKey);
     expect(a.justDeleteMeData).toEqual(data.justDeleteMeData);
   });
 });
@@ -36,10 +39,10 @@ describe('JustDeleteMeInfo', () => {
     expect(info.notes).toBe('n');
   });
 
-  it('has undefined fields when constructed with no args', () => {
+  it('has null fields when constructed with no args', () => {
     const info = new JustDeleteMeInfo();
-    expect(info.difficulty).toBeUndefined();
-    expect(info.url).toBeUndefined();
-    expect(info.notes).toBeUndefined();
+    expect(info.difficulty).toBeNull();
+    expect(info.url).toBeNull();
+    expect(info.notes).toBeNull();
   });
 });

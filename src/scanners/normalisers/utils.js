@@ -15,6 +15,9 @@ export function toIsoDate(input) {
 export default toIsoDate;
 
 // Text/email normalisation helpers used across scanners
+// Note: normaliseEmail is a sanitizer, not a validator. If the input has no '@',
+// it returns the lowercased/trimmed string as-is — callers should not assume the
+// result is a valid email address.
 export function normaliseEmail(email) {
   if (!email) return null;
   let e = String(email).trim();
@@ -54,7 +57,10 @@ export function normaliseText(text) {
   // Remove common reply/forward prefixes
   t = t.replace(/(^|\s)(re|fw|fwd)\s*[:\-]\s*/gi, ' ');
   t = t.replace(/(^|\s)(re|fw|fwd)\s+/gi, ' ');
-  // Remove punctuation except internal apostrophes
+  // Remove punctuation except internal apostrophes.
+  // Note: this strips all non-Latin characters (CJK, Cyrillic, Arabic, etc.).
+  // Acceptable for current English-centric JustDeleteMe matching; would need
+  // revisiting if international service names are ever supported.
   t = t.replace(/[^a-z0-9\s']/g, ' ');
   // Collapse whitespace
   t = t.replace(/\s+/g, ' ').trim();
