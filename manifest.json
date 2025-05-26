@@ -14,11 +14,11 @@
   ],
   
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "src/popup/popup.html"
   },
   
   "background": {
-    "service_worker": "services/authService.js"
+    "service_worker": "src/services/authService.js"
   },
   
   "oauth2": {
