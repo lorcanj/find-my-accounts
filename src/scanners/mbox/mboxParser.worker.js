@@ -45,6 +45,22 @@ function getHeaderValue(parsedHeaders, name) {
   return String(entry.initial || '');
 }
 
+function extractAndProcessMessages(inputBuffer, delimiterRegex) {
+  let remainingBuffer = inputBuffer;
+  while (true) {
+    const match = remainingBuffer.match(delimiterRegex);
+    if (!match) break;
+
+    const matchIndex = match.index;
+    const messageChunk = remainingBuffer.slice(0, matchIndex);
+    processMessage(messageChunk);
+
+    const delimiterNewlineLength = match[0].length - 5;
+    remainingBuffer = remainingBuffer.slice(matchIndex + delimiterNewlineLength);
+  }
+  return remainingBuffer;
+}
+
 function processMessage(part) {
   if (!part || !part.trim()) return;
 
@@ -126,24 +142,7 @@ self.onmessage = (e) => {
       
       let searchStartIndex = 0;
       
-      while (true) {
-        const match = currentBuffer.slice(searchStartIndex).match(/\r?\nFrom /);
-        
-        if (!match) {
-          break;
-        }
-        
-        const matchIndex = searchStartIndex + match.index;
-        const messagePart = currentBuffer.slice(0, matchIndex);
-        
-        processMessage(messagePart);
-        
-        const newlineLength = match[0].length - 5;
-        const nextMessageStartIndex = matchIndex + newlineLength;
-        
-        currentBuffer = currentBuffer.slice(nextMessageStartIndex);
-        searchStartIndex = 0; 
-      }
+      currentBuffer = extractAndProcessMessages(currentBuffer, /\r?\nFrom /);
       
       remainder = currentBuffer;
       totalBytesProcessed += buffer.byteLength;
@@ -154,18 +153,7 @@ self.onmessage = (e) => {
       const finalDecoded = decoder.decode();
       let finalBuffer = remainder + finalDecoded;
       
-      // Process any remaining messages in the final buffer
-      let searchStartIndex = 0;
-      while (true) {
-        const match = finalBuffer.slice(searchStartIndex).match(/\r?\nFrom /);
-        if (!match) break;
-        const matchIndex = searchStartIndex + match.index;
-        const messagePart = finalBuffer.slice(0, matchIndex);
-        processMessage(messagePart);
-        const newlineLength = match[0].length - 5;
-        finalBuffer = finalBuffer.slice(matchIndex + newlineLength);
-        searchStartIndex = 0;
-      }
+      finalBuffer = extractAndProcessMessages(finalBuffer, /\r?\nFrom /);
       
       // Process the very last part
       if (finalBuffer && finalBuffer.trim()) {
