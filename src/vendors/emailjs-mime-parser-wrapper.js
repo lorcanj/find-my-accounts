@@ -33,12 +33,11 @@ else if (lib && typeof lib.parse === 'function') parseFn = lib.parse;
 const exportedDefault = parseFn || lib || raw;
 
 // Ensure we always export a usable `parse` function.
-// Try multiple fallbacks (lib, exportedDefault, raw)
+// Try multiple fallbacks (lib, exportedDefault)
 let ensuredParse = parseFn;
 if (!ensuredParse) {
   if (typeof exportedDefault === 'function') ensuredParse = exportedDefault;
   else if (exportedDefault && typeof exportedDefault.parse === 'function') ensuredParse = exportedDefault.parse;
-  else if (raw && typeof raw.parse === 'function') ensuredParse = raw.parse;
   else {
     ensuredParse = function () {
       throw new Error('emailjs-mime-parser: parse() is not available on the bundled module');
@@ -59,5 +58,4 @@ if (!ensuredParse) {
 // informative failure.
 export const parse = ensuredParse;
 
-// Also expose `_raw` to allow inspection of the original bundled module shape.
-export const _raw = raw;
+export default exportedDefault;
