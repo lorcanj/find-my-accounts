@@ -5,7 +5,7 @@ import { importMboxFile } from '../services/mboxImportService.js';
 
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
-
+let existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
+      existingKeys.clear();
 
       try {
         await importMboxFile(
@@ -250,14 +251,15 @@ function resetProgressIndicator() {
 }
 
 function deduplicateAccounts(batchedEnrichedAccounts) {
-  // assume that canonicalKey has fallbacks
-  const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey));
-
   const newUnique = [];
 
   for (const batchedAccount of batchedEnrichedAccounts) {
+    // assume that canonicalKey has fallbacks
     const key = batchedAccount.canonicalKey;
-    if (!key || !existingKeys.has(key)) {
+    
+    // Only add accounts with a generated key to prevent duplicates.
+    // Accounts with failed key generation (null) are filtered out.
+    if (key && !existingKeys.has(key)) {
       newUnique.push(batchedAccount);
       existingKeys.add(key);
     }
