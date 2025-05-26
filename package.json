@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "vitest --run",
-    "build": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --minify --outdir=dist-raw --platform=browser --format=esm && npm run obfuscate",
+    "build": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --drop:console --outdir=dist-raw --platform=browser --format=esm && npm run obfuscate",
     "build:dev": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --sourcemap --outdir=dist --platform=browser --format=esm",
     "obfuscate": "javascript-obfuscator dist-raw --output dist --config obfuscator.config.json",
     "bundle:emailjs": "esbuild node_modules/emailjs-mime-parser/dist/mimeparser.js --bundle --outfile=src/vendors/emailjs-mime-parser.bundle.js --platform=browser --format=esm",

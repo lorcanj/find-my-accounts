@@ -13,6 +13,8 @@ let importBtn;
 let progress;
 let progressBar;
 let downloadButton;
+let parseTimer;
+let timerValue;
 
 document.addEventListener('DOMContentLoaded', () => {
   // File import UI elements
@@ -21,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   importBtn = document.getElementById('importMboxBtn');
   progress = document.getElementById('importProgress');
   progressBar = document.getElementById('importProgressBar');
+  parseTimer = document.getElementById('parseTimer');
+  timerValue = document.getElementById('timerValue');
   let currentMboxFileValid = false;
 
   if (mboxInput) {
@@ -59,6 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
+
+      // Start timer
+      if (parseTimer) parseTimer.classList.add('hidden');
+      const startTime = Date.now();
+
       try {
         await importMboxFile(
           file,
@@ -96,11 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Import error:', err);
         if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
       } finally {
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (timerValue) timerValue.textContent = `${elapsed.toFixed(1)}s`;
+        if (parseTimer) parseTimer.classList.remove('hidden');
         if (importBtn) importBtn.disabled = false;
       }
     });
   }
-
   downloadButton = document.getElementById('downloadAccounts');
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {

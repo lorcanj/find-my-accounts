@@ -1,4 +1,5 @@
 // mbox parser worker — import bundled emailjs-mime-parser from src/vendors after bundling.
+
 import { parse as parseNamed } from '../../vendors/emailjs-mime-parser-wrapper.js';
 import normaliseMboxMessage from './normaliser.js';
 
