@@ -19,7 +19,9 @@ export function extractAccountsFromMessages(messages = []) {
     const key = m.canonicalKey;
 
     if (!seen.has(key)) {
-      foundAccounts.push(new Account({ name: m.displayName || '', subject, from, snippet: m.snippet }));
+      // Fallback to email or from address if display name is missing
+      const name = m.displayName || m.email || m.from || 'Unknown Sender';
+      foundAccounts.push(new Account({ name, subject, from, snippet: m.snippet, canonicalKey: key }));
       seen.add(key);
     }
   }

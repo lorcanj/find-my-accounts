@@ -243,8 +243,8 @@ describe('extractAccountsFromMessages', () => {
   // ========================================
   
   describe('missing and empty fields', () => {
-    it('handles missing displayName by using empty string', () => {
-      // Test that when displayName is missing, the Account's name defaults to ''
+    it('handles missing displayName by falling back to from address', () => {
+      // Test that when displayName is missing, the Account's name defaults to from address
       const messages = [{
         canonicalKey: 'key1',
         from: 'test@example.com',
@@ -254,7 +254,7 @@ describe('extractAccountsFromMessages', () => {
       
       const result = extractAccountsFromMessages(messages);
       
-      expect(result[0].name).toBe('');
+      expect(result[0].name).toBe('test@example.com');
     });
 
     it('handles missing from field by using empty string', () => {

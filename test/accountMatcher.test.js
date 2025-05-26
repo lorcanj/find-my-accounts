@@ -442,7 +442,7 @@ describe('extractAccountsFromMessages', () => {
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(1);
-      expect(res[0]).toHaveProperty('name', '');
+      expect(res[0]).toHaveProperty('name', 'noreply@example.com');
     });
   });
 });
