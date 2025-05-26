@@ -41,3 +41,8 @@ function parseNameFromFromHeader(fromHeader) {
   }
   return fromHeader.trim();
 }
+
+module.exports = {
+  extractAccountsFromMessages,
+  parseNameFromFromHeader
+};
