@@ -13,6 +13,7 @@ jspm_packages/
 
 # Build output
 /dist/
+/dist-raw/
 /build/
 
 # Coverage directory
