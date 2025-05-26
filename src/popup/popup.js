@@ -21,15 +21,10 @@ let downloadButton;
 let importUiState = IMPORT_UI_STATE.IDLE;
 
 const INSTRUCTION_LINKS = [
-  { messageKey: 'instructionsPart1' },
-  { messageKey: 'instructionsGoogleTakeout', url: 'https://takeout.google.com/' },
-  { messageKey: 'instructionsPart2' },
-  { messageKey: 'instructionsThunderbird', url: 'https://www.thunderbird.net/' },
-  { messageKey: 'instructionsPart3' },
-  { messageKey: 'instructionsAppleMail', url: 'https://support.apple.com/guide/mail/pro-export-mailboxes-mlhlp1030/mac' },
-  { messageKey: 'instructionsPart4' },
-  { messageKey: 'instructionsProtonMail', url: 'https://proton.me/support/export-emails-import-export-app' },
-  { messageKey: 'instructionsPart5' },
+  { key: 'google_takeout', messageKey: 'instructionsGoogleTakeout', url: 'https://takeout.google.com/' },
+  { key: 'thunderbird', messageKey: 'instructionsThunderbird', url: 'https://www.thunderbird.net/' },
+  { key: 'apple_mail', messageKey: 'instructionsAppleMail', url: 'https://support.apple.com/guide/mail/pro-export-mailboxes-mlhlp1030/mac' },
+  { key: 'proton_mail', messageKey: 'instructionsProtonMail', url: 'https://proton.me/support/export-emails-import-export-app' }
 ];
 
 function renderInstructions() {
@@ -40,19 +35,34 @@ function renderInstructions() {
   while (instructionsTextEl.firstChild) {
     instructionsTextEl.removeChild(instructionsTextEl.firstChild);
   }
-  // Build the sentence with links (first paragraph content)
-  INSTRUCTION_LINKS.forEach(item => {
-    if (item.url) {
-      const link = document.createElement('a');
-      link.href = item.url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.textContent = chrome.i18n.getMessage(item.messageKey);
-      link.title = item.url;
-      instructionsTextEl.appendChild(link);
-    } else {
-      const text = document.createTextNode(chrome.i18n.getMessage(item.messageKey));
-      instructionsTextEl.appendChild(text);
+
+  // Create link elements
+  const linkElements = INSTRUCTION_LINKS.map(item => {
+    const link = document.createElement('a');
+    link.href = item.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = chrome.i18n.getMessage(item.messageKey);
+    link.title = item.url;
+    return link;
+  });
+
+  // Get the main instruction string with placeholders
+  // We pass dummy strings for the placeholders to get the full text,
+  // then we'll replace those dummy strings with the actual DOM elements.
+  const placeholders = INSTRUCTION_LINKS.map((_, i) => `__LINK_${i}__`);
+  const mainText = chrome.i18n.getMessage('instructionsMain', placeholders);
+
+  // Split the text by the placeholders and interleave the text nodes and link elements
+  const parts = mainText.split(/(__LINK_\d+__)/);
+  
+  parts.forEach(part => {
+    const match = part.match(/__LINK_(\d+)__/);
+    if (match) {
+      const index = parseInt(match[1], 10);
+      instructionsTextEl.appendChild(linkElements[index]);
+    } else if (part) {
+      instructionsTextEl.appendChild(document.createTextNode(part));
     }
   });
 

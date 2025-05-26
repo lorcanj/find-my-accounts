@@ -14,20 +14,22 @@
   "instructionsProtonMail": {
     "message": "Proton Mail"
   },
-  "instructionsPart1": {
-    "message": "Upload an .mbox file (e.g., from "
-  },
-  "instructionsPart2": {
-    "message": ", "
-  },
-  "instructionsPart3": {
-    "message": ", "
-  },
-  "instructionsPart4": {
-    "message": ", or "
-  },
-  "instructionsPart5": {
-    "message": ")."
+  "instructionsMain": {
+    "message": "Upload an .mbox file (e.g., from $GOOGLE_TAKEOUT$, $THUNDERBIRD$, $APPLE_MAIL$, or $PROTON_MAIL$).",
+    "placeholders": {
+      "google_takeout": {
+        "content": "$1"
+      },
+      "thunderbird": {
+        "content": "$2"
+      },
+      "apple_mail": {
+        "content": "$3"
+      },
+      "proton_mail": {
+        "content": "$4"
+      }
+    }
   },
   "instructionsPart6": {
     "message": "Files are processed entirely in your browser."
