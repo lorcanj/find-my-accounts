@@ -79,18 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
           // onBatch
           (batchMessages) => {
             if (batchMessages && batchMessages.length) {
+              // TODO: update variable names to make clear these are batches of accounts
               const accounts = extractAccountsFromMessages(batchMessages);
+              
+              // TODO: potential rework, might want to do enrichment after the deduplication
               const enrichedAccounts = enrichAccounts(accounts);
-
-              const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey || a.domain));
-              const newUnique = enrichedAccounts.filter(a => {
-                const key = a.canonicalKey || a.domain;
-                if (!key) return true;
-                if (existingKeys.has(key)) return false;
-                existingKeys.add(key);
-                return true;
-              });
-
+              
+              const newUnique = deduplicateAccounts(enrichedAccounts);
+              
+              // probably just want to append rather than keep making new one?
               accountsForDownload = [...accountsForDownload, ...newUnique];
               renderAccountList(accountsForDownload);
               updateAccountCount(accountsForDownload.length);
@@ -193,19 +190,31 @@ function resetProgressIndicator() {
   if (progressBar) progressBar.style.width = '0%';
 }
 
-function handleImportResponse(response) {
-  if (response && response.success) {
-    const accounts = extractAccountsFromMessages(response.data || []);
-    const enrichedAccounts = enrichAccounts(accounts);
-    renderAccountList(enrichedAccounts);
-    accountsForDownload = enrichedAccounts;
-    updateAccountCount(enrichedAccounts.length);
-    document.getElementById('selectedFileInfo').textContent = 'Import complete.';
-  } else {
-    const msg = response && response.error ? response.error : 'Import failed.';
-    document.getElementById('selectedFileInfo').textContent = msg;
-    console.log('Import failed:', response);
+// TODO: double check canonical key generation as fallback shouldn't be needed here
+              // const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey || a.domain));
+
+              // const newUnique = enrichedAccounts.filter(a => {
+              //   const key = a.canonicalKey || a.domain;
+              //   if (!key) return true;
+              //   if (existingKeys.has(key)) return false;
+              //   existingKeys.add(key);
+              //   return true;
+              // });
+
+
+function deduplicateAccounts(batchedEnrichedAccounts) {
+  // assume that canonicalKey has fallbacks
+  const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey));
+
+  const newUnique = [];
+
+  for (const batchedAccount of batchedEnrichedAccounts) {
+    const key = batchedAccount.canonicalKey;
+    if (!key || !existingKeys.has(key)) {
+      newUnique.push(batchedAccount);
+      existingKeys.add(key);
+    }
   }
-  const importBtn = document.getElementById('importMboxBtn');
-  if (importBtn) importBtn.disabled = false;
+  
+  return newUnique;
 }
