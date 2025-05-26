@@ -163,14 +163,18 @@ function createAccountListItem(account) {
       const link = document.createElement('a');
       link.href = account.justDeleteMeData.url;
       link.textContent = 'Delete';
+      link.setAttribute('aria-label', `Delete ${account.justDeleteMeData.name}`);
       link.title = account.justDeleteMeData.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       actionDiv.appendChild(link);
+    } else {
+      actionDiv.textContent = '-';
     }
   } else {
     nameDiv.textContent = account.name;
     diffDiv.textContent = '-';
+    actionDiv.textContent = '-';
   }
 
   li.appendChild(nameDiv);
