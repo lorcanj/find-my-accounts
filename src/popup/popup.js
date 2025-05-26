@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
+      document.getElementById('accountList').innerHTML = ''; // Clear previous results
 
       try {
         await importMboxFile(
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
               
               // probably just want to append rather than keep making new one?
               accountsForDownload.push(...newUnique);
-              renderAccountList(accountsForDownload);
+              renderAccountList(newUnique);
               updateAccountCount(accountsForDownload.length);
             }
           }
@@ -161,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function renderAccountList(accounts) {
   const list = document.getElementById('accountList');
-    list.innerHTML = '';
   accounts.forEach(account => {
     const li = createAccountListItem(account);
     list.appendChild(li);
