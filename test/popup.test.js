@@ -222,4 +222,45 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     expect(downloadedAccounts).toHaveLength(1);
     expect(downloadedAccounts[0].email).toBe('new@example.com');
   });
+
+  it('does not add malformed entries when canonicalKey is missing', async () => {
+    const malformedAndValidAccounts = [
+      { canonicalKey: null, email: 'bad@example.com', from: 'Bad <bad@example.com>', name: 'Bad' },
+      { canonicalKey: 'k-valid', email: 'good@example.com', from: 'Good <good@example.com>', name: 'Good' }
+    ];
+
+    extractAccountsMock.mockReturnValueOnce(malformedAndValidAccounts);
+
+    importMboxFileMock.mockImplementation(async (file, onProgress, onBatch) => {
+      onProgress(100);
+      onBatch([{ canonicalKey: 'msg' }]);
+      return Promise.resolve();
+    });
+
+    await import('../src/popup/popup.js');
+
+    const event = new window.Event('DOMContentLoaded');
+    document.dispatchEvent(event);
+
+    const fileInput = document.getElementById('mboxFileInput');
+    const importBtn = document.getElementById('importMboxBtn');
+
+    const file = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
+    setInputFiles(fileInput, [file]);
+
+    await importBtn.click();
+
+    await vi.waitFor(() => {
+      expect(document.getElementById('accountCount').textContent).toBe('1');
+    });
+
+    const downloadBtn = document.getElementById('downloadAccounts');
+    downloadBtn.click();
+
+    expect(downloadMock).toHaveBeenCalledTimes(1);
+    const downloadedAccounts = downloadMock.mock.calls[0][0];
+    expect(downloadedAccounts).toHaveLength(1);
+    expect(downloadedAccounts[0].email).toBe('good@example.com');
+    expect(downloadedAccounts.some((account) => account.email === 'bad@example.com')).toBe(false);
+  });
 });
