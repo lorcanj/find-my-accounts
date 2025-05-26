@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const newUnique = deduplicateAccounts(enrichedAccounts);
               
               // probably just want to append rather than keep making new one?
-              accountsForDownload = [...accountsForDownload, ...newUnique];
+              accountsForDownload.push(...newUnique);
               renderAccountList(accountsForDownload);
               updateAccountCount(accountsForDownload.length);
             }
