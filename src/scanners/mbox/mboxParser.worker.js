@@ -49,8 +49,8 @@ function getHeaderValue(parsedHeaders, name) {
   if (entry.value) {
     if (Array.isArray(entry.value)) {
       const mapped = entry.value.map(formatAddress);
+      // TODO: check whether this is necessary
       const allStrings = mapped.every(item => typeof item === 'string' && String(item).trim() !== '');
-      // If all items formatted to non-empty strings, join and return.
       if (allStrings) return mapped.filter(Boolean).join(', ');
     } else {
       const formatted = formatAddress(entry.value);
