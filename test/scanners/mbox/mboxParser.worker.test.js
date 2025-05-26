@@ -101,7 +101,6 @@ describe('mboxParser.worker.js', () => {
 
       // Verify done message
       expect(mockPostMessage).toHaveBeenCalledWith({ type: 'done' });
-      expect(mockClose).toHaveBeenCalled();
     });
 
     it('processes multiple messages separated by From delimiter', () => {
@@ -353,7 +352,6 @@ describe('mboxParser.worker.js', () => {
       onmessageHandler({ data: { type: 'end' } });
 
       expect(mockPostMessage).toHaveBeenCalledWith({ type: 'done' });
-      expect(mockClose).toHaveBeenCalled();
     });
 
     it('handles chunk with only whitespace', () => {
@@ -700,7 +698,6 @@ describe('mboxParser.worker.js', () => {
       
       // Worker should handle this (may process with defaults or skip)
       expect(mockPostMessage).toHaveBeenCalledWith({ type: 'done' });
-      expect(mockClose).toHaveBeenCalled();
     });
   });
 

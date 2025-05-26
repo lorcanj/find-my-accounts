@@ -1,4 +1,6 @@
 // src/popup/download.js
+import { EXPORT_FILENAME, CSV_HEADERS } from '../constants/exports.js';
+
 export function downloadAccountsAsJson(accounts) {
   const dataStr = JSON.stringify(accounts, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
@@ -6,7 +8,7 @@ export function downloadAccountsAsJson(accounts) {
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'accounts.json';
+  a.download = EXPORT_FILENAME.JSON;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -18,8 +20,7 @@ export function downloadAccountsAsCsv(accounts) {
     return;
   }
 
-  // Define headers based on what we display in the UI + some extras
-  const headers = ['Account Name', 'Domain', 'Sender', 'Difficulty', 'Delete URL'];
+  const headers = CSV_HEADERS;
   
   // Map accounts to rows
   const rows = accounts.map(account => {
@@ -45,7 +46,7 @@ export function downloadAccountsAsCsv(accounts) {
   
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'findmyaccounts.csv';
+  a.download = EXPORT_FILENAME.CSV;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

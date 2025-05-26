@@ -3,12 +3,7 @@ import { normaliseForLookup } from '../scanners/normalisers/utils.js';
 import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
-
-const NO_DATA_FOUND_MESSAGE = 'No data found.';
-const IMPORT_UI_STATE = Object.freeze({
-  IDLE: 'idle',
-  SCANNING: 'scanning'
-});
+import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
 
 let accountsForDownload = [];
 const existingKeys = new Set();
@@ -29,7 +24,7 @@ const INSTRUCTION_LINKS = [
 ];
 
 function renderInstructions() {
-  const instructionsTextEl = document.getElementById('instructionsText');
+  const instructionsTextEl = document.getElementById(DOM_ID.INSTRUCTIONS_TEXT);
   if (!instructionsTextEl) return;
 
   // Clear existing content
@@ -69,12 +64,12 @@ function renderInstructions() {
 
   // Append the next sentences as separate paragraphs for clarity
   const para1 = document.createElement('p');
-  para1.className = 'muted mt-0-5';
+  para1.className = `${CSS_CLASS.MUTED} ${CSS_CLASS.MT_HALF}`;
   para1.textContent = chrome.i18n.getMessage('instructionsPart6');
   instructionsTextEl.appendChild(para1);
 
   const para2 = document.createElement('p');
-  para2.className = 'muted';
+  para2.className = CSS_CLASS.MUTED;
   para2.textContent = chrome.i18n.getMessage('instructionsPart7');
   instructionsTextEl.appendChild(para2);
 }
@@ -88,11 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const isPopped = urlParams.get('popped') === 'true';
 
   if (isPopped) {
-    document.body.classList.add('popped-out');
+    document.body.classList.add(CSS_CLASS.POPPED_OUT);
   }
 
   // Pop-out button handler
-  const popOutBtn = document.getElementById('popOutBtn');
+  const popOutBtn = document.getElementById(DOM_ID.POP_OUT_BTN);
   if (popOutBtn) {
     // Hide button if we are already in the popped-out window
     if (isPopped) {
@@ -134,11 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // File import UI elements
-  mboxInput = document.getElementById('mboxFileInput');
-  selectedFileInfo = document.getElementById('selectedFileInfo');
-  startScanBtn = document.getElementById('startScanBtn');
-  progress = document.getElementById('importProgress');
-  progressBar = document.getElementById('importProgressBar');
+  mboxInput = document.getElementById(DOM_ID.MBOX_FILE_INPUT);
+  selectedFileInfo = document.getElementById(DOM_ID.SELECTED_FILE_INFO);
+  startScanBtn = document.getElementById(DOM_ID.START_SCAN_BTN);
+  progress = document.getElementById(DOM_ID.IMPORT_PROGRESS);
+  progressBar = document.getElementById(DOM_ID.IMPORT_PROGRESS_BAR);
   let currentMboxFileValid = false;
 
   setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
@@ -150,11 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const file = mboxInput.files && mboxInput.files[0];
-      const largeFileWarning = document.getElementById('largeFileWarning');
+      const largeFileWarning = document.getElementById(DOM_ID.LARGE_FILE_WARNING);
       
       if (!file) {
         if (selectedFileInfo) selectedFileInfo.textContent = '';
-        if (largeFileWarning) largeFileWarning.classList.add('hidden');
+        if (largeFileWarning) largeFileWarning.classList.add(CSS_CLASS.HIDDEN);
         currentMboxFileValid = false;
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         return;
@@ -171,12 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${sizeText}`;
 
       if (largeFileWarning) {
-        const isPopped = document.body.classList.contains('popped-out');
+        const isPopped = document.body.classList.contains(CSS_CLASS.POPPED_OUT);
         // Show warning for files >= 50MB if not popped out
         if (sizeInMB >= 50 && !isPopped) {
-          largeFileWarning.classList.remove('hidden');
+          largeFileWarning.classList.remove(CSS_CLASS.HIDDEN);
         } else {
-          largeFileWarning.classList.add('hidden');
+          largeFileWarning.classList.add(CSS_CLASS.HIDDEN);
         }
       }
 
@@ -214,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
-      document.getElementById('accountList').innerHTML = ''; // Clear previous results
+      document.getElementById(DOM_ID.ACCOUNT_LIST).innerHTML = ''; // Clear previous results
 
       try {
         await importMboxFile(
@@ -261,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  downloadButton = document.getElementById('downloadAccounts');
+  downloadButton = document.getElementById(DOM_ID.DOWNLOAD_ACCOUNTS);
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
       downloadAccountsAsCsv(accountsForDownload);
@@ -270,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderAccountList(accounts) {
-  const list = document.getElementById('accountList');
+  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   accounts.forEach(account => {
     const li = createAccountListItem(account);
     list.appendChild(li);
@@ -284,13 +279,13 @@ function enrichAccounts(accounts) {
     const lookupKey = getAccountName(account);
     const nameMatch = domainLookup && domainLookup[lookupKey];
     const domainMatch = !nameMatch && account.domain && domainMap && domainMap[account.domain.toLowerCase()];
-    account.justDeleteMeData = nameMatch || domainMatch || NO_DATA_FOUND_MESSAGE;
+    account.justDeleteMeData = nameMatch || domainMatch || UI_TEXT.NO_DATA_FOUND;
     return account;
   });
 }
 
 function updateAccountCount(count) {
-  document.getElementById('accountCount').textContent = count;
+  document.getElementById(DOM_ID.ACCOUNT_COUNT).textContent = count;
 }
 
 // Alias for the shared lookup normaliser
@@ -301,18 +296,18 @@ function createAccountListItem(account) {
   li.setAttribute('role', 'row');
   
   const nameDiv = document.createElement('div');
-  nameDiv.className = 'col name';
+  nameDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_NAME}`;
   nameDiv.setAttribute('role', 'cell');
   
   const diffDiv = document.createElement('div');
-  diffDiv.className = 'col difficulty';
+  diffDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_DIFF}`;
   diffDiv.setAttribute('role', 'cell');
   
   const actionDiv = document.createElement('div');
-  actionDiv.className = 'col action';
+  actionDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_ACTION}`;
   actionDiv.setAttribute('role', 'cell');
 
-  if (account.justDeleteMeData !== NO_DATA_FOUND_MESSAGE) {
+  if (account.justDeleteMeData !== UI_TEXT.NO_DATA_FOUND) {
     nameDiv.textContent = account.justDeleteMeData.name;
     diffDiv.textContent = account.justDeleteMeData.difficulty;
     
@@ -347,8 +342,8 @@ function getAccountName(account) {
 }
 
 function resetProgressIndicator() {
-  const progressEl = document.getElementById('importProgress');
-  const progressBar = document.getElementById('importProgressBar');
+  const progressEl = document.getElementById(DOM_ID.IMPORT_PROGRESS);
+  const progressBar = document.getElementById(DOM_ID.IMPORT_PROGRESS_BAR);
   if (progressEl) progressEl.style.display = 'none';
   if (progressBar) progressBar.style.width = '0%';
 }
@@ -363,14 +358,14 @@ function setImportUiState(state, options = {}) {
 
   if (startScanBtn) {
     if (state === IMPORT_UI_STATE.SCANNING) {
-      startScanBtn.textContent = 'Cancel scan';
-      startScanBtn.classList.add('btn-cancel');
+      startScanBtn.textContent = UI_TEXT.CANCEL_SCAN;
+      startScanBtn.classList.add(CSS_CLASS.BTN_CANCEL);
       startScanBtn.disabled = false;
       return;
     }
 
-    startScanBtn.textContent = 'Start scan';
-    startScanBtn.classList.remove('btn-cancel');
+    startScanBtn.textContent = UI_TEXT.START_SCAN;
+    startScanBtn.classList.remove(CSS_CLASS.BTN_CANCEL);
     startScanBtn.disabled = !hasValidFile;
   }
 }
