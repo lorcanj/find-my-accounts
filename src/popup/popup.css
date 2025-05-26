@@ -39,6 +39,30 @@ body.popped-out {
     align-items: center;
     margin-bottom: 12px;
 }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.kofi-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #eee;
+    color: #333;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.kofi-button svg {
+    color: #FF5E5B; /* Ko-fi red/pink */
+}
+.kofi-button:hover {
+    background-color: #e0e0e0;
+}
 .container h1 {
     font-size: 1.25rem;
     font-weight: 600;
