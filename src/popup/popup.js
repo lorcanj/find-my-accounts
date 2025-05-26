@@ -516,7 +516,7 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
 
       // Merge subscription signals across batches
       if (batchedAccount._subscriptionSignals?.length) {
-        entry.account._subscriptionSignals = (entry.account._subscriptionSignals || []).concat(batchedAccount._subscriptionSignals);
+        entry.account._subscriptionSignals = entry.account._subscriptionSignals.concat(batchedAccount._subscriptionSignals);
       }
 
       // Update confidence if this message has higher confidence

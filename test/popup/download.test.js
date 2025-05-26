@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { downloadAccountsAsCsv } from '../../src/popup/download.js';
+import { downloadAccountsAsCsv, downloadAccountsAsJson } from '../../src/popup/download.js';
 
 describe('downloadAccountsAsCsv - CSV injection protection', () => {
   let dom;
@@ -93,5 +93,81 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
     expect(dataRow).toContain('"Alice ""A"" <alice@example.com>"');
     expect(dataRow).toContain('"https://example.com/delete,now"');
     expect(dataRow).not.toContain("'=Example Account");
+  });
+});
+
+describe('downloadAccountsAsJson - transient field stripping', () => {
+  let dom;
+  let originalDocument;
+  let originalWindow;
+  let originalURL;
+  let capturedBlob;
+
+  beforeEach(() => {
+    dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' });
+
+    originalDocument = global.document;
+    originalWindow = global.window;
+    originalURL = global.URL;
+
+    global.document = dom.window.document;
+    global.window = dom.window;
+
+    capturedBlob = null;
+    global.URL = {
+      ...dom.window.URL,
+      createObjectURL: vi.fn((blob) => { capturedBlob = blob; return 'blob:mock-url'; }),
+      revokeObjectURL: vi.fn(),
+    };
+
+    vi.spyOn(dom.window.HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    dom.window.close();
+    global.document = originalDocument;
+    global.window = originalWindow;
+    global.URL = originalURL;
+  });
+
+  it('strips _subscriptionSignals from JSON export', async () => {
+    downloadAccountsAsJson([
+      {
+        name: 'Spotify',
+        domain: 'spotify.com',
+        _subscriptionSignals: [
+          { strongKeywords: ['invoice'], amount: '$9.99', dateIso: '2024-06-01T00:00:00Z' },
+        ],
+      },
+    ]);
+
+    const jsonText = await capturedBlob.text();
+    const parsed = JSON.parse(jsonText);
+
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0].name).toBe('Spotify');
+    expect(parsed[0]).not.toHaveProperty('_subscriptionSignals');
+  });
+
+  it('preserves all non-transient fields in JSON export', async () => {
+    downloadAccountsAsJson([
+      {
+        name: 'Netflix',
+        domain: 'netflix.com',
+        from: 'billing@netflix.com',
+        subscription: { confidence: 'high', amount: '$15.99/mo', status: 'active' },
+        _subscriptionSignals: [{ strongKeywords: ['renewed'] }],
+      },
+    ]);
+
+    const jsonText = await capturedBlob.text();
+    const parsed = JSON.parse(jsonText);
+
+    expect(parsed[0].name).toBe('Netflix');
+    expect(parsed[0].domain).toBe('netflix.com');
+    expect(parsed[0].from).toBe('billing@netflix.com');
+    expect(parsed[0].subscription.confidence).toBe('high');
+    expect(parsed[0]).not.toHaveProperty('_subscriptionSignals');
   });
 });
