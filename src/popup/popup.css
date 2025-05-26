@@ -78,6 +78,7 @@ body.popped-out {
     gap: 8px;
     align-items: center;
 }
+.btn-cancel { background: #c62828; color: white; }
 .file-picker input[type="file"] {
     width: 100%;
 }
