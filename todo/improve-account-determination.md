@@ -15,10 +15,10 @@ Add the confidence field to the data model and define constants.
 ## Chunk 2 — Split SENDER_REGEX & scoring logic
 Replace binary matching with weighted signal scoring.
 
-- [ ] Split `SENDER_REGEX` into `STRONG_SENDER_REGEX` and `WEAK_SENDER_REGEX`
-- [ ] Replace `isAccountRelated()` with signal-scoring function
-- [ ] Pass confidence through `extractAccountsFromMessages()` into `Account`
-- [ ] Update tests for new matching behaviour
+- [x] Split `SENDER_REGEX` into `STRONG_SENDER_REGEX` and `WEAK_SENDER_REGEX`
+- [x] Replace `isAccountRelated()` with signal-scoring function
+- [x] Pass confidence through `extractAccountsFromMessages()` into `Account`
+- [x] Update tests for new matching behaviour
 
 ## Chunk 3 — Fix i18n text normalisation
 Allow non-Latin characters through `normaliseText`.
