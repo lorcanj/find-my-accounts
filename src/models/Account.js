@@ -7,7 +7,7 @@ export class JustDeleteMeInfo {
 }
 
 export default class Account {
-  constructor({ name = '', subject = '', from = '', domain = '', canonicalKey = null, justDeleteMeData = null, lastEmailDate = null } = {}) {
+  constructor({ name = '', subject = '', from = '', domain = '', canonicalKey = null, justDeleteMeData = null, lastEmailDate = null, confidence = null } = {}) {
     this.name = name;
     this.subject = subject;
     this.from = from;
@@ -15,5 +15,6 @@ export default class Account {
     this.canonicalKey = canonicalKey;
     this.justDeleteMeData = justDeleteMeData;
     this.lastEmailDate = lastEmailDate;
+    this.confidence = confidence;
   }
 }

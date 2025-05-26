@@ -4,6 +4,7 @@ import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
+import { CONFIDENCE_RANK } from '../constants/confidence.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
@@ -354,8 +355,9 @@ function createAccountListItem(account) {
   actionDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_ACTION}`;
   actionDiv.setAttribute('role', 'cell');
 
+  const nameText = document.createElement('span');
   if (account.justDeleteMeData !== UI_TEXT.NO_DATA_FOUND) {
-    nameDiv.textContent = account.justDeleteMeData.name;
+    nameText.textContent = account.justDeleteMeData.name;
     diffDiv.textContent = account.justDeleteMeData.difficulty;
 
     if (account.justDeleteMeData.url) {
@@ -371,9 +373,13 @@ function createAccountListItem(account) {
       actionDiv.textContent = '-';
     }
   } else {
-    nameDiv.textContent = account.name;
+    nameText.textContent = account.name;
     diffDiv.textContent = '-';
     actionDiv.textContent = '-';
+  }
+  nameDiv.appendChild(nameText);
+  if (account.confidence) {
+    nameDiv.appendChild(createConfidenceBadge(account.confidence));
   }
 
   li.appendChild(nameDiv);
@@ -382,6 +388,20 @@ function createAccountListItem(account) {
   li.appendChild(actionDiv);
 
   return li;
+}
+
+const CONFIDENCE_BADGE_CLASS = {
+  high:   CSS_CLASS.BADGE_HIGH,
+  medium: CSS_CLASS.BADGE_MED,
+  low:    CSS_CLASS.BADGE_LOW,
+};
+const CONFIDENCE_LABEL = { high: 'High', medium: 'Med', low: 'Low' };
+
+function createConfidenceBadge(confidence) {
+  const badge = document.createElement('span');
+  badge.className = `${CSS_CLASS.BADGE} ${CONFIDENCE_BADGE_CLASS[confidence]}`;
+  badge.textContent = CONFIDENCE_LABEL[confidence];
+  return badge;
 }
 
 // Normalises the account name for lookup matching
@@ -437,15 +457,31 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
       // Store reference; the li element is assigned later in renderAccountList
       existingKeys.set(key, { account: batchedAccount, li: null });
     } else if (key && existingKeys.has(key)) {
-      // Update lastEmailDate if this message is more recent
       const entry = existingKeys.get(key);
+
+      // Update lastEmailDate if this message is more recent
       const newDate = batchedAccount.lastEmailDate;
       if (newDate && (!entry.account.lastEmailDate || newDate > entry.account.lastEmailDate)) {
         entry.account.lastEmailDate = newDate;
-        // Update the already-rendered DOM element
         if (entry.li) {
           const dateCell = entry.li.querySelector('.last-email');
           if (dateCell) dateCell.textContent = formatEmailDate(newDate);
+        }
+      }
+
+      // Update confidence if this message has higher confidence
+      const newConf = batchedAccount.confidence;
+      if (newConf && (!entry.account.confidence || CONFIDENCE_RANK[newConf] > CONFIDENCE_RANK[entry.account.confidence])) {
+        entry.account.confidence = newConf;
+        if (entry.li) {
+          const existingBadge = entry.li.querySelector('.badge');
+          if (existingBadge) {
+            existingBadge.className = `${CSS_CLASS.BADGE} ${CONFIDENCE_BADGE_CLASS[newConf]}`;
+            existingBadge.textContent = CONFIDENCE_LABEL[newConf];
+          } else {
+            const nameCol = entry.li.querySelector('.name');
+            if (nameCol) nameCol.appendChild(createConfidenceBadge(newConf));
+          }
         }
       }
     }
