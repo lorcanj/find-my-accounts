@@ -57,22 +57,21 @@ async function handleImportRequest(request) {
           // currently we just log progress; later we can forward to popup
           console.log('mbox parse progress:', msg.percent);
         } else if (msg.type === 'done') {
-          const normalised = Array.isArray(msg.messages) ? msg.messages.map(m => {
-            try {
-              // Convert worker output to canonical normalised form
-              const nm = normaliseMboxMessage(m);
-              return nm;
-            } catch (err) {
-              console.warn('normaliseMboxMessage failed, falling back to generateCanonicalKey', err);
-              try {
-                m.canonicalKey = generateCanonicalKey(m);
-              } catch (e) {
-                console.warn('generateCanonicalKey failed during fallback', e);
-                m.canonicalKey = null;
-              }
-              return m;
-            }
-          }) : [];
+          const normalised = Array.isArray(msg.messages)
+            ? msg.messages.reduce((acc, m) => {
+                try {
+                  // Convert worker output to canonical normalised form
+                  const nm = normaliseMboxMessage(m);
+                  acc.push(nm);
+                } catch (err) {
+                  console.warn('normaliseMboxMessage failed, skipping message', err);
+                  // Optionally we could attempt a fallback here that constructs
+                  // a consistent normalised-like structure, but for now we
+                  // simply omit the failed message to keep the array shape consistent.
+                }
+                return acc;
+              }, [])
+            : [];
           worker.terminate();
           resolve(normalised);
         } else if (msg.type === 'error') {
