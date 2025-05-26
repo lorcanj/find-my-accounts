@@ -59,6 +59,10 @@ body.popped-out {
 .btn-link:hover {
     text-decoration: underline;
 }
+/* Style specifically for the pop-out button to make it black */
+#popOutBtn {
+    color: #000;
+}
 .btn {
     padding: 8px 12px;
     border: none;
