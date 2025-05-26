@@ -56,6 +56,25 @@ body.popped-out {
 }
 .btn-primary { background: #1976d2; color: white; }
 .btn-secondary { background: #eee; color: #222; }
+
+/* Make the download image button visually neutral (no grey background) */
+#downloadAccounts {
+    background: transparent;
+    background-color: transparent;
+    border: none;
+    padding: 4px;
+}
+#downloadAccounts img {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Row layout for primary actions (import + download) */
+.button-row {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
 .file-picker input[type="file"] {
     width: 100%;
 }
