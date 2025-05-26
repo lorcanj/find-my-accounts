@@ -77,12 +77,7 @@ export async function importMboxFile(file, onProgress, onBatch) {
           worker.postMessage({ type: 'chunk', buffer: value.buffer }, [value.buffer]);
           
           bytesRead += value.byteLength;
-          // if (onProgress) {
-          //   const percent = Math.min(100, Math.round((bytesRead / totalSize) * 100));
-          //   onProgress(percent);
-          // }
-          
-          // Continue reading
+
           readNext();
         }).catch(err => {
           worker.terminate();
@@ -111,10 +106,6 @@ export async function importMboxFile(file, onProgress, onBatch) {
           worker.postMessage({ type: 'chunk', buffer }, [buffer]);
           
           offset = end;
-          // if (onProgress) {
-          //   const percent = Math.min(100, Math.round((offset / totalSize) * 100));
-          //   onProgress(percent);
-          // }
           
           readNextChunk();
         };
