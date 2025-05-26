@@ -63,11 +63,8 @@ export function normaliseText(text) {
   // Remove common reply/forward prefixes
   t = t.replace(/(^|\s)(re|fw|fwd)\s*[:\-]\s*/gi, ' ');
   t = t.replace(/(^|\s)(re|fw|fwd)\s+/gi, ' ');
-  // Remove punctuation except internal apostrophes.
-  // Note: this strips all non-Latin characters (CJK, Cyrillic, Arabic, etc.).
-  // Acceptable for current English-centric JustDeleteMe matching; would need
-  // revisiting if international service names are ever supported.
-  t = t.replace(/[^a-z0-9\s']/g, ' ');
+  // Remove punctuation except internal apostrophes, preserving Unicode letters/digits.
+  t = t.replace(/[^\p{L}\p{N}\s']/gu, ' ');
   // Collapse whitespace
   t = t.replace(/\s+/g, ' ').trim();
   return t;

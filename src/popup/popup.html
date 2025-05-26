@@ -64,9 +64,15 @@
 
     <div id="results" class="results">
       <h2 id="accounts-heading">Found Accounts: <span id="accountCount">0</span></h2>
+      <div id="confidenceFilters" class="confidence-filters">
+        <button class="filter-btn active" data-level="high">High</button>
+        <button class="filter-btn active" data-level="medium">Medium</button>
+        <button class="filter-btn active" data-level="low">Low</button>
+      </div>
       <div role="table" aria-labelledby="accounts-heading">
         <div class="account-list-headers" role="row">
           <div class="col name" role="columnheader">Account name</div>
+          <div class="col confidence" role="columnheader">Confidence</div>
           <div class="col difficulty" role="columnheader">Deletion difficulty</div>
           <div class="col action" role="columnheader">Link to delete</div>
         </div>

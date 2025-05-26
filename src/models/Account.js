@@ -7,12 +7,13 @@ export class JustDeleteMeInfo {
 }
 
 export default class Account {
-  constructor({ name = '', subject = '', from = '', domain = '', canonicalKey = null, justDeleteMeData = null } = {}) {
+  constructor({ name = '', subject = '', from = '', domain = '', canonicalKey = null, justDeleteMeData = null, confidence = null } = {}) {
     this.name = name;
     this.subject = subject;
     this.from = from;
     this.domain = domain;
     this.canonicalKey = canonicalKey;
     this.justDeleteMeData = justDeleteMeData;
+    this.confidence = confidence;
   }
 }

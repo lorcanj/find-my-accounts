@@ -137,10 +137,10 @@ h2#accounts-heading {
     color: #202124;
 }
 
-/* Layout for account list headers and rows: three columns */
+/* Layout for account list headers and rows: four columns */
 .account-list-headers {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr auto 1fr 1fr;
     gap: 8px;
     align-items: center;
     padding: 8px 4px;
@@ -153,7 +153,7 @@ h2#accounts-heading {
 
 .account-list li {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr auto 1fr 1fr;
     gap: 8px;
     align-items: center;
     padding: 10px 4px;
@@ -165,3 +165,36 @@ h2#accounts-heading {
 
 .account-list .name { word-break: break-word; }
 .account-list .action { text-align: right; }
+
+/* Confidence badges */
+.badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+.badge-high   { background: #e6f4ea; color: #1e7e34; }
+.badge-medium { background: #fef7e0; color: #b45309; }
+.badge-low    { background: #fce8e6; color: #c5221f; }
+
+/* Confidence filter bar */
+.confidence-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.filter-btn {
+    padding: 3px 10px;
+    border: 1px solid #dadce0;
+    border-radius: 12px;
+    background: #fff;
+    color: #5f6368;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.filter-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+.filter-btn:hover:not(.active) { background: #f1f3f4; }
