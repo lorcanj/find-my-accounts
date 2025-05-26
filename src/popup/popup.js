@@ -344,9 +344,14 @@ function createAccountListItem(account) {
   const confDiv = document.createElement('div');
   confDiv.className = `${CSS_CLASS.COL} col-confidence`;
   confDiv.setAttribute('role', 'cell');
+  const BADGE_CLASS_MAP = {
+    high: CSS_CLASS.BADGE_HIGH,
+    medium: CSS_CLASS.BADGE_MED,
+    low: CSS_CLASS.BADGE_LOW,
+  };
   if (account.confidence) {
     const badge = document.createElement('span');
-    badge.className = `${CSS_CLASS.BADGE} badge-${account.confidence}`;
+    badge.className = `${CSS_CLASS.BADGE} ${BADGE_CLASS_MAP[account.confidence] || ''}`;
     badge.textContent = account.confidence;
     confDiv.appendChild(badge);
   }
