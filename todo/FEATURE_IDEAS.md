@@ -1,5 +1,20 @@
 # Feature Ideas
 
+## ROI Summary
+
+| Tier | Features | Rationale |
+|------|----------|-----------|
+| **Tier 1 — High ROI** | #2 Improve Account Determination, #4 Activity Recency | #2 fixes the core value prop (trust in results). #4 is low effort, high user value — just track latest email date per key. |
+| **Tier 2 — Good ROI** | #1 Deletion Email Detection, #3 Breach Detection | Similar regex-based approach, bundle together. Taps into security motivation. |
+| **Tier 3 — Moderate ROI** | #5 Account Categorization, #7 Multiple Email Support, #10 Export Formats | Nice-to-haves. JSON/MD export is trivial; the rest is more effort for narrower audience. |
+| **Tier 4 — Lower ROI** | #9 Expand JustDeleteMe Dataset | Ongoing maintenance burden. Better to contribute upstream. |
+| **Absorbed** | #6 Confidence Scoring | Subsumes into #2 — not a standalone feature. |
+| **Ruled out** | #8 Direct Mail Provider Integration | $60k security review. |
+
+**Recommended order:** #2 → #4 → #1+#3 (bundled) → #10 (JSON/MD only) → #5 → #7
+
+---
+
 ## 1. Deletion Email Detection
 Detect "account deleted", "goodbye", "we're sorry to see you go" emails to mark accounts as potentially already closed. This would let users focus on accounts that are still active.
 
