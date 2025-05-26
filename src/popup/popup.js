@@ -190,18 +190,6 @@ function resetProgressIndicator() {
   if (progressBar) progressBar.style.width = '0%';
 }
 
-// TODO: double check canonical key generation as fallback shouldn't be needed here
-              // const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey || a.domain));
-
-              // const newUnique = enrichedAccounts.filter(a => {
-              //   const key = a.canonicalKey || a.domain;
-              //   if (!key) return true;
-              //   if (existingKeys.has(key)) return false;
-              //   existingKeys.add(key);
-              //   return true;
-              // });
-
-
 function deduplicateAccounts(batchedEnrichedAccounts) {
   // assume that canonicalKey has fallbacks
   const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey));
