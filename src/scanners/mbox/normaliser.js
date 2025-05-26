@@ -16,6 +16,7 @@ export default function normaliseMboxMessage(raw = {}) {
   const parsed = parseOneAddress(from);
   if (parsed && parsed.address) {
     email = normaliseEmail(parsed.address);
+    // double check this
     if (parsed.name) displayName = String(parsed.name).trim() || null;
   } else {
     displayName = from.trim() || null;
