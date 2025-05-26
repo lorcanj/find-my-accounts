@@ -34,9 +34,9 @@ function formatAddress(v) {
     if (v.name && v.address) return `${v.name} <${v.address}>`;
     if (v.name) return v.name;
     if (v.address) return v.address;
-    // Return the original object when we can't format it to a string.
-    // Caller can decide how to handle non-string header values.
-    return v;
+    if (v instanceof Date) return v.toISOString();
+    // Return null when we can't format it to a string.
+    return null;
   } 
   return String(v);
 }
