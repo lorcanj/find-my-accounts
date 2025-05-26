@@ -46,10 +46,15 @@ export function generateCanonicalKey(item = {}) {
           for (const part of subParts) {
             // Check for significant parts (avoid short generic subdomains like api, cdn, app)
             if (part && part.length > 3) {
-              const regex = new RegExp(`\\b${part}\\b`, 'i');
-              if (regex.test(displayName)) {
-                brandStem = part;
-                break;
+              const lowerPart = part.toLowerCase();
+              const idx = displayName.toLowerCase().indexOf(lowerPart);
+              if (idx !== -1) {
+                const before = idx === 0 || /\W/.test(displayName[idx - 1]);
+                const after = idx + lowerPart.length >= displayName.length || /\W/.test(displayName[idx + lowerPart.length]);
+                if (before && after) {
+                  brandStem = part;
+                  break;
+                }
               }
             }
           }
