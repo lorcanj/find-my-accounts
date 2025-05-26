@@ -1,8 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 
-/**
- * Structured header fallback tests (moved from main worker test file)
- */
 describe('mboxParser.worker.js - structured header fallback', () => {
   let mockPostMessage;
   let mockClose;
