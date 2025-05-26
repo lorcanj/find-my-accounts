@@ -15,6 +15,33 @@ let progressBar;
 let downloadButton;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Pop-out button handler
+  const popOutBtn = document.getElementById('popOutBtn');
+  if (popOutBtn) {
+    popOutBtn.addEventListener('click', () => {
+      // Check if there's an import in progress
+      const hasProgress = progress && !progress.classList.contains('hidden') && progress.style.display !== 'none';
+      
+      if (hasProgress) {
+        const proceed = confirm(
+          'Warning: In-progress parsing will not persist when you pop out. You may need to re-select and re-import your file in the new window. Continue?'
+        );
+        if (!proceed) return;
+      }
+      
+      // Open the popup in a new window
+      chrome.windows.create({
+        url: chrome.runtime.getURL('src/popup/popup.html'),
+        type: 'popup',
+        width: 800,
+        height: 600
+      });
+      
+      // Optionally close the current popup
+      window.close();
+    });
+  }
+  
   // File import UI elements
   mboxInput = document.getElementById('mboxFileInput');
   selectedFileInfo = document.getElementById('selectedFileInfo');
