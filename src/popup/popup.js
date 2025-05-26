@@ -413,6 +413,9 @@ function createAccountListItem(account) {
     actionDiv.textContent = '-';
   }
 
+  const subBadge = createSubscriptionBadge(account.subscription);
+  if (subBadge) nameDiv.appendChild(subBadge);
+
   li.appendChild(nameDiv);
   li.appendChild(confidenceDiv);
   li.appendChild(dateDiv);
@@ -428,6 +431,33 @@ const CONFIDENCE_BADGE_CLASS = {
   low:    CSS_CLASS.BADGE_LOW,
 };
 const CONFIDENCE_LABEL = { high: 'High', medium: 'Med', low: 'Low' };
+
+const SUB_STATUS_BADGE_CLASS = {
+  active:    CSS_CLASS.BADGE_SUB_ACTIVE,
+  cancelled: CSS_CLASS.BADGE_SUB_CANCELLED,
+  trial:     CSS_CLASS.BADGE_SUB_TRIAL,
+};
+const FREQUENCY_SHORT = { monthly: '/mo', annual: '/yr', weekly: '/wk', quarterly: '/qtr' };
+
+function createSubscriptionBadge(subscription) {
+  if (!subscription) return null;
+  if (subscription.confidence === 'low') return null;
+
+  const badge = document.createElement('span');
+  const statusClass = SUB_STATUS_BADGE_CLASS[subscription.status] || SUB_STATUS_BADGE_CLASS.active;
+  badge.className = `${CSS_CLASS.BADGE} ${statusClass}`;
+  badge.style.marginLeft = '6px';
+
+  if (subscription.amount) {
+    const freq = FREQUENCY_SHORT[subscription.frequency] || '';
+    badge.textContent = `${subscription.amount}${freq}`;
+  } else {
+    badge.textContent = 'Subscription';
+  }
+
+  badge.title = `Subscription confidence: ${subscription.confidence}`;
+  return badge;
+}
 
 function applyConfidenceFilter() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
