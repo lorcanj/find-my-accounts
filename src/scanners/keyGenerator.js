@@ -14,14 +14,15 @@ export function generateCanonicalKey(item = {}) {
       if (!hostname) {
         return `e:${email}`;
       }
-      
+
       const res = parse(hostname);
 
-      // registrableDomain is the SLD+TLD (e.g. github.com)
+      // registrableDomain is the second-level domain + top-level domain (e.g. github.com)
       const registrableDomain = res.domain || hostname;
       
       let brandStem = registrableDomain;
-      // If we have a valid component (domain + suffix), strip the suffix
+      
+      // TODO: check and move to function
       if (res.domain && res.publicSuffix) {
         if (registrableDomain.endsWith('.' + res.publicSuffix)) {
           brandStem = registrableDomain.slice(0, -(res.publicSuffix.length + 1));
