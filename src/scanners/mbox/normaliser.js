@@ -53,6 +53,7 @@ export default function normaliseMboxMessage(raw = {}) {
   try {
     normalised.canonicalKey = generateCanonicalKey(normalised);
   } catch (e) {
+    console.warn('[normaliser] canonical key generation failed for:', from, e);
     normalised.canonicalKey = null;
   }
 
