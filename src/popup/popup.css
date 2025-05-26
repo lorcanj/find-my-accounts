@@ -260,8 +260,10 @@ h2#accounts-heading {
 
 /* Bug report footer */
 .bug-report {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
+    line-height: 1.8;
+}
+
+.bug-report button {
+    vertical-align: middle;
+    margin-left: 2px;
 }

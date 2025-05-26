@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bugReportText = document.getElementById('bugReportText');
   const copyEmailBtn = document.getElementById('copyEmailBtn');
   if (bugReportText) {
-    const addr = ['findmyaccts', 'feedback'].join('+') + '@' + 'gmail.com';
+    const addr = 'findmyaccts+feedback' + '@' + 'gmail.com';
     bugReportText.textContent = `Found an issue? Email us at ${addr}`;
 
     if (copyEmailBtn) {
@@ -343,6 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           copyEmailBtn.title = 'Copied!';
           setTimeout(() => { copyEmailBtn.title = 'Copy email address'; }, 1500);
+        }).catch(() => {
+          copyEmailBtn.title = 'Copy failed — try manually selecting the address';
+          setTimeout(() => { copyEmailBtn.title = 'Copy email address'; }, 3000);
         });
       });
     }
