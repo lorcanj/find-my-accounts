@@ -7,7 +7,6 @@ import normaliseMboxMessage from './normaliser.js';
 let decoder = new TextDecoder('utf-8');
 let remainder = '';
 let batch = [];
-let count = 0;
 let totalBytesProcessed = 0;
 const BATCH_SIZE = 50;
 const MAX_HEADER_CHARS = 256 * 1024;
@@ -138,7 +137,6 @@ function processMessage(part) {
     const normalised = normaliseMboxMessage(rawMsg);
 
     batch.push(normalised);
-    count++;
 
     if (batch.length >= BATCH_SIZE) {
       self.postMessage({ type: 'batch', messages: batch });
