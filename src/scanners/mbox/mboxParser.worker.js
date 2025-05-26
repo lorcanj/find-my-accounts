@@ -121,7 +121,7 @@ function processMessage(part) {
       messageId: getHeaderValue(parsedHeaders, 'Message-ID') || null,
       threadId: getHeaderValue(parsedHeaders, 'Thread-Index') || null,
       headers: parsedHeaders || {},
-      raw: headerOnlyMessage
+      rawHeaders: headerOnlyMessage
     };
 
     // Normalise to produce canonicalKey and consistent output
