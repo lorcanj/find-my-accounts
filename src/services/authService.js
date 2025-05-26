@@ -48,7 +48,7 @@ async function handleImportRequest(request) {
 
   return new Promise((resolve, reject) => {
     try {
-      const workerUrl = chrome.runtime.getURL('src/scanners/mboxParser.worker.js');
+      const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
       const worker = new Worker(workerUrl);
 
       worker.onmessage = (e) => {

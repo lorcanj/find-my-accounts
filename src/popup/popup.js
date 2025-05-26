@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ab = await readFileAsArrayBuffer(file);
 
         // Create the parser worker in the popup (Worker is defined in window scope)
-        const workerUrl = chrome.runtime.getURL('src/scanners/mboxParser.worker.js');
+        const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
         const worker = new Worker(workerUrl, { type: 'module' });
 
         worker.onmessage = (e) => {
@@ -72,8 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
 
-        worker.onerror = (err) => {
-          selectedFileInfo.textContent = `Worker error: ${err && err.message ? err.message : String(err)}`;
+        worker.onerror = (ev) => {
+          console.error('Worker onerror event:', ev);
+          // ErrorEvent in workers contains message/filename/lineno/colno
+          const message = (ev && (ev.message || (ev.error && ev.error.message))) || String(ev);
+          selectedFileInfo.textContent = `Worker error: ${message}`;
           importBtn.disabled = false;
           try { worker.terminate(); } catch (e) {}
         };
