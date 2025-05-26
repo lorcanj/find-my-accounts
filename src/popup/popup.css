@@ -3,8 +3,8 @@
 .progress-bar { height: 100%; background: #2b7cff; width: 0%; transition: width 150ms linear; }
 
 /* Basic niceties for popup layout (kept minimal) */
-.loading { font-size: 0.95em; color: #333; }
-.error { color: #b00020; font-size: 0.95em; }
+.loading { font-size: 0.95rem; color: #333; }
+.error { color: #b00020; font-size: 0.95rem; }
 
 /* Utility spacing and text helpers moved from inline styles */
 .mt-1 { margin-top: 1em; }
@@ -14,10 +14,10 @@
     color: #444; 
     line-height: 1.5; 
 }
-.file-info { margin-top: 0.5em; font-size: 0.95em; color: #222; }
+.file-info { margin-top: 0.5em; font-size: 0.95rem; color: #222; }
 .download-container { margin-top: 1em; text-align: center; }
 .hidden { display: none; }
-.ack { font-size: 0.9em; margin-top: 1em; }
+.ack { font-size: 0.9rem; margin-top: 1em; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
