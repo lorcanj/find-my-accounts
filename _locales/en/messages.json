@@ -1,7 +1,4 @@
 {
-  "instructionsText": {
-    "message": "Upload an .mbox file (e.g., from Google Takeout or Thunderbird). Files are processed entirely in your browser. Find My Accounts does not store or track any information you upload."
-  },
   "instructionsGoogleTakeout": {
     "message": "Google Takeout"
   },
