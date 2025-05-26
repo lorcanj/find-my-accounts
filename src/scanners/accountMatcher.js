@@ -1,5 +1,4 @@
 import Account from '../models/Account.js';
-import generateCanonicalKey from './keyGenerator.js';
 
 // extracts accounts from normalised data
 export function extractAccountsFromMessages(messages = []) {
