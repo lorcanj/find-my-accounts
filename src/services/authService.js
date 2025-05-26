@@ -43,6 +43,7 @@ async function fetchRawMessages(maxResults = 50) {
   }
 }
 
+// might move this, not sure if it should sit here
 chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
   console.log('Received message:', request)
   if (request.action === ACTION_SCAN_GMAIL) {

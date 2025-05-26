@@ -1,10 +1,18 @@
 const ACTION_SCAN_GMAIL = 'scanGmail';
+let lastAccounts = [];
 
 console.log('Popup loaded');
 
 document.addEventListener('DOMContentLoaded', () => {
   const scanButton = document.getElementById(ACTION_SCAN_GMAIL);
   scanButton.addEventListener('click', handleScanClick);
+
+  const downloadButton = document.getElementById('downloadAccounts');
+  if (downloadButton) {
+    downloadButton.addEventListener('click', function() {
+      window.downloadAccountsAsJson(lastAccounts); // lastAccounts should be your current accounts array
+    });
+  }
 });
 
 function handleScanClick() {
@@ -15,8 +23,8 @@ function handleScanClick() {
 function handleScanResponse(response) {
   if (response && response.success) {
     const accounts = extractAccountsFromMessages(response.data);
+    lastAccounts = accounts;
     updateAccountList(accounts);
-    // not in sync, count the list above
     updateAccountCount(accounts.length);
   } else {
     console.log('Scan failed:', response && response.error);
