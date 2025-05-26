@@ -11,6 +11,11 @@ describe('Account model', () => {
     expect(a.canonicalKey).toBeNull();
     expect(a.justDeleteMeData).toBeNull();
     expect(a.lastEmailDate).toBeNull();
+    expect(a.isSubscription).toBe(false);
+    expect(a.subscriptionConfidence).toBeNull();
+    expect(a.amount).toBeNull();
+    expect(a.frequency).toBeNull();
+    expect(a.subscriptionStatus).toBeNull();
   });
 
   it('assigns provided properties', () => {
@@ -31,6 +36,22 @@ describe('Account model', () => {
     expect(a.canonicalKey).toBe(data.canonicalKey);
     expect(a.justDeleteMeData).toEqual(data.justDeleteMeData);
     expect(a.lastEmailDate).toBe('2025-06-15T12:00:00.000Z');
+  });
+
+  it('accepts and stores subscription field overrides', () => {
+    const a = new Account({
+      name: 'Netflix',
+      isSubscription: true,
+      subscriptionConfidence: 'high',
+      amount: '$9.99',
+      frequency: 'monthly',
+      subscriptionStatus: 'active',
+    });
+    expect(a.isSubscription).toBe(true);
+    expect(a.subscriptionConfidence).toBe('high');
+    expect(a.amount).toBe('$9.99');
+    expect(a.frequency).toBe('monthly');
+    expect(a.subscriptionStatus).toBe('active');
   });
 });
 
