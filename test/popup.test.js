@@ -159,7 +159,10 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     await vi.waitFor(() => {
       // Critical assertion: accountCount should be 1 (only second import), not 2 (accumulated)
       expect(document.getElementById('accountCount').textContent).toBe('1');
-      expect(importMboxFileMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+      // Verify extraction ran twice. We check this inside waitFor to ensure we wait
+      // for the second extraction to complete, preventing flakiness where the DOM
+      // updates before the mock call count is registered.
+      expect(extractAccountsMock).toHaveBeenCalledTimes(2);
     });
 
     // Verify download receives only the second import's accounts
@@ -223,7 +226,8 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     await vi.waitFor(() => {
       // Critical assertion: should still be 1 (reset happened)
       expect(document.getElementById('accountCount').textContent).toBe('1');
-      expect(importMboxFileMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+      // Verify extraction also ran for the second import
+      expect(extractAccountsMock).toHaveBeenCalledTimes(2);
     });
 
     // Verify the downloaded accounts are only from the second import
