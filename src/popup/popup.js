@@ -4,8 +4,8 @@ import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
-const DEFAULT_IMPORT_BUTTON_TEXT = 'Import .mbox';
-const CANCEL_IMPORT_BUTTON_TEXT = 'Cancel scan';
+const DEFAULT_IMPORT_BUTTON_TEXT = 'Import emails';
+const CANCEL_SCAN_IN_PROGRESS_BUTTON_TEXT = 'Cancel scan in progress';
 let accountsForDownload = [];
 const existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
@@ -270,7 +270,7 @@ function setImportUiState(scanning, hasValidFile = false) {
 
   if (!importBtn) return;
 
-  importBtn.textContent = scanning ? CANCEL_IMPORT_BUTTON_TEXT : DEFAULT_IMPORT_BUTTON_TEXT;
+  importBtn.textContent = scanning ? CANCEL_SCAN_IN_PROGRESS_BUTTON_TEXT : DEFAULT_IMPORT_BUTTON_TEXT;
   importBtn.classList.toggle('btn-cancel', scanning);
   importBtn.disabled = scanning ? false : !hasValidFile;
 }

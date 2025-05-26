@@ -7,32 +7,32 @@
  * @param {Function} onBatch - Callback for receiving a batch of normalised messages.
  * @returns {Promise<void>} - Resolves when import is complete.
  */
-let activeImport = null;
+let activeGlobalSession = null;
 
 export function cancelMboxImport() {
-  if (!activeImport || activeImport.settled) return false;
+  if (!activeGlobalSession || activeGlobalSession.settled) return false;
 
-  activeImport.cancelled = true;
+  activeGlobalSession.cancelled = true;
 
-  if (activeImport.reader && typeof activeImport.reader.cancel === 'function') {
-    activeImport.reader.cancel().catch(() => {});
+  if (activeGlobalSession.reader && typeof activeGlobalSession.reader.cancel === 'function') {
+    activeGlobalSession.reader.cancel().catch(() => {});
   }
 
-  if (activeImport.fileReader && typeof activeImport.fileReader.abort === 'function') {
+  if (activeGlobalSession.fileReader && typeof activeGlobalSession.fileReader.abort === 'function') {
     try {
-      activeImport.fileReader.abort();
+      activeGlobalSession.fileReader.abort();
     } catch {
       // noop
     }
   }
 
-  if (activeImport.worker) {
-    activeImport.worker.terminate();
+  if (activeGlobalSession.worker) {
+    activeGlobalSession.worker.terminate();
   }
 
-  activeImport.settled = true;
-  activeImport.reject(new Error('Import cancelled'));
-  activeImport = null;
+  activeGlobalSession.settled = true;
+  activeGlobalSession.reject(new Error('Import cancelled'));
+  activeGlobalSession = null;
   return true;
 }
 
@@ -41,7 +41,10 @@ export async function importMboxFile(file, onProgress, onBatch) {
     const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
     const worker = new Worker(workerUrl, { type: 'module' });
 
-    activeImport = {
+    // We capture a local session object for this specific run so that async callbacks
+    // (readNext, onload) always check the correct state even if the global
+    // activeGlobalSession is reset or overwritten by a cancellation.
+    const perRunSession = {
       worker,
       reader: null,
       fileReader: null,
@@ -49,20 +52,27 @@ export async function importMboxFile(file, onProgress, onBatch) {
       cancelled: false,
       settled: false
     };
+    activeGlobalSession = perRunSession;
 
     function settleResolve() {
-      if (activeImport) {
-        activeImport.settled = true;
-        activeImport = null;
+      if (perRunSession.settled) {
+        return;
       }
+      if (activeGlobalSession === perRunSession) {
+        activeGlobalSession = null;
+      }
+      perRunSession.settled = true;
       resolve();
     }
 
     function settleReject(error) {
-      if (activeImport) {
-        activeImport.settled = true;
-        activeImport = null;
+      if (perRunSession.settled) {
+        return;
       }
+      if (activeGlobalSession === perRunSession) {
+        activeGlobalSession = null;
+      }
+      perRunSession.settled = true;
       reject(error);
     }
     
@@ -112,17 +122,15 @@ export async function importMboxFile(file, onProgress, onBatch) {
     if (file.stream) {
       const stream = file.stream();
       const reader = stream.getReader();
-      if (activeImport) {
-        activeImport.reader = reader;
-      }
+      perRunSession.reader = reader;
       
       function readNext() {
-        if (activeImport && activeImport.cancelled) {
+        if (perRunSession.cancelled) {
           return;
         }
 
         reader.read().then(({ done, value: chunk }) => {
-          if (activeImport && activeImport.cancelled) {
+          if (perRunSession.cancelled) {
             return;
           }
 
@@ -155,12 +163,10 @@ export async function importMboxFile(file, onProgress, onBatch) {
         const end = Math.min(offset + CHUNK_SIZE, totalSize);
         const blob = file.slice(offset, end);
         const reader = new FileReader();
-        if (activeImport) {
-          activeImport.fileReader = reader;
-        }
+        perRunSession.fileReader = reader;
         
         reader.onload = (e) => {
-          if (activeImport && activeImport.cancelled) {
+          if (perRunSession.cancelled) {
             return;
           }
 
