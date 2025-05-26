@@ -254,9 +254,8 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
   const newUnique = [];
 
   for (const batchedAccount of batchedEnrichedAccounts) {
-    // assume that canonicalKey has fallbacks
     const key = batchedAccount.canonicalKey;
-    
+
     // Only add accounts with a generated key to prevent duplicates.
     // Accounts with failed key generation (null) are filtered out.
     if (key && !existingKeys.has(key)) {
