@@ -112,6 +112,21 @@ describe('extractSubscriptionSignals', () => {
       expect(signals.isBillingSender).toBe(true);
     });
 
+    it('billing-noreply@netflix.com → isBillingSender: true (startsWith)', () => {
+      const signals = extractSubscriptionSignals(msg('Your receipt', { email: 'billing-noreply@netflix.com' }));
+      expect(signals.isBillingSender).toBe(true);
+    });
+
+    it('invoices.team@freshbooks.com → isBillingSender: true (startsWith)', () => {
+      const signals = extractSubscriptionSignals(msg('Your receipt', { email: 'invoices.team@freshbooks.com' }));
+      expect(signals.isBillingSender).toBe(true);
+    });
+
+    it('noreply-billing@example.com → isBillingSender: false (billing not at start)', () => {
+      const signals = extractSubscriptionSignals(msg('Your receipt', { email: 'noreply-billing@example.com' }));
+      expect(signals.isBillingSender).toBe(false);
+    });
+
     it('noreply@spotify.com → isBillingSender: false', () => {
       const signals = extractSubscriptionSignals(msg('Your receipt', { email: 'noreply@spotify.com' }));
       expect(signals.isBillingSender).toBe(false);

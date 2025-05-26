@@ -24,7 +24,7 @@ function findMatches(normSubject, normKeywords, originalKeywords) {
 function checkBillingSender(email) {
   if (!email) return false;
   const localPart = email.split('@')[0];
-  return BILLING_SENDER_PATTERNS.some(p => localPart === p);
+  return BILLING_SENDER_PATTERNS.some(p => localPart.startsWith(p));
 }
 
 function extractAmount(subject) {
