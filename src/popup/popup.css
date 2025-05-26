@@ -59,6 +59,7 @@ body.popped-out {
 
 /* Icon-only button style */
 .btn-icon {
+    background-color: transparent;
     border: none;
     padding: 4px;
     cursor: pointer;
