@@ -92,11 +92,28 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     mockState.cancelMboxImportMock = cancelMboxImportMock;
     mockState.extractAccountsMock = extractAccountsMock;
     mockState.domainLookup = {};
+
+    // Mock chrome API
+    global.chrome = {
+      i18n: {
+        getMessage: vi.fn((key) => `mock_${key}`)
+      },
+      runtime: {
+        getURL: vi.fn((path) => `chrome-extension://mock-id/${path}`),
+        lastError: null
+      },
+      windows: {
+        create: vi.fn((options, callback) => {
+          if (callback) callback();
+        })
+      }
+    };
   });
 
   afterEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    delete global.chrome;
     dom.window.close();
     global.document = originalDocument;
     global.window = originalWindow;
