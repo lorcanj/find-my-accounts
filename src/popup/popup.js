@@ -1,5 +1,5 @@
 import { domainLookup } from '../data/buildDomainLookup.js';
-import { downloadAccountsAsJson, downloadAccountsAsCsv } from './download.js';
+import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile } from '../services/mboxImportService.js';
 

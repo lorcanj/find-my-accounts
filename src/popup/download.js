@@ -14,7 +14,6 @@ export function downloadAccountsAsJson(accounts) {
 }
 
 export function downloadAccountsAsCsv(accounts) {
-  console.log('accounts', accounts);
   if (!accounts || accounts.length === 0) {
     return;
   }
@@ -54,8 +53,15 @@ export function downloadAccountsAsCsv(accounts) {
 
 function escapeCsv(str) {
   if (str == null) return ''; // handles null and undefined
-  const stringValue = String(str);
+  let stringValue = String(str);
   
+  // MITIGATION: Prevent CSV Injection (Formula Injection)
+  // If the value starts with =, +, -, or @, prepend a single quote so Excel treats it as text.
+  const forbiddenChars = ['=', '+', '-', '@'];
+  if (forbiddenChars.some(char => stringValue.startsWith(char))) {
+    stringValue = `'${stringValue}`;
+  }
+
   // If the string contains comma, double quote, or newline, enclose in double quotes
   if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
     // Double quotes must be escaped by another double quote
