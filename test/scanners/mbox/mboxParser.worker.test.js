@@ -702,7 +702,7 @@ describe('mboxParser.worker.js', () => {
       onmessageHandler({ data: { type: 'end' } });
 
       // Should attempt to process despite corrupted envelope
-      const batchCalls = mockPostMessage.mock.calls.filter(
+      mockPostMessage.mock.calls.filter(
         call => call[0].type === 'batch'
       );
       
@@ -770,6 +770,74 @@ describe('mboxParser.worker.js', () => {
       expect(allMessages.length).toBe(2);
       expect(allMessages[0].subject).toBe('First');
       expect(allMessages[1].subject).toBe('Second');
+    });
+  });
+
+  /**
+   * Test 11b: Relaxed Envelope Constraints
+   * 
+   * Scenario: Envelope headers that don't strictly follow "From user@domain" (e.g. MAILER-DAEMON)
+   * Expected: Regex should accept them as delimiters if they have a valid-looking 3-char timestamp start
+   */
+  describe('Relaxed Envelope Constraints', () => {
+    it('handles MAILER-DAEMON envelope line', () => {
+      const mboxContent = 
+        'From MAILER-DAEMON Fri Jul  8 12:08:34 2011\n' +
+        'Subject: Mailer Daemon Test\n' +
+        '\n' +
+        'Body content.\n';
+
+      const buffer = new TextEncoder().encode(mboxContent);
+      onmessageHandler({ data: { type: 'chunk', buffer: buffer.buffer } });
+      onmessageHandler({ data: { type: 'end' } });
+
+      const batchCalls = mockPostMessage.mock.calls.filter(call => call[0].type === 'batch');
+      const allMessages = batchCalls.flatMap(call => call[0].messages);
+
+      expect(allMessages.length).toBe(1);
+      expect(allMessages[0].subject).toBe('Mailer Daemon Test');
+    });
+
+    it('handles "From -" envelope line (common in some exports)', () => {
+      const mboxContent = 
+        'From - Wed Dec 31 19:00:00 1969\n' +
+        'Subject: Reset Date\n' +
+        '\n' +
+        'Body content.\n';
+
+      const buffer = new TextEncoder().encode(mboxContent);
+      onmessageHandler({ data: { type: 'chunk', buffer: buffer.buffer } });
+      onmessageHandler({ data: { type: 'end' } });
+
+      const batchCalls = mockPostMessage.mock.calls.filter(call => call[0].type === 'batch');
+      const allMessages = batchCalls.flatMap(call => call[0].messages);
+
+      expect(allMessages.length).toBe(1);
+      expect(allMessages[0].subject).toBe('Reset Date');
+    });
+
+    it('ignores "From" lines that lack a valid day name in timestamp', () => {
+      // "From what I ..." -> "what" is sender, "I" is [A-Z] but NOT a valid day -> REJECT
+      // "From that Day ..." -> "that" is sender, "Day" is Capitalized but NOT a valid day -> REJECT
+      // We want to verify that non-compliant timestamps are ignored.
+      
+      const mboxContent = 
+        'From sender@example.com Mon Jan 01 00:00:00 2024\n' +
+        'Subject: False Positive Check\n' +
+        '\n' +
+        'From what I understand, no split here.\n' +
+        'From me to You (You is Capitalized 3-char, but "to" is not [A-Z]).\n' + 
+        'From that Day forward.\n'; 
+
+      const buffer = new TextEncoder().encode(mboxContent);
+      onmessageHandler({ data: { type: 'chunk', buffer: buffer.buffer } });
+      onmessageHandler({ data: { type: 'end' } });
+
+      const batchCalls = mockPostMessage.mock.calls.filter(call => call[0].type === 'batch');
+      const allMessages = batchCalls.flatMap(call => call[0].messages);
+
+      expect(allMessages.length).toBe(1);
+      expect(allMessages[0].subject).toBe('False Positive Check');
     });
   });
 
