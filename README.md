@@ -19,14 +19,16 @@ Account Scanner is a Chrome extension that helps you discover all accounts assoc
 ## Privacy & Security
 
 - The extension only requests Gmail read-only access.
-- No passwords are accessed or stored.
 - All processing is done locally in your browser.
 
 ## Limitations
 
 - Only works with Gmail accounts (for now).
-- Cannot access Chrome's built-in password manager due to browser restrictions.
 - May not detect every account if emails are missing or use unusual formats.
+
+## Acknowledgements
+
+This extension uses account deletion data from [justdeleteme.xyz](https://justdeleteme.xyz/). Huge thanks to the justdeleteme project and its contributors for maintaining this valuable resource.
 
 ---
 
