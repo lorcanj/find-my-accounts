@@ -37,7 +37,8 @@ export function downloadAccountsAsCsv(accounts) {
   });
 
   // Combine headers and rows
-  const csvContent = [headers.join(','), ...rows].join('\n');
+  const safeHeaders = headers.map(escapeCsv).join(',');
+  const csvContent = [safeHeaders, ...rows].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
