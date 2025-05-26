@@ -386,6 +386,60 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     });
   });
 
+  it('renders subscription badges after scan completion', async () => {
+    const accounts = [
+      {
+        canonicalKey: 'k-sub',
+        email: 'billing@netflix.com',
+        from: 'Netflix <billing@netflix.com>',
+        name: 'Netflix',
+        _subscriptionSignals: [
+          { strongKeywords: ['subscription confirmed'], weakKeywords: [], negativeKeywords: [], purchaseKeywords: [], isBillingSender: true, amount: '$15.99', frequency: 'monthly', dateIso: '2024-01-15T12:00:00.000Z' }
+        ],
+      },
+      {
+        canonicalKey: 'k-nosub',
+        email: 'noreply@github.com',
+        from: 'GitHub <noreply@github.com>',
+        name: 'GitHub',
+        _subscriptionSignals: [],
+      },
+    ];
+
+    extractAccountsMock.mockReturnValueOnce(accounts);
+
+    importMboxFileMock.mockImplementation(async (file, onProgress, onBatch) => {
+      onProgress(100);
+      onBatch([{ canonicalKey: 'msg' }]);
+      return Promise.resolve();
+    });
+
+    await import('../src/popup/popup.js');
+    document.dispatchEvent(new window.Event('DOMContentLoaded'));
+
+    const fileInput = document.getElementById('mboxFileInput');
+    const startScanBtn = document.getElementById('startScanBtn');
+    const file = new window.File(['mbox'], 'test.mbox', { type: 'application/mbox' });
+    setInputFiles(fileInput, [file]);
+    await startScanBtn.click();
+
+    await vi.waitFor(() => {
+      const rows = document.querySelectorAll('#accountList li[role="row"]');
+      expect(rows).toHaveLength(2);
+
+      // Netflix row should have a subscription badge
+      const netflixRow = rows[0];
+      const badge = netflixRow.querySelector('.badge-sub-active');
+      expect(badge).not.toBeNull();
+      expect(badge.textContent).toBe('$15.99/mo');
+
+      // GitHub row should NOT have a subscription badge
+      const githubRow = rows[1];
+      const noBadge = githubRow.querySelector('[class*="badge-sub"]');
+      expect(noBadge).toBeNull();
+    });
+  });
+
   it('disables file input and keeps cancel button enabled during an in-progress scan', async () => {
     importMboxFileMock.mockImplementation(() => new Promise(() => {}));
 

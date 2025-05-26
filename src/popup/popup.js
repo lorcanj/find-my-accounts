@@ -247,6 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
           delete account._subscriptionSignals;
         }
 
+        // Re-render so subscription badges appear on the now-enriched accounts
+        const sortSelect = document.getElementById(DOM_ID.SORT_SELECT);
+        rerenderAllAccounts(sortSelect ? sortSelect.value : 'default');
+
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
