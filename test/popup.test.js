@@ -321,4 +321,37 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       expect(selectedFileInfo.textContent).toBe('Import cancelled.');
     });
   });
+
+  it('keeps cancel button enabled when file input changes during an in-progress scan', async () => {
+    importMboxFileMock.mockImplementation(() => new Promise(() => {}));
+
+    await import('../src/popup/popup.js');
+
+    const event = new window.Event('DOMContentLoaded');
+    document.dispatchEvent(event);
+
+    const fileInput = document.getElementById('mboxFileInput');
+    const importBtn = document.getElementById('importMboxBtn');
+
+    const validFile = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
+    setInputFiles(fileInput, [validFile]);
+
+    importBtn.click();
+
+    await vi.waitFor(() => {
+      expect(importBtn.textContent).toBe('Cancel scan');
+      expect(importBtn.disabled).toBe(false);
+    });
+
+    const invalidFile = new window.File(['not mbox'], 'test.txt', { type: 'text/plain' });
+    setInputFiles(fileInput, [invalidFile]);
+
+    expect(importBtn.textContent).toBe('Cancel scan');
+    expect(importBtn.disabled).toBe(false);
+
+    setInputFiles(fileInput, []);
+
+    expect(importBtn.textContent).toBe('Cancel scan');
+    expect(importBtn.disabled).toBe(false);
+  });
 });

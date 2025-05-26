@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = mboxInput.files && mboxInput.files[0];
       if (!file) {
         if (selectedFileInfo) selectedFileInfo.textContent = '';
-        if (importBtn) importBtn.disabled = true;
+        if (importBtn && !importInProgress) importBtn.disabled = true;
         currentMboxFileValid = false;
         return;
       }
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Simple extension-only validation for now
       if (!/\.mbox$/i.test(file.name)) {
         if (selectedFileInfo) selectedFileInfo.textContent = `Invalid file type. Please select a .mbox file.`;
-        if (importBtn) importBtn.disabled = true;
+        if (importBtn && !importInProgress) importBtn.disabled = true;
         currentMboxFileValid = false;
         return;
       }
@@ -164,7 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
         }
       } finally {
-        setImportUiState(false, true);
+        const hasValidSelection =
+          currentMboxFileValid &&
+          mboxInput &&
+          mboxInput.files &&
+          mboxInput.files.length > 0;
+        setImportUiState(false, hasValidSelection);
       }
     });
   }
