@@ -78,6 +78,7 @@ self.onmessage = (e) => {
       let decodedText = '';
       if (textNode && textNode.body) {
         if (typeof textNode.body === 'string') decodedText = textNode.body;
+        // can't assume that utf-8 can be the fallback, will need to update
         else if (textNode.body instanceof Uint8Array) decodedText = new TextDecoder(textNode.charset || 'utf-8').decode(textNode.body);
       }
 
