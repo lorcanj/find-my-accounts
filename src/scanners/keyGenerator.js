@@ -67,14 +67,11 @@ export function generateCanonicalKey(item = {}) {
   const subject = item.normSubject ?? normaliseText(item.subject || '');
   if (name || subject) return `n:${name}|${subject}`;
 
-  if (item.provider && item.messageId) return `m:${item.provider}|${item.messageId}`;
-
   // Fallback: deterministic, normalised string of a few identifying fields
   const fallback = [
     item.displayName || '',
     item.normSubject || item.subject || '',
-    item.snippet || '',
-    item.provider || ''
+    item.snippet || ''
   ].join(' | ');
   const normalisedFallback = normaliseText(fallback).replace(/\s+/g, '_');
   return `u:${normalisedFallback}`;
