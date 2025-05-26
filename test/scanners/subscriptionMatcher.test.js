@@ -41,12 +41,12 @@ describe('enrichAccountWithSubscription', () => {
       expect(acc.subscription.confidence).toBe('high');
     });
 
-    it('strong alone → medium', () => {
+    it('strong alone → low', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
         signal({ strongKeywords: ['renewed'] }),
       ]);
-      expect(acc.subscription.confidence).toBe('medium');
+      expect(acc.subscription.confidence).toBe('low');
     });
 
     it('amount alone (no keywords) → medium', () => {
@@ -109,7 +109,7 @@ describe('enrichAccountWithSubscription', () => {
         signal({ purchaseKeywords: ['order confirmed'], strongKeywords: ['invoice'] }),
       ]);
       expect(acc.subscription).not.toBeNull();
-      expect(acc.subscription.confidence).toBe('medium');
+      expect(acc.subscription.confidence).toBe('low');
     });
   });
 

@@ -43,14 +43,16 @@ export function enrichAccountWithSubscription(account, signalsArray) {
   const countStrongOrBilling = signalsArray.filter(
     s => (s.strongKeywords?.length > 0) || s.isBillingSender
   ).length;
+  const countStrong = signalsArray.filter(s => s.strongKeywords?.length > 0).length;
 
   let confidence = null;
   if      (hasStrong && hasAmount)        confidence = CONFIDENCE.HIGH;
   else if (hasStrong && anyBillingSender) confidence = CONFIDENCE.HIGH;
   else if (countStrongOrBilling > 1)      confidence = CONFIDENCE.HIGH;
-  else if (hasStrong)                     confidence = CONFIDENCE.MEDIUM;
-  else if (hasAmount)                     confidence = CONFIDENCE.MEDIUM; // also covers weak+amount — both map to medium, so no separate branch needed
+  else if (hasStrong && countStrong >= 2) confidence = CONFIDENCE.MEDIUM;
+  else if (hasAmount)                     confidence = CONFIDENCE.MEDIUM;
   else if (hasWeak && anyBillingSender)   confidence = CONFIDENCE.MEDIUM;
+  else if (hasStrong)                     confidence = CONFIDENCE.LOW;
   else if (hasWeak)                       confidence = CONFIDENCE.LOW;
 
   if (confidence === null) return account;
