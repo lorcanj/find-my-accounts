@@ -1,5 +1,6 @@
 import { domainLookup } from '../data/buildDomainLookup.js';
 import { downloadAccountsAsJson } from './download.js';
+import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 
 const ACTION_SCAN_GMAIL = 'scanGmail';
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
@@ -26,10 +27,9 @@ function handleScanClick() {
 
 function handleScanResponse(response) {
   if (response && response.success) {
-    const accounts = response.data || [];
-
-    const filteredAccounts = filterAccounts(accounts);
-    const enrichedAccounts = enrichAccounts(filteredAccounts);
+    console.log(response.data)
+    const accounts = extractAccountsFromMessages(response.data);
+    const enrichedAccounts = enrichAccounts(accounts);
     renderAccountList(enrichedAccounts);
     // Store the enriched, deduplicated accounts for download/export
     accountsForDownload = enrichedAccounts;
