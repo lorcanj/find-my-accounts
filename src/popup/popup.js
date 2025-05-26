@@ -39,26 +39,6 @@ function handleScanResponse(response) {
   }
 }
 
-function filterAccounts(accounts) {
-  const seenAccount = new Set();
-  const filtered = [];
-  accounts.forEach(account => {
-    const displayName = extractDisplayName(account);
-    const accountName = normalise(displayName);
-    if (seenAccount.has(accountName)) return;
-    account.name = displayName; // store original for display
-    seenAccount.add(accountName);
-    filtered.push(account);
-  });
-  // Helper to extract the original display name from the "from" field
-  function extractDisplayName(account) {
-    const from = account.from || '';
-    const nameMatch = from.match(/^"?([^"<]*)"?\s*</);
-    return nameMatch && nameMatch[1] ? nameMatch[1].trim() : from;
-  }
-  return filtered;
-}
-
 function renderAccountList(accounts) {
   const list = document.getElementById('accountList');
   list.innerHTML = '';
@@ -69,6 +49,7 @@ function renderAccountList(accounts) {
 }
 
 // Enrich accounts with justdeleteme data
+// might need to update this as I don't think I need getAccountName anymore
 function enrichAccounts(accounts) {
   return accounts.map(account => {
     const lookupKey = getAccountName(account);

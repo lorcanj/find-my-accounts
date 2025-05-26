@@ -51,7 +51,6 @@ export default class GmailProvider extends BaseProvider {
     }
   }
 
-  // this isn't normalising
   normaliseAccount(gmailData) {
     return normaliseGmailMessage(gmailData);
   }

@@ -1,6 +1,7 @@
 
 import { parseOneAddress } from 'email-addresses';
 import { toIsoDate, normaliseEmail, normaliseText } from './utils.js';
+import generateCanonicalKey from '../keyGenerator.js';
 
 // Maps Gmail message detail objects to a canonical, plain JS object shape
 // Normaliser is pure and returns primitive fields only.
@@ -64,6 +65,13 @@ export default function normaliseGmailMessage(raw) {
 		metadata: { headers, rawSummary: { labelIds: raw.labelIds } },
 		raw
 	};
+
+	// Attach a canonical key computed from the normalised fields
+	try {
+		normalised.canonicalKey = generateCanonicalKey(normalised);
+	} catch (e) {
+		normalised.canonicalKey = null;
+	}
 
 	return normalised;
 }

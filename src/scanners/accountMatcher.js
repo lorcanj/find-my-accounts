@@ -11,7 +11,8 @@ export function extractAccountsFromMessages(messages = []) {
     const from = m.from || '';
     const subject = m.subject || '';
     const item = { from, subject, snippet: m.snippet || '', provider: m.provider || 'gmail', messageId: m.messageId || m.id || null };
-    const key = generateCanonicalKey(item);
+    // Prefer canonicalKey from a normaliser; fall back to generating one
+    const key = m.canonicalKey || generateCanonicalKey(item);
     if (!seen.has(key)) {
       foundAccounts.push(new Account({ name: m.name || '', subject, from, snippet: item.snippet }));
       seen.add(key);
