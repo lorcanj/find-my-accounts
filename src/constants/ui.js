@@ -1,5 +1,5 @@
 // Feature flag — set to true to re-enable the subscription UI surface
-export const SUBSCRIPTION_UI_ENABLED = false;
+export const SUBSCRIPTION_UI_ENABLED = true;
 
 export const IMPORT_UI_STATE = Object.freeze({
   IDLE:     'idle',
