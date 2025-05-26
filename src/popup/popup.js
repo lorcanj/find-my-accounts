@@ -1,6 +1,7 @@
 import { domainLookup } from '../data/buildDomainLookup.js';
 import { downloadAccountsAsJson } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
+import { importMboxFile } from '../services/mboxImportService.js';
 
 const ACTION_SCAN_GMAIL = 'scanGmail';
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
@@ -65,54 +66,47 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
+
       try {
-        const ab = await readFileAsArrayBuffer(file);
-
-        // Create the parser worker in the popup (Worker is defined in window scope)
-        const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
-        const worker = new Worker(workerUrl, { type: 'module' });
-
-        worker.onmessage = (e) => {
-          const msg = e.data || {};
-          if (msg.type === 'progress') {
-            const pct = Math.max(0, Math.min(100, Number(msg.percent) || 0));
+        await importMboxFile(
+          file,
+          // onProgress
+          (pct) => {
             if (progress) progress.style.display = 'block';
             if (progressBar) progressBar.style.width = `${pct}%`;
             if (selectedFileInfo) selectedFileInfo.textContent = `Parsing ${file.name}: ${pct}%`;
-          } else if (msg.type === 'done') {
-            resetProgressIndicator();
-            handleImportResponse({ success: true, data: msg.messages || [] });
-            worker.terminate();
-          } else if (msg.type === 'error') {
-            resetProgressIndicator();
-            if (selectedFileInfo) selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
-            if (importBtn) importBtn.disabled = false;
-            worker.terminate();
+          },
+          // onBatch
+          (batchMessages) => {
+            if (batchMessages && batchMessages.length) {
+              const accounts = extractAccountsFromMessages(batchMessages);
+              const enrichedAccounts = enrichAccounts(accounts);
+
+              const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey || a.domain));
+              const newUnique = enrichedAccounts.filter(a => {
+                const key = a.canonicalKey || a.domain;
+                if (!key) return true;
+                if (existingKeys.has(key)) return false;
+                existingKeys.add(key);
+                return true;
+              });
+
+              accountsForDownload = [...accountsForDownload, ...newUnique];
+              renderAccountList(accountsForDownload);
+              updateAccountCount(accountsForDownload.length);
+            }
           }
-        };
+        );
 
-        worker.onerror = (ev) => {
-          console.error('Worker onerror event:', ev);
-          resetProgressIndicator();
-          // ErrorEvent in workers contains message/filename/lineno/colno
-          const message = (ev && (ev.message || (ev.error && ev.error.message))) || String(ev);
-          if (selectedFileInfo) selectedFileInfo.textContent = `Worker error: ${message}`;
-          if (importBtn) importBtn.disabled = false;
-          try { worker.terminate(); } catch (e) {}
-        };
-
-        try {
-          // Transfer buffer where supported
-          worker.postMessage({ buffer: ab, fileName: file.name }, [ab]);
-        } catch (e) {
-          worker.postMessage({ buffer: ab, fileName: file.name });
-        }
-
-        if (selectedFileInfo) selectedFileInfo.textContent = `Imported ${file.name}, parsing...`;
-        if (progress) progress.style.display = 'block';
-        if (progressBar) progressBar.style.width = '0%';
+        // Success (resolved)
+        resetProgressIndicator();
+        if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
       } catch (err) {
-        if (selectedFileInfo) selectedFileInfo.textContent = `Failed to read file: ${err.message}`;
+        // Error (rejected)
+        resetProgressIndicator();
+        console.error('Import error:', err);
+        if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
+      } finally {
         if (importBtn) importBtn.disabled = false;
       }
     });
@@ -124,7 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
       downloadAccountsAsJson(accountsForDownload);
     });
   }
+
+  // Top duplicate import control removed; use the main file picker (`mboxFileInput`) instead.
 });
+
+// The dedicated top-file input and handler were removed in favor of the
+// consolidated import UI (`mboxFileInput` + `importMboxBtn`).
 
 // need to use chrome.runtime
 // for communication between the popup and service worker
@@ -192,15 +191,6 @@ function getAccountName(account) {
   const nameMatch = from.match(/^"?([^"<]*)"?\s*</);
   const displayName = nameMatch && nameMatch[1] ? nameMatch[1].trim() : from;
   return normalise(displayName);
-}
-
-function readFileAsArrayBuffer(file) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onerror = () => reject(new Error('File read error'));
-    fr.onload = () => resolve(fr.result);
-    fr.readAsArrayBuffer(file);
-  });
 }
 
 function resetProgressIndicator() {
