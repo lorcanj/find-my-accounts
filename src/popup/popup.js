@@ -27,7 +27,6 @@ function handleScanClick() {
 
 function handleScanResponse(response) {
   if (response && response.success) {
-    console.log(response.data)
     const accounts = extractAccountsFromMessages(response.data);
     const enrichedAccounts = enrichAccounts(accounts);
     renderAccountList(enrichedAccounts);
