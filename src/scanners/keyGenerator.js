@@ -44,10 +44,13 @@ export function generateCanonicalKey(item = {}) {
         if (displayName) {
           const subParts = res.subdomain.split('.');
           for (const part of subParts) {
-            // Check for significant parts (avoid 1-2 char parts) that appear in the name
-            if (part && part.length > 2 && displayName.includes(part)) {
-              brandStem = part;
-              break;
+            // Check for significant parts (avoid short generic subdomains like api, cdn, app)
+            if (part && part.length > 3) {
+              const regex = new RegExp(`\\b${part}\\b`, 'i');
+              if (regex.test(displayName)) {
+                brandStem = part;
+                break;
+              }
             }
           }
         }
