@@ -6,9 +6,7 @@ import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 const IMPORT_UI_STATE = Object.freeze({
   IDLE: 'idle',
-  SCANNING: 'scanning',
-  DONE: 'done',
-  ERROR: 'error'
+  SCANNING: 'scanning'
 });
 
 let accountsForDownload = [];
@@ -165,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Success (resolved)
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
-        setImportUiState(IMPORT_UI_STATE.DONE, { hasValidFile: currentMboxFileValid });
+        setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
       } catch (err) {
         // Error (rejected) or cancellation
         resetProgressIndicator();
@@ -175,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           console.error('Import error:', err);
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
-          setImportUiState(IMPORT_UI_STATE.ERROR, { hasValidFile: currentMboxFileValid });
+          setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         }
       }
     });
