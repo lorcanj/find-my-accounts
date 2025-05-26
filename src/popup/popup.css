@@ -56,6 +56,28 @@ body.popped-out {
 }
 .btn-primary { background: #1976d2; color: white; }
 .btn-secondary { background: #eee; color: #222; }
+
+/* Icon-only button style */
+.btn-icon {
+    background-color: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-icon img {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Row layout for primary actions (import + download) */
+.button-row {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
 .file-picker input[type="file"] {
     width: 100%;
 }
