@@ -1,11 +1,8 @@
-import GmailProvider from './providers/GmailProvider.js';
-
 class ProviderManager {
   constructor() {
     this.providers = new Map();
     
     // Register default providers
-    this.registerProvider(new GmailProvider());
   }
 
   registerProvider(provider) {

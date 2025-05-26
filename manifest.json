@@ -2,16 +2,9 @@
   "manifest_version": 3,
   "name": "Account Scanner",
   "version": "1.0.0",
-  "description": "Scan your Gmail inbox to discover all accounts associated with your email",
+  "description": "Scan uploaded .mbox files to discover accounts associated with your email",
   
-  "permissions": [
-    "identity",
-    "storage"
-  ],
-  
-  "host_permissions": [
-    "https://www.googleapis.com/*"
-  ],
+  "permissions": [],
   
   "action": {
     "default_popup": "src/popup/popup.html"
@@ -20,13 +13,6 @@
   "background": {
     "service_worker": "dist/service-worker.js",
     "type": "module"
-  },
-  
-  "oauth2": {
-    "client_id": "540669513328-c58t5k5tgfbrbdhtsgo0ivnvl5qm0d5k.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/gmail.readonly"
-    ]
   }
 }
 
