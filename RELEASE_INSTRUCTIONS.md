@@ -61,7 +61,5 @@ This zip contains the raw source code. This is required by platforms like Mozill
 *   `src/` (The entire folder)
 *   `_locales/`
 *   `test/`
-*   `marketing/` (Optional)
-*   `todo/` (Optional)
 
 *(Note: Do **not** include the `node_modules/` or `dist/` folders in the source zip, as they are generated from the source).*

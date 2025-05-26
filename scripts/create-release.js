@@ -86,9 +86,7 @@ const sourceItems = [
   'LICENSES',
   'src',
   '_locales',
-  'test',
-  'marketing',
-  'todo'
+  'test'
 ];
 
 for (const item of sourceItems) {
