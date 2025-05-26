@@ -1,10 +1,51 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+const mockState = {
+  downloadMock: null,
+  importMboxFileMock: null,
+  extractAccountsMock: null,
+  domainLookup: {}
+};
+
+// Top-level mocked modules. The factories delegate to functions on `mockState`,
+// which are populated in `beforeEach` so tests can control behavior per-test.
+vi.mock('../src/popup/download.js', () => ({
+  downloadAccountsAsJson: (...args) => mockState.downloadMock(...args)
+}));
+
+vi.mock('../src/services/mboxImportService.js', () => ({
+  importMboxFile: async (...args) => mockState.importMboxFileMock(...args)
+}));
+
+vi.mock('../src/scanners/accountMatcher.js', () => ({
+  extractAccountsFromMessages: (...args) => mockState.extractAccountsMock(...args)
+}));
+
+vi.mock('../src/data/buildDomainLookup.js', () => ({
+  domainLookup: mockState.domainLookup
+}));
+
 describe('popup.js - accountsForDownload reset behavior', () => {
+  function setInputFiles(input, files) {
+    // Create a simple array-like object to mimic FileList behavior if code iterates it
+    const fileList = [...files];
+    fileList.item = (index) => files[index] || null;
+    
+    Object.defineProperty(input, 'files', {
+      value: fileList,
+      writable: false,
+      configurable: true
+    });
+    
+    input.dispatchEvent(new globalThis.window.Event('change'));
+  }
+
   let dom;
   let document;
   let window;
+  let originalDocument;
+  let originalWindow;
   let downloadMock;
   let importMboxFileMock;
   let extractAccountsMock;
@@ -30,36 +71,29 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     document = dom.window.document;
     window = dom.window;
+
+    originalDocument = global.document;
+    originalWindow = global.window;
+
     global.document = document;
     global.window = window;
 
-    // Mock dependencies
     downloadMock = vi.fn();
     importMboxFileMock = vi.fn();
     extractAccountsMock = vi.fn();
 
-    // Mock modules before importing popup.js
-    vi.doMock('../src/popup/download.js', () => ({
-      downloadAccountsAsJson: downloadMock
-    }));
-
-    vi.doMock('../src/services/mboxImportService.js', () => ({
-      importMboxFile: importMboxFileMock
-    }));
-
-    vi.doMock('../src/scanners/accountMatcher.js', () => ({
-      extractAccountsFromMessages: extractAccountsMock
-    }));
-
-    vi.doMock('../src/data/buildDomainLookup.js', () => ({
-      domainLookup: {}
-    }));
+    mockState.downloadMock = downloadMock;
+    mockState.importMboxFileMock = importMboxFileMock;
+    mockState.extractAccountsMock = extractAccountsMock;
+    mockState.domainLookup = {};
   });
 
   afterEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     dom.window.close();
+    global.document = originalDocument;
+    global.window = originalWindow;
   });
 
   it('resets accountsForDownload when importing twice (no accumulation)', async () => {
@@ -94,35 +128,30 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     const fileInput = document.getElementById('mboxFileInput');
     const importBtn = document.getElementById('importMboxBtn');
 
-    // Create a mock file
+    // Create a mock file and assign it via DataTransfer helper
     const file1 = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
-    Object.defineProperty(fileInput, 'files', {
-      value: [file1],
-      writable: false
-    });
-
-    // Trigger change event to enable import button
-    fileInput.dispatchEvent(new window.Event('change'));
+    setInputFiles(fileInput, [file1]);
 
     // Click import button
     await importBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 10)); // Allow async operations to complete
-
+    
     // Verify first import completed
-    expect(extractAccountsMock).toHaveBeenCalledTimes(1);
-    expect(document.getElementById('accountCount').textContent).toBe('1');
+    await vi.waitFor(() => {
+      expect(extractAccountsMock).toHaveBeenCalledTimes(1);
+      expect(document.getElementById('accountCount').textContent).toBe('1');
+    });
 
     // Simulate second import: reuse the same file object and rely on mocks
     fileInput.dispatchEvent(new window.Event('change'));
 
     await importBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 10));
-
+    
     // Verify second import completed
-    expect(extractAccountsMock).toHaveBeenCalledTimes(2);
-
-    // Critical assertion: accountCount should be 1 (only second import), not 2 (accumulated)
-    expect(document.getElementById('accountCount').textContent).toBe('1');
+    await vi.waitFor(() => {
+      expect(extractAccountsMock).toHaveBeenCalledTimes(2);
+      // Critical assertion: accountCount should be 1 (only second import), not 2 (accumulated)
+      expect(document.getElementById('accountCount').textContent).toBe('1');
+    });
 
     // Verify download receives only the second import's accounts
     const downloadBtn = document.getElementById('downloadAccounts');
@@ -167,25 +196,23 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     const importBtn = document.getElementById('importMboxBtn');
 
     const file1 = new window.File(['mbox1'], 'first.mbox', { type: 'application/mbox' });
-    Object.defineProperty(fileInput, 'files', {
-      value: [file1],
-      writable: false
-    });
-    fileInput.dispatchEvent(new window.Event('change'));
+    setInputFiles(fileInput, [file1]);
     await importBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    await vi.waitFor(() => {
+      expect(document.getElementById('accountCount').textContent).toBe('1');
+    });
 
-    // Verify first import
-    expect(document.getElementById('accountCount').textContent).toBe('1');
-
-    // Second import - should reset, not accumulate
     // Second import - reuse same file object and rely on mocks to produce new accounts
     fileInput.dispatchEvent(new window.Event('change'));
     await importBtn.click();
-    await new Promise(resolve => setTimeout(resolve, 10));
-
-    // Critical assertion: should still be 1 (reset happened)
-    expect(document.getElementById('accountCount').textContent).toBe('1');
+    
+    await vi.waitFor(() => {
+      // Ensure that the second extraction happened
+      expect(extractAccountsMock).toHaveBeenCalledTimes(2);
+      // Critical assertion: should still be 1 (reset happened)
+      expect(document.getElementById('accountCount').textContent).toBe('1');
+    });
 
     // Verify the downloaded accounts are only from the second import
     const downloadBtn = document.getElementById('downloadAccounts');
@@ -194,6 +221,5 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     const downloadedAccounts = downloadMock.mock.calls[0][0];
     expect(downloadedAccounts).toHaveLength(1);
     expect(downloadedAccounts[0].email).toBe('new@example.com');
-    expect(downloadedAccounts[0].email).not.toBe('old@example.com');
   });
 });
