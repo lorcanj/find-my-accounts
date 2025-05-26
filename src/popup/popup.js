@@ -50,11 +50,17 @@ document.addEventListener('DOMContentLoaded', () => {
         width: 400,
         height: 600
       }, () => {
-        if (!chrome.runtime.lastError) {
-          window.close();
-        } else {
-          console.error('Window creation failed:', chrome.runtime.lastError);
+        const err = chrome.runtime.lastError;
+        if (err) {
+          console.error('Window creation failed:', err);
+          if (selectedFileInfo) {
+            selectedFileInfo.textContent = `Pop-out failed: ${err.message || String(err)}`;
+          } else {
+            alert(`Pop-out failed: ${err.message || String(err)}`);
+          }
+          return;
         }
+        window.close();
       });
     });
   }
