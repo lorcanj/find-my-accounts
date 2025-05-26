@@ -9,22 +9,17 @@ function extractAccountsFromMessages(messages) {
     const subject = subjectHeader ? subjectHeader.value.toLowerCase() : '';
     const from = fromHeader ? fromHeader.value : '';
 
-    // Create a unique key for each account (customize as needed)
+    // Create a unique key for each account
     const key = from + '|' + subject;
 
     if (
       accountKeywords.some(keyword => subject.includes(keyword)) &&
       !seen.has(key)
     ) {
-      foundAccounts.push({
-        subject,
-        from,
-        snippet: msg.snippet
-      });
+      foundAccounts.push(new Account({subject, from, snippet: msg.snippet}));
       seen.add(key);
     }
   });
-
   return foundAccounts;
 }
 
