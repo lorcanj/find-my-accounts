@@ -341,12 +341,9 @@ function createAccountListItem(account) {
   return li;
 }
 
-// Extracts and normalises the account name for deduplication
+// Normalises the account name for lookup matching
 function getAccountName(account) {
-  const from = account.from || '';
-  const nameMatch = from.match(/^"?([^"<]*)"?\s*</);
-  const displayName = nameMatch && nameMatch[1] ? nameMatch[1].trim() : from;
-  return normalise(displayName);
+  return normalise(account.name || '');
 }
 
 function resetProgressIndicator() {
