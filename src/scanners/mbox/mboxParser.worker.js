@@ -202,7 +202,6 @@ self.onmessage = (e) => {
       }
       
       self.postMessage({ type: 'done' });
-      self.close();
     }
   } catch (err) {
     self.postMessage({ type: 'error', message: err?.message ?? String(err) });
