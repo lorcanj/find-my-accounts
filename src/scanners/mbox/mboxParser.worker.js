@@ -140,9 +140,10 @@ self.onmessage = (e) => {
       const decoded = decoder.decode(buffer, { stream: true });
       let currentBuffer = remainder + decoded;
       
-      let searchStartIndex = 0;
-      
-      currentBuffer = extractAndProcessMessages(currentBuffer, /\r?\nFrom /);
+      // Use a more specific delimiter pattern to avoid false matches on "From " in message body
+      // Pattern: (start-of-string OR newline) + From <email> <timestamp>
+      // This prevents splitting when body contains lines like "From what I understand..."
+      currentBuffer = extractAndProcessMessages(currentBuffer, /(?:^|\r?\n)From \S+@\S+ /);
       
       remainder = currentBuffer;
       totalBytesProcessed += buffer.byteLength;
@@ -153,7 +154,8 @@ self.onmessage = (e) => {
       const finalDecoded = decoder.decode();
       let finalBuffer = remainder + finalDecoded;
       
-      finalBuffer = extractAndProcessMessages(finalBuffer, /\r?\nFrom /);
+      // Use the same specific delimiter pattern as in chunk processing
+      finalBuffer = extractAndProcessMessages(finalBuffer, /(?:^|\r?\n)From \S+@\S+ /);
       
       // Process the very last part
       if (finalBuffer && finalBuffer.trim()) {
