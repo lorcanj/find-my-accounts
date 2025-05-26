@@ -42,6 +42,7 @@ async function handleScanRequest(request) {
 
 // Import handler — spawn the mbox parser Web Worker and return normalised-like messages
 async function handleImportRequest(request) {
+  // TODO: add check for file type
   const fileName = request.fileName || 'import.mbox';
   const buffer = request.buffer;
   if (!buffer) throw new Error('No file buffer provided');
