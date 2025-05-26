@@ -1,3 +1,6 @@
+// Feature flag — set to true to re-enable the subscription UI surface
+export const SUBSCRIPTION_UI_ENABLED = true;
+
 export const IMPORT_UI_STATE = Object.freeze({
   IDLE:     'idle',
   SCANNING: 'scanning',
@@ -25,6 +28,9 @@ export const CSS_CLASS = Object.freeze({
   BADGE_HIGH:  'badge-high',
   BADGE_MED:   'badge-medium',
   BADGE_LOW:   'badge-low',
+  BADGE_SUB_ACTIVE:    'badge-sub-active',
+  BADGE_SUB_CANCELLED: 'badge-sub-cancelled',
+  BADGE_SUB_TRIAL:     'badge-sub-trial',
   FILTER_BTN:  'filter-btn',
   FILTER_BTN_ACTIVE: 'active',
 });
@@ -43,4 +49,5 @@ export const DOM_ID = Object.freeze({
   LARGE_FILE_WARNING: 'largeFileWarning',
   SORT_SELECT:        'sortSelect',
   CONFIDENCE_FILTER:  'confidenceFilter',
+  SHOW_SUBSCRIPTIONS: 'showSubscriptions',
 });

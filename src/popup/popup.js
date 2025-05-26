@@ -2,8 +2,9 @@ import { domainLookup, domainMap } from '../data/buildDomainLookup.js';
 import { normaliseForLookup } from '../scanners/normalisers/utils.js';
 import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages, updateConfidence } from '../scanners/accountMatcher.js';
+import { enrichAccountWithSubscription } from '../scanners/subscriptionMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
-import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
+import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID, SUBSCRIPTION_UI_ENABLED } from '../constants/ui.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
@@ -240,7 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         );
 
-        // Success (resolved)
+        // Success (resolved) — enrich accounts with subscription data
+        for (const { account } of existingKeys.values()) {
+          enrichAccountWithSubscription(account, account._subscriptionSignals || []);
+        }
+
+        // Re-render so subscription badges appear on the now-enriched accounts
+        const sortSelect = document.getElementById(DOM_ID.SORT_SELECT);
+        rerenderAllAccounts(sortSelect ? sortSelect.value : 'default');
+
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
@@ -254,6 +263,11 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('Import error:', err);
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
           setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
+        }
+      } finally {
+        // Clean up transient signals regardless of success/cancel/error
+        for (const { account } of existingKeys.values()) {
+          delete account._subscriptionSignals;
         }
       }
     });
@@ -300,7 +314,29 @@ document.addEventListener('DOMContentLoaded', () => {
       applyConfidenceFilter();
     });
   }
+
+  // Subscription filter toggle
+  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  if (subToggle && SUBSCRIPTION_UI_ENABLED) {
+    subToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
+    subToggle.addEventListener('change', applySubscriptionFilter);
+  }
 });
+
+function applySubscriptionFilter() {
+  if (!SUBSCRIPTION_UI_ENABLED) return;
+  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
+  if (!list) return;
+  const showSubsOnly = !!(subToggle && subToggle.checked);
+  let visibleCount = 0;
+  for (const li of list.children) {
+    const visible = !showSubsOnly || li.dataset.hasSubscription === 'true';
+    li.style.display = visible ? '' : 'none';
+    if (visible) visibleCount++;
+  }
+  updateAccountCount(visibleCount);
+}
 
 
 function rerenderAllAccounts(sortOrder) {
@@ -316,6 +352,7 @@ function rerenderAllAccounts(sortOrder) {
     }
   });
   applyConfidenceFilter();
+  applySubscriptionFilter();
 }
 
 function renderAccountList(accounts) {
@@ -330,6 +367,7 @@ function renderAccountList(accounts) {
     }
   });
   applyConfidenceFilter();
+  applySubscriptionFilter();
 }
 
 // Enrich accounts with justdeleteme data
@@ -357,6 +395,7 @@ function createAccountListItem(account) {
   const li = document.createElement('li');
   li.setAttribute('role', 'row');
   if (account.confidence) li.dataset.confidence = account.confidence;
+  if (account.subscription) li.dataset.hasSubscription = 'true';
 
   const nameDiv = document.createElement('div');
   nameDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_NAME}`;
@@ -385,8 +424,9 @@ function createAccountListItem(account) {
   actionDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_ACTION}`;
   actionDiv.setAttribute('role', 'cell');
 
+  const nameSpan = document.createElement('span');
   if (account.justDeleteMeData !== UI_TEXT.NO_DATA_FOUND) {
-    nameDiv.textContent = account.justDeleteMeData.name;
+    nameSpan.textContent = account.justDeleteMeData.name;
     diffDiv.textContent = account.justDeleteMeData.difficulty;
 
     if (account.justDeleteMeData.url) {
@@ -402,10 +442,14 @@ function createAccountListItem(account) {
       actionDiv.textContent = '-';
     }
   } else {
-    nameDiv.textContent = account.name;
+    nameSpan.textContent = account.name;
     diffDiv.textContent = '-';
     actionDiv.textContent = '-';
   }
+
+  nameDiv.appendChild(nameSpan);
+  const subBadge = createSubscriptionBadge(account.subscription);
+  if (subBadge) nameDiv.appendChild(subBadge);
 
   li.appendChild(nameDiv);
   li.appendChild(confidenceDiv);
@@ -422,6 +466,34 @@ const CONFIDENCE_BADGE_CLASS = {
   low:    CSS_CLASS.BADGE_LOW,
 };
 const CONFIDENCE_LABEL = { high: 'High', medium: 'Med', low: 'Low' };
+
+const SUB_STATUS_BADGE_CLASS = {
+  active:    CSS_CLASS.BADGE_SUB_ACTIVE,
+  cancelled: CSS_CLASS.BADGE_SUB_CANCELLED,
+  trial:     CSS_CLASS.BADGE_SUB_TRIAL,
+};
+const FREQUENCY_SHORT = { monthly: '/mo', annual: '/yr', weekly: '/wk', quarterly: '/qtr' };
+
+function createSubscriptionBadge(subscription) {
+  if (!SUBSCRIPTION_UI_ENABLED) return null;
+  if (!subscription) return null;
+  if (subscription.confidence === 'low') return null;
+
+  const badge = document.createElement('span');
+  const statusClass = SUB_STATUS_BADGE_CLASS[subscription.status] || SUB_STATUS_BADGE_CLASS.active;
+  badge.className = `${CSS_CLASS.BADGE} ${statusClass}`;
+
+  if (subscription.amount) {
+    const freq = FREQUENCY_SHORT[subscription.frequency] || '';
+    badge.textContent = `${subscription.amount}${freq}`;
+  } else {
+    badge.textContent = 'Subscription';
+  }
+
+  const statusLabel = subscription.status ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) : 'Active';
+  badge.title = `Subscription · ${statusLabel}`;
+  return badge;
+}
 
 function applyConfidenceFilter() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
@@ -506,6 +578,11 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
           const dateCell = entry.li.querySelector('.last-email');
           if (dateCell) dateCell.textContent = formatEmailDate(newDate);
         }
+      }
+
+      // Merge subscription signals across batches
+      if (batchedAccount._subscriptionSignals?.length) {
+        entry.account._subscriptionSignals = entry.account._subscriptionSignals.concat(batchedAccount._subscriptionSignals);
       }
 
       // Update confidence if this message has higher confidence

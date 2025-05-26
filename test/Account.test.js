@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import Account, { JustDeleteMeInfo } from '../src/models/Account.js';
+import Account, { JustDeleteMeInfo, SubscriptionInfo } from '../src/models/Account.js';
 
 describe('Account model', () => {
   it('uses defaults when constructed with no args', () => {
@@ -11,6 +11,7 @@ describe('Account model', () => {
     expect(a.canonicalKey).toBeNull();
     expect(a.justDeleteMeData).toBeNull();
     expect(a.lastEmailDate).toBeNull();
+    expect(a.subscription).toBeNull();
   });
 
   it('assigns provided properties', () => {
@@ -31,6 +32,39 @@ describe('Account model', () => {
     expect(a.canonicalKey).toBe(data.canonicalKey);
     expect(a.justDeleteMeData).toEqual(data.justDeleteMeData);
     expect(a.lastEmailDate).toBe('2025-06-15T12:00:00.000Z');
+  });
+
+  it('accepts a SubscriptionInfo instance', () => {
+    const sub = new SubscriptionInfo({
+      confidence: 'high',
+      amount: '$9.99',
+      frequency: 'monthly',
+      status: 'active',
+    });
+    const a = new Account({ name: 'Netflix', subscription: sub });
+    expect(a.subscription).toBe(sub);
+    expect(a.subscription.confidence).toBe('high');
+    expect(a.subscription.amount).toBe('$9.99');
+    expect(a.subscription.frequency).toBe('monthly');
+    expect(a.subscription.status).toBe('active');
+  });
+});
+
+describe('SubscriptionInfo', () => {
+  it('stores all four fields', () => {
+    const s = new SubscriptionInfo({ confidence: 'high', amount: '$9.99', frequency: 'monthly', status: 'active' });
+    expect(s.confidence).toBe('high');
+    expect(s.amount).toBe('$9.99');
+    expect(s.frequency).toBe('monthly');
+    expect(s.status).toBe('active');
+  });
+
+  it('defaults optional fields to null', () => {
+    const s = new SubscriptionInfo({ confidence: 'low' });
+    expect(s.confidence).toBe('low');
+    expect(s.amount).toBeNull();
+    expect(s.frequency).toBeNull();
+    expect(s.status).toBeNull();
   });
 });
 
