@@ -88,8 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const file = mboxInput.files && mboxInput.files[0];
+      const largeFileWarning = document.getElementById('largeFileWarning');
+      
       if (!file) {
         if (selectedFileInfo) selectedFileInfo.textContent = '';
+        if (largeFileWarning) largeFileWarning.classList.add('hidden');
         currentMboxFileValid = false;
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         return;
@@ -104,6 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${sizeText}`;
+
+      if (largeFileWarning) {
+        const isPopped = document.body.classList.contains('popped-out');
+        // Show warning for files >= 50MB if not popped out
+        if (sizeInMB >= 50 && !isPopped) {
+          largeFileWarning.classList.remove('hidden');
+        } else {
+          largeFileWarning.classList.add('hidden');
+        }
+      }
 
       // Simple extension-only validation for now
       if (!/\.mbox$/i.test(file.name)) {
