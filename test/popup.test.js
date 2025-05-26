@@ -53,6 +53,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
   let importMboxFileMock;
   let cancelMboxImportMock;
   let extractAccountsMock;
+  let originalConfirm;
 
   beforeEach(async () => {
     // Create a minimal DOM structure
@@ -61,6 +62,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       <html>
         <body>
           <input type="file" id="mboxFileInput" />
+          <label for="mboxFileInput">Choose file</label>
           <button id="startScanBtn" disabled>Start scan</button>
           <div id="selectedFileInfo"></div>
           <div id="importProgress" style="display: none;">
@@ -78,6 +80,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     originalDocument = global.document;
     originalWindow = global.window;
+    originalConfirm = global.confirm;
 
     global.document = document;
     global.window = window;
@@ -114,6 +117,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     vi.resetModules();
     vi.clearAllMocks();
     delete global.chrome;
+    global.confirm = originalConfirm;
     dom.window.close();
     global.document = originalDocument;
     global.window = originalWindow;
@@ -371,5 +375,68 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     
     expect(startScanBtn.textContent).toBe('Cancel scan');
     expect(fileInput.disabled).toBe(true);
+  });
+
+  it('prompts Firefox users to pop out and opens popped window on confirmation', async () => {
+    Object.defineProperty(window.navigator, 'userAgent', {
+      value: 'Mozilla/5.0 Firefox/125.0',
+      configurable: true
+    });
+
+    const closeSpy = vi.spyOn(window, 'close').mockImplementation(() => {});
+    global.confirm = vi.fn(() => true);
+
+    await import('../src/popup/popup.js');
+
+    const event = new window.Event('DOMContentLoaded');
+    document.dispatchEvent(event);
+
+    const fileLabel = document.querySelector('label[for="mboxFileInput"]');
+    const clickEvent = new window.MouseEvent('click', { bubbles: true, cancelable: true });
+    const dispatchResult = fileLabel.dispatchEvent(clickEvent);
+
+    expect(dispatchResult).toBe(false);
+    expect(global.confirm).toHaveBeenCalledWith('Firefox will close this popup when opening the file picker. Pop out instead?');
+    expect(global.chrome.windows.create).toHaveBeenCalledTimes(1);
+    expect(global.chrome.windows.create).toHaveBeenCalledWith(
+      {
+        url: 'chrome-extension://mock-id/src/popup/popup.html?popped=true',
+        type: 'normal',
+        width: 400,
+        height: 600
+      },
+      expect.any(Function)
+    );
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('continues with file picker when Firefox pop-out prompt is declined', async () => {
+    Object.defineProperty(window.navigator, 'userAgent', {
+      value: 'Mozilla/5.0 Firefox/125.0',
+      configurable: true
+    });
+
+    global.confirm = vi.fn(() => false);
+
+    await import('../src/popup/popup.js');
+
+    const event = new window.Event('DOMContentLoaded');
+    document.dispatchEvent(event);
+
+    const fileInput = document.getElementById('mboxFileInput');
+    const fileInputClickSpy = vi.spyOn(fileInput, 'click').mockImplementation(() => {});
+
+    const fileLabel = document.querySelector('label[for="mboxFileInput"]');
+    const clickEvent = new window.MouseEvent('click', { bubbles: true, cancelable: true });
+    const dispatchResult = fileLabel.dispatchEvent(clickEvent);
+
+    expect(dispatchResult).toBe(false);
+    expect(global.confirm).toHaveBeenCalledWith('Firefox will close this popup when opening the file picker. Pop out instead?');
+
+    await vi.waitFor(() => {
+      expect(fileInputClickSpy).toHaveBeenCalledTimes(1);
+    });
+
+    expect(global.chrome.windows.create).not.toHaveBeenCalled();
   });
 });

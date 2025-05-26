@@ -134,11 +134,48 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // File import UI elements
   mboxInput = document.getElementById('mboxFileInput');
+  const mboxLabel = document.querySelector('label[for="mboxFileInput"]');
   selectedFileInfo = document.getElementById('selectedFileInfo');
   startScanBtn = document.getElementById('startScanBtn');
   progress = document.getElementById('importProgress');
   progressBar = document.getElementById('importProgressBar');
   let currentMboxFileValid = false;
+  const isFirefox = window.navigator.userAgent.toLowerCase().includes('firefox');
+
+  if (mboxLabel && mboxInput) {
+    mboxLabel.addEventListener('click', (event) => {
+      if (!isFirefox || isPopped) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const proceed = confirm('Firefox will close this popup when opening the file picker. Pop out instead?');
+      if (proceed) {
+        chrome.windows.create({
+          url: chrome.runtime.getURL('src/popup/popup.html?popped=true'),
+          type: 'normal',
+          width: 400,
+          height: 600
+        }, () => {
+          const err = chrome.runtime.lastError;
+          if (err) {
+            console.error('Window creation failed:', err);
+            if (selectedFileInfo) {
+              selectedFileInfo.textContent = `Pop-out failed: ${err.message || String(err)}`;
+            } else {
+              alert(`Pop-out failed: ${err.message || String(err)}`);
+            }
+            return;
+          }
+          window.close();
+        });
+        return;
+      }
+
+      setTimeout(() => mboxInput.click(), 0);
+    });
+  }
 
   setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
 
