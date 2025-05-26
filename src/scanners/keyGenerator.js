@@ -2,6 +2,7 @@ import { normaliseEmail, normaliseText } from './normalisers/utils.js';
 
 export function generateCanonicalKey(item = {}) {
   // Prefer already-normalised fields from provider normalisers; fall back to helpers
+  // TODO: improve this as matching is a bit weird currently
   const email = item.email ?? normaliseEmail(item.from || item.address || null);
   if (email) {
     // Simple registrable-domain heuristic: reduce multi-label domains to last two labels
