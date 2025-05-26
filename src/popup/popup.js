@@ -8,6 +8,7 @@ import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js'
 let accountsForDownload = [];
 const existingKeys = new Set();
 const activeFilters = new Set(['high', 'medium', 'low']);
+let visibleCount = 0;
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -210,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
+      visibleCount = 0;
       document.getElementById(DOM_ID.ACCOUNT_LIST).innerHTML = ''; // Clear previous results
 
       try {
@@ -234,6 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
               
               accountsForDownload.push(...newUnique);
               renderAccountList(newUnique);
+              newUnique.forEach(a => {
+                if (!a.confidence || activeFilters.has(a.confidence)) visibleCount++;
+              });
               updateAccountCount(accountsForDownload.length);
             }
           }
@@ -305,15 +310,9 @@ function enrichAccounts(accounts) {
 }
 
 function updateAccountCount(count) {
-  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
-  const allItems = list ? list.querySelectorAll('li[role="row"]') : [];
-  let visible = 0;
-  allItems.forEach(li => {
-    if (li.style.display !== 'none') visible++;
-  });
   const countEl = document.getElementById(DOM_ID.ACCOUNT_COUNT);
-  if (visible < count) {
-    countEl.textContent = `${visible} / ${count}`;
+  if (visibleCount < count) {
+    countEl.textContent = `${visibleCount} / ${count}`;
   } else {
     countEl.textContent = count;
   }
@@ -322,10 +321,12 @@ function updateAccountCount(count) {
 function applyConfidenceFilter() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   if (!list) return;
-  const items = list.querySelectorAll('li[role="row"]');
-  items.forEach(li => {
+  visibleCount = 0;
+  list.querySelectorAll('li[role="row"]').forEach(li => {
     const level = li.dataset.confidence;
-    li.style.display = (!level || activeFilters.has(level)) ? '' : 'none';
+    const show = !level || activeFilters.has(level);
+    li.style.display = show ? '' : 'none';
+    if (show) visibleCount++;
   });
   updateAccountCount(accountsForDownload.length);
 }
