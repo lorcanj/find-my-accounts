@@ -28,7 +28,6 @@ const lib = unwrapDefault(raw);
 let parseFn = null;
 if (typeof lib === 'function') parseFn = lib;
 else if (lib && typeof lib.parse === 'function') parseFn = lib.parse;
-else if (raw && typeof raw.parse === 'function') parseFn = raw.parse;
 
 // Export a clean default and named `parse` for consumers
 const exportedDefault = parseFn || lib || raw;
