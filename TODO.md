@@ -2,14 +2,6 @@
 
 This document outlines the recommended order for merging the split branches and identifies additional work (primarily testing) required for each stage.
 
-## 2. Key Generator (`split/keygen`)
-**Status:** Foundation. Used by Normaliser and Service.
-- [ ] **Review:** Check `src/scanners/keyGenerator.js` for the new heuristic logic.
-- [ ] **Task:** Create `test/keyGenerator.test.js`.
-    - Test `generateCanonicalKey` with various email formats.
-    - Test the new "registrable domain" heuristic (e.g., `user@sub.domain.com` -> `e:user@domain.com`).
-- [ ] **Merge:** Merge into `main`.
-
 ## 3. Mbox Worker (`split/mbox-worker`)
 **Status:** Core Logic. Depends on Vendor Bundle and Key Generator.
 - [ ] **Review:** Check `src/scanners/mbox/mboxParser.worker.js` and `normaliser.js`.
