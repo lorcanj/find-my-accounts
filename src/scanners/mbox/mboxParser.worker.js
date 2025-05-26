@@ -2,6 +2,7 @@
 
 import { parse as parseNamed } from '../../vendors/emailjs-mime-parser-wrapper.js';
 import normaliseMboxMessage from './normaliser.js';
+import { WORKER_MSG } from '../../constants/workerMessages.js';
 
 // State for streaming
 let decoder = new TextDecoder('utf-8');
@@ -139,7 +140,7 @@ function processMessage(part) {
     batch.push(normalised);
 
     if (batch.length >= BATCH_SIZE) {
-      self.postMessage({ type: 'batch', messages: batch });
+      self.postMessage({ type: WORKER_MSG.BATCH, messages: batch });
       batch = [];
     }
   } catch (err) {
@@ -154,15 +155,15 @@ self.onmessage = (e) => {
 
   // Basic runtime assertions for incoming messages
   if (!data || typeof type !== 'string') {
-    self.postMessage({ type: 'error', message: 'Invalid message: missing or invalid `type` field' });
+    self.postMessage({ type: WORKER_MSG.ERROR, message: 'Invalid message: missing or invalid `type` field' });
     return;
   }
 
   try {
-    if (type === 'chunk') {
+    if (type === WORKER_MSG.CHUNK) {
       // Ensure buffer-like object with byteLength
       if (!buffer || typeof buffer.byteLength !== 'number') {
-        self.postMessage({ type: 'error', message: 'Invalid chunk: missing ArrayBuffer/TypedArray buffer' });
+        self.postMessage({ type: WORKER_MSG.ERROR, message: 'Invalid chunk: missing ArrayBuffer/TypedArray buffer' });
         return;
       }
       const decoded = decoder.decode(buffer, { stream: true });
@@ -178,9 +179,9 @@ self.onmessage = (e) => {
       
       remainder = currentBuffer;
       totalBytesProcessed += buffer.byteLength;
-      self.postMessage({ type: 'progress', totalBytesProcessed });
+      self.postMessage({ type: WORKER_MSG.PROGRESS, totalBytesProcessed });
 
-    } else if (type === 'end') {
+    } else if (type === WORKER_MSG.END) {
       // Flush decoder
       const finalDecoded = decoder.decode();
       let finalBuffer = remainder + finalDecoded;
@@ -195,13 +196,13 @@ self.onmessage = (e) => {
       
       // Send any remaining batched messages
       if (batch.length > 0) {
-        self.postMessage({ type: 'batch', messages: batch });
+        self.postMessage({ type: WORKER_MSG.BATCH, messages: batch });
         batch = [];
       }
       
-      self.postMessage({ type: 'done' });
+      self.postMessage({ type: WORKER_MSG.DONE });
     }
   } catch (err) {
-    self.postMessage({ type: 'error', message: err?.message ?? String(err) });
+    self.postMessage({ type: WORKER_MSG.ERROR, message: err?.message ?? String(err) });
   }
 };

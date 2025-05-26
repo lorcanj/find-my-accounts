@@ -1,5 +1,6 @@
 import { parse } from 'tldts';
 import { normaliseEmail, normaliseText } from './normalisers/utils.js';
+import { KEY_PREFIX } from '../constants/keyPrefixes.js';
 
 let _fallbackId = 0;
 
@@ -20,7 +21,7 @@ export function generateCanonicalKey(item = {}) {
       const hostname = (parts[1] || '').trim();
       
       if (!hostname) {
-        return `e:${email}`;
+        return `${KEY_PREFIX.EMAIL}${email}`;
       }
 
       const res = parse(hostname);
@@ -70,14 +71,14 @@ export function generateCanonicalKey(item = {}) {
 
       // using English locale rules, 
       // may mis-handle locale‑specific letters (e.g. Turkish İ/ı)
-      return `brand:${brandStem.toLocaleLowerCase('en')}`;
+      return `${KEY_PREFIX.BRAND}${brandStem.toLocaleLowerCase('en')}`;
     }
-    return `e:${email}`;
+    return `${KEY_PREFIX.EMAIL}${email}`;
   }
 
   const name = item.normDisplayName ?? normaliseText(item.displayName || item.name || '');
   const subject = item.normSubject ?? normaliseText(item.subject || '');
-  if (name || subject) return `n:${name}|${subject}`;
+  if (name || subject) return `${KEY_PREFIX.NAME}${name}|${subject}`;
 
   // Fallback: deterministic, normalised string of a few identifying fields
   const fallback = [
@@ -85,8 +86,8 @@ export function generateCanonicalKey(item = {}) {
     item.normSubject || item.subject || ''
   ].join(' | ');
   const normalisedFallback = normaliseText(fallback).replace(/\s+/g, '_');
-  if (!normalisedFallback) return `u:${_fallbackId++}`;
-  return `u:${normalisedFallback}`;
+  if (!normalisedFallback) return `${KEY_PREFIX.UNKNOWN}${_fallbackId++}`;
+  return `${KEY_PREFIX.UNKNOWN}${normalisedFallback}`;
 }
 
 export default generateCanonicalKey;
