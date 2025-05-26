@@ -31,7 +31,7 @@ function updateAccountList(accounts) {
   list.innerHTML = '';
   accounts.forEach(account => {
     const li = document.createElement('li');
-    li.textContent = `${account.from} — ${account.subject}`;
+    li.textContent = `${account.from}`;
     list.appendChild(li);
   });
 }
