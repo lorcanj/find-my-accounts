@@ -49,6 +49,14 @@ function getHeaderValue(parsedHeaders, name) {
   return String(entry.initial || '');
 }
 
+/**
+ * Extracts the header block from a MIME message string, limiting processing
+ * to just the metadata section. Finds the first double-newline sequence
+ * (blank line) that separates headers from the body.
+ * 
+ * Returns the headers plus the delimiter, truncated if excessively large,
+ * allowing the MIME parser to work on a minimal dataset.
+ */
 function extractHeaderBlock(mimeMessage) {
   if (!mimeMessage) return '';
 
@@ -65,6 +73,8 @@ function extractHeaderBlock(mimeMessage) {
     headerBlock = mimeMessage;
   } else {
     // Include the header/body delimiter so parser receives a complete header section.
+    // The parser requires the distinct double-newline sequence to correctly identify
+    // the end of the headers block and successfully parse the final header field.
     headerBlock = mimeMessage.slice(0, boundaryIndex + boundaryLength);
   }
 
