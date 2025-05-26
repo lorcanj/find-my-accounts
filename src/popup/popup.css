@@ -257,3 +257,11 @@ h2#accounts-heading {
     background: #fff;
     color: #333;
 }
+
+/* Bug report footer */
+.bug-report {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
