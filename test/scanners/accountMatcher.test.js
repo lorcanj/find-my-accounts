@@ -195,6 +195,24 @@ describe('extractAccountsFromMessages', () => {
       expect(result[0].subject).toBe('Welcome to Our Service');
     });
 
+    it('preserves domain in Account and JSON output when provided by normalised message', () => {
+      const messages = [{
+        canonicalKey: 'github|verify',
+        displayName: 'GitHub',
+        from: 'noreply@github.com',
+        subject: '[GitHub] Please verify your email address',
+        domain: 'github.com'
+      }];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].domain).toBe('github.com');
+
+      const exportedJson = JSON.stringify(result);
+      expect(exportedJson).toContain('"domain":"github.com"');
+    });
+
 
     it('extracts all fields correctly in a complete message', () => {
       // Test that all fields are extracted together in a realistic scenario
