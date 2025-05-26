@@ -1,0 +1,10 @@
+find my accounts is a privacy-first account discovery tool with local processing and data security as a primary feature.
+
+Out of the box, find my accounts discovers forgotten online accounts by analysing your email exports (MBOX files) entirely on your device. It identifies accounts, providing:
+
+- Direct links to account deletion pages
+- Exportable results
+
+Additionally, because everything runs locally in your browser, your sensitive email data never leaves your computer, ensuring complete privacy while you take back control of your online presence.
+
+In beta — features may change; feedback welcome.
