@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { importMboxFile } from '../../src/services/mboxImportService.js';
+import { importMboxFile, cancelMboxImport } from '../../src/services/mboxImportService.js';
 
 describe('mboxImportService', () => {
   let mockWorker;
@@ -737,6 +737,64 @@ describe('mboxImportService', () => {
 
       expect(onProgress).toHaveBeenCalledWith(100);
       expect(onBatch).toHaveBeenCalledWith([{ single: 'message' }]);
+    });
+  });
+
+  describe('Cancellation and late-message guards', () => {
+    beforeEach(() => {
+      mockFile.stream = vi.fn(() => ({
+        getReader: () => ({
+          read: vi.fn(() => Promise.resolve({ done: true }))
+        })
+      }));
+    });
+
+    afterEach(() => {
+      // Ensure global active session does not leak across tests
+      cancelMboxImport();
+    });
+
+    it('should reject with cancellation error and terminate worker', async () => {
+      const promise = importMboxFile(mockFile, null, null);
+
+      const cancelled = cancelMboxImport();
+
+      expect(cancelled).toBe(true);
+      expect(mockWorker.terminate).toHaveBeenCalled();
+      await expect(promise).rejects.toThrow('Import cancelled');
+    });
+
+    it('should ignore late batch/progress/done messages after cancellation', async () => {
+      const onBatch = vi.fn();
+      const onProgress = vi.fn();
+      const promise = importMboxFile(mockFile, onProgress, onBatch);
+
+      cancelMboxImport();
+
+      // Simulate messages that were already queued before terminate/cancel
+      mockWorker.simulateMessage({ type: 'batch', messages: [{ id: 1 }] });
+      mockWorker.simulateMessage({ type: 'progress', totalBytesProcessed: 500 });
+      mockWorker.simulateMessage({ type: 'done' });
+
+      expect(onBatch).not.toHaveBeenCalled();
+      expect(onProgress).not.toHaveBeenCalled();
+      await expect(promise).rejects.toThrow('Import cancelled');
+    });
+
+    it('should ignore late messages after done has settled the promise', async () => {
+      const onBatch = vi.fn();
+      const onProgress = vi.fn();
+      const promise = importMboxFile(mockFile, onProgress, onBatch);
+
+      mockWorker.simulateMessage({ type: 'done' });
+      await expect(promise).resolves.toBeUndefined();
+
+      // Late messages after settlement should be ignored
+      mockWorker.simulateMessage({ type: 'batch', messages: [{ id: 123 }] });
+      mockWorker.simulateMessage({ type: 'progress', totalBytesProcessed: 1000 });
+
+      expect(onBatch).not.toHaveBeenCalled();
+      expect(onProgress).not.toHaveBeenCalled();
     });
   });
 });
