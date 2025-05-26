@@ -18,23 +18,29 @@ export default toIsoDate;
 export function normaliseEmail(email) {
   if (!email) return null;
   let e = String(email).trim();
+
+  // Unicode normalize to a stable form if available
+  if (typeof e.normalize === 'function') e = e.normalize('NFKC');
+
+  // Remove control and zero-width characters that may have sneaked in
+  e = e.replace(/[\u0000-\u001F\u007F\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
+
+  // Strip surrounding angle brackets and surrounding quotes
   if (e.startsWith('<') && e.endsWith('>')) e = e.slice(1, -1).trim();
-  e = e.replace(/^['"]|['"]$/g, '');
+  e = e.replace(/^['\"]|['\"]$/g, '');
+
+  // Trim common stray punctuation or separators that can surround addresses
+  e = e.replace(/^[,;:\s()]+|[,;:\s()]+$/g, '');
+
   e = e.toLowerCase();
 
   const at = e.lastIndexOf('@');
   if (at === -1) return e;
   let local = e.slice(0, at);
-  let domain = e.slice(at + 1).toLowerCase();
+  let domain = e.slice(at + 1);
 
-  if (domain === 'googlemail.com') domain = 'gmail.com';
-
-  if (domain === 'gmail.com') {
-    local = local.split('+')[0];
-    local = local.replace(/\./g, '');
-  } else {
-    local = local.split('+')[0];
-  }
+  // Remove leading/trailing dots from domain (accidental punctuation)
+  domain = domain.replace(/^\.+|\.+$/g, '');
 
   return `${local}@${domain}`;
 }
