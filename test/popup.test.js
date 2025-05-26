@@ -66,11 +66,12 @@ describe('popup.js - accountsForDownload reset behavior', () => {
           <div id="importProgress" style="display: none;">
             <div id="importProgressBar" style="width: 0%;"></div>
           </div>
-          <div id="confidenceFilters" class="confidence-filters">
-            <button class="filter-btn active" data-level="high">High</button>
-            <button class="filter-btn active" data-level="medium">Medium</button>
-            <button class="filter-btn active" data-level="low">Low</button>
-          </div>
+          <select id="sortSelect" class="sort-select">
+            <option value="default"></option>
+            <option value="recent"></option>
+            <option value="oldest"></option>
+            <option value="name-asc"></option>
+          </select>
           <ul id="accountList"></ul>
           <span id="accountCount">0</span>
           <button id="downloadAccounts">Download</button>
@@ -349,11 +350,10 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     });
   });
 
-  it('renders confidence badges on account list items', async () => {
+  it('renders last email date on account list items', async () => {
     const accounts = [
-      { canonicalKey: 'k1', email: 'a@example.com', from: 'A', name: 'A', confidence: 'high' },
-      { canonicalKey: 'k2', email: 'b@example.com', from: 'B', name: 'B', confidence: 'medium' },
-      { canonicalKey: 'k3', email: 'c@example.com', from: 'C', name: 'C', confidence: 'low' },
+      { canonicalKey: 'k1', email: 'a@example.com', from: 'A', name: 'A', lastEmailDate: '2025-06-15T12:00:00.000Z' },
+      { canonicalKey: 'k2', email: 'b@example.com', from: 'B', name: 'B', lastEmailDate: null },
     ];
 
     extractAccountsMock.mockReturnValueOnce(accounts);
@@ -375,101 +375,15 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     await vi.waitFor(() => {
       const rows = document.querySelectorAll('#accountList li[role="row"]');
-      expect(rows).toHaveLength(3);
+      expect(rows).toHaveLength(2);
 
-      // Each row should have a badge with the correct class
-      const badges = document.querySelectorAll('.badge');
-      expect(badges).toHaveLength(3);
-      expect(badges[0].classList.contains('badge-high')).toBe(true);
-      expect(badges[0].textContent).toBe('high');
-      expect(badges[1].classList.contains('badge-medium')).toBe(true);
-      expect(badges[1].textContent).toBe('medium');
-      expect(badges[2].classList.contains('badge-low')).toBe(true);
-      expect(badges[2].textContent).toBe('low');
+      const dateCells = document.querySelectorAll('.last-email');
+      expect(dateCells).toHaveLength(2);
+      // First account has a date
+      expect(dateCells[0].textContent).not.toBe('-');
+      // Second account has no date
+      expect(dateCells[1].textContent).toBe('-');
     });
-  });
-
-  it('filters account rows when confidence filter buttons are toggled', async () => {
-    const accounts = [
-      { canonicalKey: 'k1', email: 'a@example.com', from: 'A', name: 'A', confidence: 'high' },
-      { canonicalKey: 'k2', email: 'b@example.com', from: 'B', name: 'B', confidence: 'low' },
-    ];
-
-    extractAccountsMock.mockReturnValueOnce(accounts);
-
-    importMboxFileMock.mockImplementation(async (file, onProgress, onBatch) => {
-      onProgress(100);
-      onBatch([{ canonicalKey: 'msg' }]);
-      return Promise.resolve();
-    });
-
-    await import('../src/popup/popup.js');
-    document.dispatchEvent(new window.Event('DOMContentLoaded'));
-
-    const fileInput = document.getElementById('mboxFileInput');
-    const startScanBtn = document.getElementById('startScanBtn');
-    const file = new window.File(['mbox'], 'test.mbox', { type: 'application/mbox' });
-    setInputFiles(fileInput, [file]);
-    await startScanBtn.click();
-
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('#accountList li[role="row"]')).toHaveLength(2);
-    });
-
-    // Toggle off "low" filter
-    const lowBtn = document.querySelector('.filter-btn[data-level="low"]');
-    lowBtn.click();
-
-    const rows = document.querySelectorAll('#accountList li[role="row"]');
-    expect(rows[0].style.display).toBe('');       // high: visible
-    expect(rows[1].style.display).toBe('none');    // low: hidden
-
-    // Count should show "1 / 2"
-    expect(document.getElementById('accountCount').textContent).toBe('1 / 2');
-
-    // Toggle "low" back on
-    lowBtn.click();
-    expect(rows[1].style.display).toBe('');
-    expect(document.getElementById('accountCount').textContent).toBe('2');
-  });
-
-  it('downloads only filtered accounts when a confidence level is toggled off', async () => {
-    const accounts = [
-      { canonicalKey: 'k1', email: 'a@example.com', from: 'A', name: 'A', confidence: 'high' },
-      { canonicalKey: 'k2', email: 'b@example.com', from: 'B', name: 'B', confidence: 'low' },
-    ];
-
-    extractAccountsMock.mockReturnValueOnce(accounts);
-
-    importMboxFileMock.mockImplementation(async (file, onProgress, onBatch) => {
-      onProgress(100);
-      onBatch([{ canonicalKey: 'msg' }]);
-      return Promise.resolve();
-    });
-
-    await import('../src/popup/popup.js');
-    document.dispatchEvent(new window.Event('DOMContentLoaded'));
-
-    const fileInput = document.getElementById('mboxFileInput');
-    const startScanBtn = document.getElementById('startScanBtn');
-    const file = new window.File(['mbox'], 'test.mbox', { type: 'application/mbox' });
-    setInputFiles(fileInput, [file]);
-    await startScanBtn.click();
-
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('#accountList li[role="row"]')).toHaveLength(2);
-    });
-
-    // Toggle off "low"
-    document.querySelector('.filter-btn[data-level="low"]').click();
-
-    // Download
-    document.getElementById('downloadAccounts').click();
-
-    expect(downloadMock).toHaveBeenCalledTimes(1);
-    const downloaded = downloadMock.mock.calls[0][0];
-    expect(downloaded).toHaveLength(1);
-    expect(downloaded[0].confidence).toBe('high');
   });
 
   it('disables file input and keeps cancel button enabled during an in-progress scan', async () => {

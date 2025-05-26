@@ -10,7 +10,7 @@ describe('Account model', () => {
     expect(a.domain).toBe('');
     expect(a.canonicalKey).toBeNull();
     expect(a.justDeleteMeData).toBeNull();
-    expect(a.confidence).toBeNull();
+    expect(a.lastEmailDate).toBeNull();
   });
 
   it('assigns provided properties', () => {
@@ -21,7 +21,7 @@ describe('Account model', () => {
       domain: 'example.co.uk',
       canonicalKey: 'example.co.uk',
       justDeleteMeData: { difficulty: 'easy', url: 'https://jdme.example', notes: 'ok' },
-      confidence: 'high'
+      lastEmailDate: '2025-06-15T12:00:00.000Z'
     };
     const a = new Account(data);
     expect(a.name).toBe(data.name);
@@ -30,7 +30,7 @@ describe('Account model', () => {
     expect(a.domain).toBe(data.domain);
     expect(a.canonicalKey).toBe(data.canonicalKey);
     expect(a.justDeleteMeData).toEqual(data.justDeleteMeData);
-    expect(a.confidence).toBe('high');
+    expect(a.lastEmailDate).toBe('2025-06-15T12:00:00.000Z');
   });
 });
 

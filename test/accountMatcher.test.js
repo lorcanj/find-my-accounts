@@ -315,8 +315,8 @@ describe('extractAccountsFromMessages', () => {
     });
   });
 
-  describe('confidence scoring', () => {
-    it('assigns high confidence to strong senders', () => {
+  describe('account matching tiers', () => {
+    it('matches strong senders', () => {
       const messages = [
         { canonicalKey: 'k1', email: 'noreply@example.com', from: 'Svc <noreply@example.com>', subject: 'Hi', displayName: 'Svc' },
         { canonicalKey: 'k2', email: 'support@example.com', from: 'Svc <support@example.com>', subject: 'Hi', displayName: 'Svc' },
@@ -326,10 +326,9 @@ describe('extractAccountsFromMessages', () => {
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(5);
-      res.forEach(a => expect(a.confidence).toBe('high'));
     });
 
-    it('assigns low confidence to weak senders without subject match', () => {
+    it('matches weak senders without subject match', () => {
       const messages = [
         { canonicalKey: 'k1', email: 'team@example.com', from: 'Team <team@example.com>', subject: 'Hi', displayName: 'Team' },
         { canonicalKey: 'k2', email: 'hello@example.com', from: 'Hello <hello@example.com>', subject: 'Hi', displayName: 'Hello' },
@@ -338,41 +337,38 @@ describe('extractAccountsFromMessages', () => {
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(4);
-      res.forEach(a => expect(a.confidence).toBe('low'));
     });
 
-    it('promotes weak sender to high when subject also matches', () => {
+    it('matches weak sender with subject match', () => {
       const messages = [
         { canonicalKey: 'k1', email: 'hello@example.com', from: 'Hello <hello@example.com>', subject: 'Welcome to our service', displayName: 'Hello' },
         { canonicalKey: 'k2', email: 'team@example.com', from: 'Team <team@example.com>', subject: 'Verify your email', displayName: 'Team' },
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(2);
-      res.forEach(a => expect(a.confidence).toBe('high'));
     });
 
-    it('assigns medium confidence to subject-only matches', () => {
+    it('matches subject-only patterns', () => {
       const messages = [
         { canonicalKey: 'k1', email: 'person@example.com', from: 'Person <person@example.com>', subject: 'Welcome aboard', displayName: 'Person' },
         { canonicalKey: 'k2', email: 'user@example.com', from: 'User <user@example.com>', subject: 'Verify your email', displayName: 'User' },
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(2);
-      res.forEach(a => expect(a.confidence).toBe('medium'));
     });
 
-    it('strong sender stays high even with subject match', () => {
+    it('matches strong sender with subject match', () => {
       const res = extractAccountsFromMessages([
         { canonicalKey: 'k1', email: 'noreply@example.com', from: 'Svc <noreply@example.com>', subject: 'Welcome', displayName: 'Svc' },
       ]);
-      expect(res[0].confidence).toBe('high');
+      expect(res).toHaveLength(1);
     });
 
-    it('strong sender via displayName gets high confidence', () => {
+    it('matches strong sender via displayName', () => {
       const res = extractAccountsFromMessages([
         { canonicalKey: 'k1', email: 'contact@example.com', from: 'Support <contact@example.com>', subject: 'Random topic', displayName: 'Support' },
       ]);
-      expect(res[0].confidence).toBe('high');
+      expect(res).toHaveLength(1);
     });
   });
 

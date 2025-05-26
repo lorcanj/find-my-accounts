@@ -33,5 +33,20 @@
   },
   "instructionsPart7": {
     "message": "find my accounts does not store or track any information you upload."
+  },
+  "sortDefault": {
+    "message": "Sort: Default"
+  },
+  "sortRecentFirst": {
+    "message": "Most recent first"
+  },
+  "sortOldestFirst": {
+    "message": "Oldest first"
+  },
+  "sortNameAsc": {
+    "message": "Name A–Z"
+  },
+  "sortAccountsAriaLabel": {
+    "message": "Sort accounts"
   }
 }

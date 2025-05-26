@@ -4,11 +4,10 @@ import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
+import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
-const existingKeys = new Set();
-const activeFilters = new Set(['high', 'medium', 'low']);
-let visibleCount = 0;
+const existingKeys = new Map(); // canonicalKey → { account, li }
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -211,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
-      visibleCount = 0;
       document.getElementById(DOM_ID.ACCOUNT_LIST).innerHTML = ''; // Clear previous results
 
       try {
@@ -236,9 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
               
               accountsForDownload.push(...newUnique);
               renderAccountList(newUnique);
-              newUnique.forEach(a => {
-                if (!a.confidence || activeFilters.has(a.confidence)) visibleCount++;
-              });
               updateAccountCount(accountsForDownload.length);
             }
           }
@@ -265,35 +260,54 @@ document.addEventListener('DOMContentLoaded', () => {
   downloadButton = document.getElementById(DOM_ID.DOWNLOAD_ACCOUNTS);
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
-      const filtered = accountsForDownload.filter(a => !a.confidence || activeFilters.has(a.confidence));
-      downloadAccountsAsCsv(filtered);
+      downloadAccountsAsCsv(accountsForDownload);
     });
   }
 
-  // Confidence filter toggles
-  const filterContainer = document.getElementById(DOM_ID.CONFIDENCE_FILTERS);
-  if (filterContainer) {
-    filterContainer.addEventListener('click', (e) => {
-      const btn = e.target.closest(`.${CSS_CLASS.FILTER_BTN}`);
-      if (!btn) return;
-      const level = btn.dataset.level;
-      if (activeFilters.has(level)) {
-        activeFilters.delete(level);
-        btn.classList.remove(CSS_CLASS.FILTER_BTN_ACTIVE);
-      } else {
-        activeFilters.add(level);
-        btn.classList.add(CSS_CLASS.FILTER_BTN_ACTIVE);
-      }
-      applyConfidenceFilter();
+  const sortSelect = document.getElementById(DOM_ID.SORT_SELECT);
+  if (sortSelect) {
+    sortSelect.setAttribute('aria-label', chrome.i18n.getMessage('sortAccountsAriaLabel'));
+    const sortMessages = {
+      default: 'sortDefault',
+      recent: 'sortRecentFirst',
+      oldest: 'sortOldestFirst',
+      'name-asc': 'sortNameAsc',
+    };
+    for (const option of sortSelect.options) {
+      const key = sortMessages[option.value];
+      if (key) option.textContent = chrome.i18n.getMessage(key);
+    }
+    sortSelect.addEventListener('change', () => {
+      rerenderAllAccounts(sortSelect.value);
     });
   }
 });
+
+
+function rerenderAllAccounts(sortOrder) {
+  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
+  list.innerHTML = '';
+  const sorted = sortAccounts(accountsForDownload, sortOrder);
+  sorted.forEach(account => {
+    const li = createAccountListItem(account);
+    list.appendChild(li);
+    const key = account.canonicalKey;
+    if (key && existingKeys.has(key)) {
+      existingKeys.get(key).li = li;
+    }
+  });
+}
 
 function renderAccountList(accounts) {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   accounts.forEach(account => {
     const li = createAccountListItem(account);
     list.appendChild(li);
+    // Store li reference so cross-batch dedup can update the date cell
+    const key = account.canonicalKey;
+    if (key && existingKeys.has(key)) {
+      existingKeys.get(key).li = li;
+    }
   });
 }
 
@@ -311,52 +325,26 @@ function enrichAccounts(accounts) {
 
 function updateAccountCount(count) {
   const countEl = document.getElementById(DOM_ID.ACCOUNT_COUNT);
-  if (visibleCount < count) {
-    countEl.textContent = `${visibleCount} / ${count}`;
-  } else {
-    countEl.textContent = count;
-  }
-}
-
-function applyConfidenceFilter() {
-  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
-  if (!list) return;
-  visibleCount = 0;
-  list.querySelectorAll('li[role="row"]').forEach(li => {
-    const level = li.dataset.confidence;
-    const show = !level || activeFilters.has(level);
-    li.style.display = show ? '' : 'none';
-    if (show) visibleCount++;
-  });
-  updateAccountCount(accountsForDownload.length);
+  countEl.textContent = count;
 }
 
 // Alias for the shared lookup normaliser
 const normalise = normaliseForLookup;
 
+
 function createAccountListItem(account) {
   const li = document.createElement('li');
   li.setAttribute('role', 'row');
-  if (account.confidence) li.dataset.confidence = account.confidence;
 
   const nameDiv = document.createElement('div');
   nameDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_NAME}`;
   nameDiv.setAttribute('role', 'cell');
 
-  const confDiv = document.createElement('div');
-  confDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_CONF}`;
-  confDiv.setAttribute('role', 'cell');
-  const BADGE_CLASS_MAP = {
-    high: CSS_CLASS.BADGE_HIGH,
-    medium: CSS_CLASS.BADGE_MED,
-    low: CSS_CLASS.BADGE_LOW,
-  };
-  if (account.confidence) {
-    const badge = document.createElement('span');
-    badge.className = `${CSS_CLASS.BADGE} ${BADGE_CLASS_MAP[account.confidence] || ''}`;
-    badge.textContent = account.confidence;
-    confDiv.appendChild(badge);
-  }
+  const dateDiv = document.createElement('div');
+  dateDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_LAST_EMAIL}`;
+  dateDiv.setAttribute('role', 'cell');
+  dateDiv.textContent = account.lastEmailDate ? formatEmailDate(account.lastEmailDate) : '-';
+  if (account.lastEmailDate) dateDiv.title = account.lastEmailDate;
 
   const diffDiv = document.createElement('div');
   diffDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_DIFF}`;
@@ -389,7 +377,7 @@ function createAccountListItem(account) {
   }
 
   li.appendChild(nameDiv);
-  li.appendChild(confDiv);
+  li.appendChild(dateDiv);
   li.appendChild(diffDiv);
   li.appendChild(actionDiv);
 
@@ -446,9 +434,22 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
     // Accounts with failed key generation (null) are filtered out.
     if (key && !existingKeys.has(key)) {
       newUnique.push(batchedAccount);
-      existingKeys.add(key);
+      // Store reference; the li element is assigned later in renderAccountList
+      existingKeys.set(key, { account: batchedAccount, li: null });
+    } else if (key && existingKeys.has(key)) {
+      // Update lastEmailDate if this message is more recent
+      const entry = existingKeys.get(key);
+      const newDate = batchedAccount.lastEmailDate;
+      if (newDate && (!entry.account.lastEmailDate || newDate > entry.account.lastEmailDate)) {
+        entry.account.lastEmailDate = newDate;
+        // Update the already-rendered DOM element
+        if (entry.li) {
+          const dateCell = entry.li.querySelector('.last-email');
+          if (dateCell) dateCell.textContent = formatEmailDate(newDate);
+        }
+      }
     }
   }
-  
+
   return newUnique;
 }
