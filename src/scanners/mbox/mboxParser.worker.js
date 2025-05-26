@@ -49,9 +49,10 @@ function getHeaderValue(parsedHeaders, name) {
   if (entry.value) {
     if (Array.isArray(entry.value)) {
       const mapped = entry.value.map(formatAddress);
-      // TODO: check whether this is necessary
-      const allStrings = mapped.every(item => typeof item === 'string' && String(item).trim() !== '');
-      if (allStrings) return mapped.filter(Boolean).join(', ');
+      // Join all successfully formatted items (skip nulls)
+      const joined = mapped.filter(Boolean).join(', ');
+      // If we have any valid items, return the joined string.
+      if (joined.length > 0) return joined;
     } else {
       const formatted = formatAddress(entry.value);
       if (typeof formatted === 'string' && String(formatted).trim() !== '') return formatted;
