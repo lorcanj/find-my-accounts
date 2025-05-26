@@ -14,7 +14,7 @@ const existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
-let importBtn;
+let startScanBtn;
 let progress;
 let progressBar;
 let downloadButton;
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // File import UI elements
   mboxInput = document.getElementById('mboxFileInput');
   selectedFileInfo = document.getElementById('selectedFileInfo');
-  importBtn = document.getElementById('importMboxBtn');
+  startScanBtn = document.getElementById('startScanBtn');
   progress = document.getElementById('importProgress');
   progressBar = document.getElementById('importProgressBar');
   let currentMboxFileValid = false;
@@ -131,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (importBtn) {
-    importBtn.addEventListener('click', async () => {
+  if (startScanBtn) {
+    startScanBtn.addEventListener('click', async () => {
       if (importUiState === IMPORT_UI_STATE.SCANNING) {
         const cancelled = cancelMboxImport();
         if (cancelled && selectedFileInfo) {
@@ -304,17 +304,17 @@ function setImportUiState(state, options = {}) {
     mboxInput.disabled = state === IMPORT_UI_STATE.SCANNING;
   }
 
-  if (importBtn) {
+  if (startScanBtn) {
     if (state === IMPORT_UI_STATE.SCANNING) {
-      importBtn.textContent = 'Cancel scan';
-      importBtn.classList.add('btn-cancel');
-      importBtn.disabled = false;
+      startScanBtn.textContent = 'Cancel scan';
+      startScanBtn.classList.add('btn-cancel');
+      startScanBtn.disabled = false;
       return;
     }
 
-    importBtn.textContent = 'Import .mbox';
-    importBtn.classList.remove('btn-cancel');
-    importBtn.disabled = !hasValidFile;
+    startScanBtn.textContent = 'Start scan';
+    startScanBtn.classList.remove('btn-cancel');
+    startScanBtn.disabled = !hasValidFile;
   }
 }
 

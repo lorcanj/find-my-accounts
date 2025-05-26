@@ -61,7 +61,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       <html>
         <body>
           <input type="file" id="mboxFileInput" />
-          <button id="importMboxBtn" disabled>Import</button>
+          <button id="startScanBtn" disabled>Start scan</button>
           <div id="selectedFileInfo"></div>
           <div id="importProgress" style="display: none;">
             <div id="importProgressBar" style="width: 0%;"></div>
@@ -132,14 +132,14 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     // Simulate first import
     const fileInput = document.getElementById('mboxFileInput');
-    const importBtn = document.getElementById('importMboxBtn');
+    const startScanBtn = document.getElementById('startScanBtn');
 
     // Create a mock file and assign it via DataTransfer helper
     const file1 = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
     setInputFiles(fileInput, [file1]);
 
     // Click import button
-    await importBtn.click();
+    await startScanBtn.click();
     
     // Verify first import completed
     await vi.waitFor(() => {
@@ -148,13 +148,13 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     });
 
     await vi.waitFor(() => {
-      expect(importBtn.textContent).toBe('Import .mbox');
+      expect(startScanBtn.textContent).toBe('Start scan');
     });
 
     // Simulate second import: reuse the same file object and rely on mocks
     setInputFiles(fileInput, [file1]);
 
-    await importBtn.click();
+    await startScanBtn.click();
     
     // Verify second import completed
     await vi.waitFor(() => {
@@ -206,23 +206,23 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     // First import to populate accountsForDownload
     const fileInput = document.getElementById('mboxFileInput');
-    const importBtn = document.getElementById('importMboxBtn');
+    const startScanBtn = document.getElementById('startScanBtn');
 
     const file1 = new window.File(['mbox1'], 'first.mbox', { type: 'application/mbox' });
     setInputFiles(fileInput, [file1]);
-    await importBtn.click();
+    await startScanBtn.click();
     
     await vi.waitFor(() => {
       expect(document.getElementById('accountCount').textContent).toBe('1');
     });
 
     await vi.waitFor(() => {
-      expect(importBtn.textContent).toBe('Import .mbox');
+      expect(startScanBtn.textContent).toBe('Start scan');
     });
 
     // Second import - reuse same file object and rely on mocks to produce new accounts
     setInputFiles(fileInput, [file1]);
-    await importBtn.click();
+    await startScanBtn.click();
     
     await vi.waitFor(() => {
       // Critical assertion: should still be 1 (reset happened)
@@ -260,12 +260,12 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     document.dispatchEvent(event);
 
     const fileInput = document.getElementById('mboxFileInput');
-    const importBtn = document.getElementById('importMboxBtn');
+    const startScanBtn = document.getElementById('startScanBtn');
 
     const file = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
     setInputFiles(fileInput, [file]);
 
-    await importBtn.click();
+    await startScanBtn.click();
 
     await vi.waitFor(() => {
       expect(document.getElementById('accountCount').textContent).toBe('1');
@@ -301,27 +301,27 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     document.dispatchEvent(event);
 
     const fileInput = document.getElementById('mboxFileInput');
-    const importBtn = document.getElementById('importMboxBtn');
+    const startScanBtn = document.getElementById('startScanBtn');
     const selectedFileInfo = document.getElementById('selectedFileInfo');
 
     const file = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
     setInputFiles(fileInput, [file]);
 
-    importBtn.click();
+    startScanBtn.click();
 
     await vi.waitFor(() => {
-      expect(importBtn.textContent).toBe('Cancel scan');
-      expect(importBtn.classList.contains('btn-cancel')).toBe(true);
+      expect(startScanBtn.textContent).toBe('Cancel scan');
+      expect(startScanBtn.classList.contains('btn-cancel')).toBe(true);
       expect(fileInput.disabled).toBe(true);
     });
 
-    importBtn.click();
+    startScanBtn.click();
 
     expect(cancelMboxImportMock).toHaveBeenCalledTimes(1);
 
     await vi.waitFor(() => {
-      expect(importBtn.textContent).toBe('Import .mbox');
-      expect(importBtn.classList.contains('btn-cancel')).toBe(false);
+      expect(startScanBtn.textContent).toBe('Start scan');
+      expect(startScanBtn.classList.contains('btn-cancel')).toBe(false);
       expect(fileInput.disabled).toBe(false);
       expect(selectedFileInfo.textContent).toBe('Import cancelled.');
     });
@@ -336,23 +336,23 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     document.dispatchEvent(event);
 
     const fileInput = document.getElementById('mboxFileInput');
-    const importBtn = document.getElementById('importMboxBtn');
+    const startScanBtn = document.getElementById('startScanBtn');
 
     const validFile = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
     setInputFiles(fileInput, [validFile]);
 
-    importBtn.click();
+    startScanBtn.click();
 
     await vi.waitFor(() => {
-      expect(importBtn.textContent).toBe('Cancel scan');
-      expect(importBtn.disabled).toBe(false);
+      expect(startScanBtn.textContent).toBe('Cancel scan');
+      expect(startScanBtn.disabled).toBe(false);
       expect(fileInput.disabled).toBe(true);
     });
 
     // Simulate a programmatic change to ensure it doesn't disrupt the state (even though input is disabled)
     setInputFiles(fileInput, [validFile]);
     
-    expect(importBtn.textContent).toBe('Cancel scan');
+    expect(startScanBtn.textContent).toBe('Cancel scan');
     expect(fileInput.disabled).toBe(true);
   });
 });
