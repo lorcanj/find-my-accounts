@@ -260,7 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
   downloadButton = document.getElementById(DOM_ID.DOWNLOAD_ACCOUNTS);
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
-      downloadAccountsAsCsv(accountsForDownload);
+      const filtered = accountsForDownload.filter(a => !a.confidence || activeFilters.has(a.confidence));
+      downloadAccountsAsCsv(filtered);
     });
   }
 
