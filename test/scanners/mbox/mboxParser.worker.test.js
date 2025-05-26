@@ -389,18 +389,17 @@ describe('mboxParser.worker.js', () => {
       const allMessages = batchCalls.flatMap(call => call[0].messages);
       expect(allMessages.length).toBe(1);
       expect(allMessages[0].subject).toBe('No Body');
-      expect(allMessages[0].snippet).toBe('');
     });
   });
 
   /**
    * Test 7: Message content extraction
    * 
-   * Scenario: Test that headers, body, and snippet are correctly extracted
-   * Expected: Worker should extract Subject, From, body text, and create snippet
+   * Scenario: Test that headers and body
+   * Expected: Worker should extract Subject, From
    */
   describe('Content extraction', () => {
-    it('extracts subject, from, and snippet correctly', () => {
+    it('extracts subject and from correctly', () => {
       const longBody = 'This is a test message body. '.repeat(20); // > 200 chars
       const mboxMessage = 
         'From sender@example.com Mon Jan 15 12:00:00 2024\n' +
@@ -423,13 +422,6 @@ describe('mboxParser.worker.js', () => {
       expect(msg.from).toBe('Joe Bloggs <joe.bloggs@example.co.uk>');
       expect(msg.email).toBe('joe.bloggs@example.co.uk');
       expect(msg.displayName).toBe('Joe Bloggs');
-      
-      // Snippet should be present (may be empty if body parsing fails, but typically has content)
-      expect(msg.snippet).toBeDefined();
-      // If snippet is not empty, it should be truncated to max 200 characters
-      if (msg.snippet.length > 0) {
-        expect(msg.snippet.length).toBeLessThanOrEqual(200);
-      }
     });
 
     it('handles messages with display name and email in From header', () => {

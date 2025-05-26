@@ -70,8 +70,7 @@ export function generateCanonicalKey(item = {}) {
   // Fallback: deterministic, normalised string of a few identifying fields
   const fallback = [
     item.displayName || '',
-    item.normSubject || item.subject || '',
-    item.snippet || ''
+    item.normSubject || item.subject || ''
   ].join(' | ');
   const normalisedFallback = normaliseText(fallback).replace(/\s+/g, '_');
   return `u:${normalisedFallback}`;

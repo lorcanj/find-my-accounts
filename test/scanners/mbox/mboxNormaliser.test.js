@@ -7,7 +7,6 @@ describe('normaliseMboxMessage', () => {
     const raw = {
       from: 'Alice Example <Alice+tag@Sub.Domain.COM>',
       subject: 'Hello World',
-      snippet: 'snippet text',
       date: ts,
       messageId: 'msg-1'
     };

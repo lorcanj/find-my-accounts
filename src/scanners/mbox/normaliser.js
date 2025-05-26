@@ -6,7 +6,6 @@ import generateCanonicalKey from '../keyGenerator.js';
 export default function normaliseMboxMessage(raw = {}) {
   const subject = raw.subject || '';
   const from = raw.from || '';
-  const snippet = raw.snippet || '';
   const date = raw.date || null;
 
   const dateIso = toIsoDate(date);
@@ -44,10 +43,10 @@ export default function normaliseMboxMessage(raw = {}) {
     email: email || null,
     displayName: displayName || null,
     normDisplayName,
-    snippet: snippet || '',
     date: date || null,
     dateIso,
     domain: domain || null,
+    provider: 'mbox',
     _normalised: true
   };
 

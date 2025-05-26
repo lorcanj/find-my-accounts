@@ -7,7 +7,6 @@ describe('Account model', () => {
     expect(a.name).toBe('');
     expect(a.subject).toBe('');
     expect(a.from).toBe('');
-    expect(a.snippet).toBe('');
     expect(a.domain).toBe('');
     expect(a.justDeleteMeData).toBeNull();
   });
@@ -17,7 +16,6 @@ describe('Account model', () => {
       name: 'Joe Bloggs',
       subject: 'Hello',
       from: 'joe.bloggs@example.co.uk',
-      snippet: 'snippet',
       domain: 'example.co.uk',
       justDeleteMeData: { difficulty: 'easy', url: 'https://jdme.example', notes: 'ok' }
     };
@@ -25,7 +23,6 @@ describe('Account model', () => {
     expect(a.name).toBe(data.name);
     expect(a.subject).toBe(data.subject);
     expect(a.from).toBe(data.from);
-    expect(a.snippet).toBe(data.snippet);
     expect(a.domain).toBe(data.domain);
     expect(a.justDeleteMeData).toEqual(data.justDeleteMeData);
   });
