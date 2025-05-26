@@ -143,8 +143,7 @@ h2#accounts-heading {
 .account-list li .confidence,
 .account-list li .last-email { display: none; }
 
-/* Filters and sort controls hidden */
-.confidence-filter,
+/* Sort control hidden */
 .sort-select { display: none; }
 
 .account-list-headers {
@@ -194,7 +193,7 @@ h2#accounts-heading {
 
 /* Confidence filter buttons */
 .confidence-filter {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 6px;
     margin-bottom: 8px;
