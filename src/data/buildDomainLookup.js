@@ -1,10 +1,6 @@
 import { justdeletemeData } from './justdeletemeData.js';
+import { normaliseForLookup as normalise } from '../scanners/normalisers/utils.js';
 const data = justdeletemeData;
-
-// Helper to normalise strings: lowercase and remove punctuation/spaces
-function normalise(str) {
-  return str.toLocaleLowerCase('en').replace(/[\s\W_]+/g, '');
-}
 
 function buildLookups(data) {
   const nameLookup = {};

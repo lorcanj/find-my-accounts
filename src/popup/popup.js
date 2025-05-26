@@ -1,4 +1,5 @@
 import { domainLookup, domainMap } from '../data/buildDomainLookup.js';
+import { normaliseForLookup } from '../scanners/normalisers/utils.js';
 import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
@@ -292,11 +293,8 @@ function updateAccountCount(count) {
   document.getElementById('accountCount').textContent = count;
 }
 
-// Normalises a string for lookup/deduplication
-function normalise(str) {
-  const result = str.toLowerCase().replace(/[\s\W_]+/g, '');
-  return result;
-}
+// Alias for the shared lookup normaliser
+const normalise = normaliseForLookup;
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
