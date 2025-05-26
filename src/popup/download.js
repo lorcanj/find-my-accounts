@@ -1,8 +1,12 @@
 // src/popup/download.js
 import { EXPORT_FILENAME, CSV_HEADERS } from '../constants/exports.js';
 
+/** Keys that are transient internal state and must not appear in exports. */
+const TRANSIENT_KEYS = ['_subscriptionSignals'];
+
 export function downloadAccountsAsJson(accounts) {
-  const dataStr = JSON.stringify(accounts, null, 2);
+  const dataStr = JSON.stringify(accounts, (key, value) =>
+    TRANSIENT_KEYS.includes(key) ? undefined : value, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
