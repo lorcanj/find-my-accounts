@@ -15,6 +15,7 @@
     "build": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --drop:console --minify --outdir=dist --platform=browser --format=esm",
     "build:dev": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --sourcemap --outdir=dist --platform=browser --format=esm",
     "bundle:emailjs": "esbuild node_modules/emailjs-mime-parser/dist/mimeparser.js --bundle --outfile=src/vendors/emailjs-mime-parser.bundle.js --platform=browser --format=esm",
-    "build:watch": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --outdir=dist --platform=browser --format=esm --watch"
+    "build:watch": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --outdir=dist --platform=browser --format=esm --watch",
+    "release": "npm run build && node scripts/create-release.js"
   }
 }
