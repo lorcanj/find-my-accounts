@@ -14,13 +14,74 @@ const existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
-let importBtn;
+let startScanBtn;
 let progress;
 let progressBar;
 let downloadButton;
 let importUiState = IMPORT_UI_STATE.IDLE;
 
+const INSTRUCTION_LINKS = [
+  { key: 'google_takeout', messageKey: 'instructionsGoogleTakeout', url: 'https://takeout.google.com/' },
+  { key: 'thunderbird', messageKey: 'instructionsThunderbird', url: 'https://www.thunderbird.net/' },
+  { key: 'apple_mail', messageKey: 'instructionsAppleMail', url: 'https://support.apple.com/guide/mail/pro-export-mailboxes-mlhlp1030/mac' },
+  { key: 'proton_mail', messageKey: 'instructionsProtonMail', url: 'https://proton.me/support/export-emails-import-export-app' }
+];
+
+function renderInstructions() {
+  const instructionsTextEl = document.getElementById('instructionsText');
+  if (!instructionsTextEl) return;
+
+  // Clear existing content
+  while (instructionsTextEl.firstChild) {
+    instructionsTextEl.removeChild(instructionsTextEl.firstChild);
+  }
+
+  // Create link elements
+  const linkElements = INSTRUCTION_LINKS.map(item => {
+    const link = document.createElement('a');
+    link.href = item.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = chrome.i18n.getMessage(item.messageKey);
+    link.title = item.url;
+    return link;
+  });
+
+  // Get the main instruction string with placeholders
+  // We pass dummy strings for the placeholders to get the full text,
+  // then we'll replace those dummy strings with the actual DOM elements.
+  const placeholders = INSTRUCTION_LINKS.map((_, i) => `__LINK_${i}__`);
+  const mainText = chrome.i18n.getMessage('instructionsMain', placeholders);
+
+  // Split the text by the placeholders and interleave the text nodes and link elements
+  const parts = mainText.split(/(__LINK_\d+__)/);
+  
+  parts.forEach(part => {
+    const match = part.match(/__LINK_(\d+)__/);
+    if (match) {
+      const index = parseInt(match[1], 10);
+      instructionsTextEl.appendChild(linkElements[index]);
+    } else if (part) {
+      instructionsTextEl.appendChild(document.createTextNode(part));
+    }
+  });
+
+  // Append the next sentences as separate paragraphs for clarity
+  const para1 = document.createElement('p');
+  para1.className = 'muted mt-0-5';
+  para1.textContent = chrome.i18n.getMessage('instructionsPart6');
+  instructionsTextEl.appendChild(para1);
+
+  const para2 = document.createElement('p');
+  para2.className = 'muted';
+  para2.textContent = chrome.i18n.getMessage('instructionsPart7');
+  instructionsTextEl.appendChild(para2);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Load i18n strings
+  renderInstructions();
+
   // Check if we are in a popped-out window
   const urlParams = new URLSearchParams(window.location.search);
   const isPopped = urlParams.get('popped') === 'true';
@@ -74,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // File import UI elements
   mboxInput = document.getElementById('mboxFileInput');
   selectedFileInfo = document.getElementById('selectedFileInfo');
-  importBtn = document.getElementById('importMboxBtn');
+  startScanBtn = document.getElementById('startScanBtn');
   progress = document.getElementById('importProgress');
   progressBar = document.getElementById('importProgressBar');
   let currentMboxFileValid = false;
@@ -88,14 +149,35 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const file = mboxInput.files && mboxInput.files[0];
+      const largeFileWarning = document.getElementById('largeFileWarning');
+      
       if (!file) {
         if (selectedFileInfo) selectedFileInfo.textContent = '';
+        if (largeFileWarning) largeFileWarning.classList.add('hidden');
         currentMboxFileValid = false;
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
         return;
       }
 
-      if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${Math.ceil(file.size/1024)} KB`;
+      let sizeText;
+      const sizeInMB = file.size / (1024 * 1024);
+      if (sizeInMB >= 1024) {
+        sizeText = `${(sizeInMB / 1024).toFixed(2)} GB`;
+      } else {
+        sizeText = `${sizeInMB.toFixed(1)} MB`;
+      }
+      
+      if (selectedFileInfo) selectedFileInfo.textContent = `${file.name} — ${sizeText}`;
+
+      if (largeFileWarning) {
+        const isPopped = document.body.classList.contains('popped-out');
+        // Show warning for files >= 50MB if not popped out
+        if (sizeInMB >= 50 && !isPopped) {
+          largeFileWarning.classList.remove('hidden');
+        } else {
+          largeFileWarning.classList.add('hidden');
+        }
+      }
 
       // Simple extension-only validation for now
       if (!/\.mbox$/i.test(file.name)) {
@@ -110,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (importBtn) {
-    importBtn.addEventListener('click', async () => {
+  if (startScanBtn) {
+    startScanBtn.addEventListener('click', async () => {
       if (importUiState === IMPORT_UI_STATE.SCANNING) {
         const cancelled = cancelMboxImport();
         if (cancelled && selectedFileInfo) {
@@ -283,17 +365,17 @@ function setImportUiState(state, options = {}) {
     mboxInput.disabled = state === IMPORT_UI_STATE.SCANNING;
   }
 
-  if (importBtn) {
+  if (startScanBtn) {
     if (state === IMPORT_UI_STATE.SCANNING) {
-      importBtn.textContent = 'Cancel scan';
-      importBtn.classList.add('btn-cancel');
-      importBtn.disabled = false;
+      startScanBtn.textContent = 'Cancel scan';
+      startScanBtn.classList.add('btn-cancel');
+      startScanBtn.disabled = false;
       return;
     }
 
-    importBtn.textContent = 'Import .mbox';
-    importBtn.classList.remove('btn-cancel');
-    importBtn.disabled = !hasValidFile;
+    startScanBtn.textContent = 'Start scan';
+    startScanBtn.classList.remove('btn-cancel');
+    startScanBtn.disabled = !hasValidFile;
   }
 }
 

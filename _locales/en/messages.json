@@ -1,0 +1,37 @@
+{
+  "instructionsGoogleTakeout": {
+    "message": "Google Takeout"
+  },
+  "instructionsThunderbird": {
+    "message": "Thunderbird"
+  },
+  "instructionsAppleMail": {
+    "message": "Apple Mail"
+  },
+  "instructionsProtonMail": {
+    "message": "Proton Mail"
+  },
+  "instructionsMain": {
+    "message": "Upload an .mbox file (e.g., from $GOOGLE_TAKEOUT$, $THUNDERBIRD$, $APPLE_MAIL$, or $PROTON_MAIL$).",
+    "placeholders": {
+      "google_takeout": {
+        "content": "$1"
+      },
+      "thunderbird": {
+        "content": "$2"
+      },
+      "apple_mail": {
+        "content": "$3"
+      },
+      "proton_mail": {
+        "content": "$4"
+      }
+    }
+  },
+  "instructionsPart6": {
+    "message": "Files are processed entirely in your browser."
+  },
+  "instructionsPart7": {
+    "message": "find my accounts does not store or track any information you upload."
+  }
+}

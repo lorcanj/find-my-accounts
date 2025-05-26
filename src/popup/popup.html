@@ -23,10 +23,17 @@
     </div>
     
     <div id="importContainer" class="mt-1">
-      <p class="muted">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
+      <details class="instructions-dropdown mb-1">
+        <summary>Instructions</summary>
+        <div id="instructionsText" class="muted mt-0-5"></div>
+      </details>
       <div class="file-picker">
-        <input id="mboxFileInput" type="file" accept=".mbox" />
+        <input id="mboxFileInput" type="file" accept=".mbox" class="hidden-file-input" />
+        <label for="mboxFileInput" class="btn btn-primary">Choose file</label>
         <div id="selectedFileInfo" aria-live="polite" class="file-info"></div>
+        <div id="largeFileWarning" class="hidden mt-0-5" role="alert">
+          Large file detected. Please do not click away from this popup while scanning, or the scan will be cancelled. Consider using the Pop out button (top right).
+        </div>
         <div id="importProgress" class="progress hidden mt-0-5">
           <div
             id="importProgressBar"
@@ -40,7 +47,7 @@
         </div>
       </div>
       <div class="mt-0-5 button-row">
-        <button id="importMboxBtn" class="btn btn-primary" disabled>Import .mbox</button>
+        <button id="startScanBtn" class="btn btn-primary" disabled>Start scan</button>
         <button id="downloadAccounts" class="btn-icon" title="Download accounts as CSV" aria-label="Download accounts as CSV">
           <img src="../assets/download.svg" width="16" height="16">
         </button>
