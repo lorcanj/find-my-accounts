@@ -517,6 +517,7 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
       if (newConf && (!entry.account.confidence || CONFIDENCE_RANK[newConf] > CONFIDENCE_RANK[entry.account.confidence])) {
         entry.account.confidence = newConf;
         if (entry.li) {
+          entry.li.dataset.confidence = newConf;
           const confCell = entry.li.querySelector('.confidence');
           if (confCell) {
             confCell.innerHTML = '';
