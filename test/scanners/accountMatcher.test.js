@@ -315,34 +315,29 @@ describe('extractAccountsFromMessages', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('handles undefined canonicalKey by treating it as a valid key', () => {
-      // Test that messages without canonicalKey are still processed
-      // Note: undefined canonicalKey will be used as the key
+    it('does not deduplicate messages with undefined canonicalKey', () => {
+      // Messages without a canonicalKey should each be kept individually
       const messages = [
         { from: 'test1@example.com', subject: 'Welcome 1' },
         { from: 'test2@example.com', subject: 'Welcome 2' }
       ];
-      
+
       const result = extractAccountsFromMessages(messages);
-      
-      // Both messages will have undefined canonicalKey, so they'll be deduplicated
-      expect(result).toHaveLength(1);
+
+      expect(result).toHaveLength(2);
     });
 
-    it('handles messages with duplicate undefined canonicalKeys', () => {
-      // Test that multiple messages with undefined canonicalKey are deduplicated
+    it('keeps all messages when canonicalKey is undefined even from same sender', () => {
       const messages = [
         { from: 'noreply@example.com', subject: 'Welcome 1' },
         { from: 'noreply@example.com', subject: 'Welcome 2' },
         { from: 'noreply@example.com', subject: 'Welcome 3' }
       ];
-      
+
       const result = extractAccountsFromMessages(messages);
-      
-      // All have undefined canonicalKey, so only first is kept
-      expect(result).toHaveLength(1);
-      expect(result[0].from).toBe('noreply@example.com');
-      expect(result[0].subject).toBe('Welcome 1');
+
+      // No canonicalKey means no dedup — all are kept
+      expect(result).toHaveLength(3);
     });
   });
 
