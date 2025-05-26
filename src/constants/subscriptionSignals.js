@@ -44,8 +44,9 @@ export const FREQUENCY_KEYWORDS = Object.freeze({
   quarterly: ['quarterly', '/quarter'],
 });
 
-// Matches currency amounts in subject lines, e.g. $9.99, €14.99/month, A$49.00/year, USD 9.99
-export const AMOUNT_REGEX = /(?:(?:A|CA|NZ|HK|SG)?\$|€|£|¥|USD|EUR|GBP|CAD|AUD)\s?\d+(?:[.,]\d{1,2})?(?:\s?\/\s?(?:mo(?:nth)?|yr|year|week|quarter))?/i;
+// Matches currency amounts in subject lines, e.g. $9.99, €14.99, A$49.00, USD 9.99
+// Does not include trailing frequency suffixes (/month, /mo, etc.) — frequency is detected separately
+export const AMOUNT_REGEX = /(?:(?:A|CA|NZ|HK|SG)?\$|€|£|¥|USD|EUR|GBP|CAD|AUD)\s?\d+(?:[.,]\d{1,2})?/i;
 
 // Post-match patterns that indicate the amount is not a subscription fee
 export const AMOUNT_REJECT_AFTER = /^k\b|^\s*(?:off|discount|saving|cashback)\b/i;

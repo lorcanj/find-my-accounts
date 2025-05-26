@@ -84,7 +84,7 @@ describe('subscription pipeline integration', () => {
 
     const sig = accounts[0]._subscriptionSignals[0];
     expect(sig.isBillingSender).toBe(true);
-    expect(sig.amount).toBe('$9.99/mo');
+    expect(sig.amount).toBe('$9.99');
     expect(sig.strongKeywords).toContain('invoice');
   });
 
@@ -120,7 +120,7 @@ describe('subscription pipeline integration', () => {
 
     expect(accounts[0].subscription).not.toBeNull();
     expect(accounts[0].subscription.confidence).toBe('high');
-    expect(accounts[0].subscription.amount).toBe('$15.99/mo');
+    expect(accounts[0].subscription.amount).toBe('$15.99');
     expect(accounts[0].subscription.status).toBe('active');
     expect(accounts[0]).not.toHaveProperty('_subscriptionSignals');
   });
@@ -153,7 +153,7 @@ describe('subscription pipeline integration', () => {
 
     expect(accounts).toHaveLength(1);
     expect(accounts[0].subscription.status).toBe('cancelled');
-    expect(accounts[0].subscription.amount).toBe('$7.99/mo');
+    expect(accounts[0].subscription.amount).toBe('$7.99');
   });
 
   it('batch with no subscription signals → enrichment leaves accounts unchanged', () => {
@@ -207,7 +207,7 @@ describe('subscription pipeline integration', () => {
     const github = accounts.find(a => a.canonicalKey === 'brand:github');
 
     expect(spotify.subscription).not.toBeNull();
-    expect(spotify.subscription.amount).toBe('$9.99/mo');
+    expect(spotify.subscription.amount).toBe('$9.99');
     expect(github.subscription).toBeNull();
   });
 

@@ -100,6 +100,6 @@ describe('PayPal subscription false positive regression', () => {
 
     expect(paypal.subscription).toBeNull();
     expect(netflix.subscription).not.toBeNull();
-    expect(netflix.subscription.amount).toBe('$15.99/mo');
+    expect(netflix.subscription.amount).toBe('$15.99');
   });
 });

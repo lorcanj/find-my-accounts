@@ -43,24 +43,14 @@ function extractAmount(subject) {
   return match[0];
 }
 
-function detectFrequency(normSubject, amount) {
-  // Check amount string for slash patterns first (more specific signal)
-  if (amount) {
-    const amountLower = amount.toLowerCase();
-    for (const [freq, keywords] of Object.entries(FREQUENCY_KEYWORDS)) {
-      for (const kw of keywords) {
-        if (kw.startsWith('/') && amountLower.includes(kw)) return freq;
-      }
-    }
-  }
-
-  // Fall back to subject keyword matching
+function detectFrequency(normSubject, subject) {
+  const subjectLower = subject.toLowerCase();
   for (const [freq, keywords] of Object.entries(FREQUENCY_KEYWORDS)) {
     for (const kw of keywords) {
-      if (!kw.startsWith('/') && normSubject.includes(kw)) return freq;
+      const haystack = kw.startsWith('/') ? subjectLower : normSubject;
+      if (haystack.includes(kw)) return freq;
     }
   }
-
   return null;
 }
 
@@ -80,7 +70,7 @@ export function extractSubscriptionSignals(message) {
   // An isolated amount with no subscription context is not a subscription signal
   const hasContext = strongKeywords.length > 0 || weakKeywords.length > 0 || isBillingSender;
   const amount = hasContext ? rawAmount : null;
-  const frequency = detectFrequency(normSubject, amount);
+  const frequency = detectFrequency(normSubject, subject);
 
   return {
     strongKeywords,
