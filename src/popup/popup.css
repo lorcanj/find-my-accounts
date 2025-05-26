@@ -32,7 +32,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 16px;
-    width: 480px;
+    width: 360px;
     color: #202124;
     line-height: 1.5;
     font-size: 16px;
@@ -137,10 +137,18 @@ h2#accounts-heading {
     color: #202124;
 }
 
-/* Layout for account list headers and rows: five columns */
+/* Layout for account list headers and rows: three columns (confidence + last-email hidden) */
+.account-list-headers .confidence,
+.account-list-headers .last-email,
+.account-list li .confidence,
+.account-list li .last-email { display: none; }
+
+/* Sort control hidden */
+.sort-select { display: none; }
+
 .account-list-headers {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     align-items: center;
     padding: 8px 4px;
@@ -153,7 +161,7 @@ h2#accounts-heading {
 
 .account-list li {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     align-items: center;
     padding: 10px 4px;
@@ -185,7 +193,7 @@ h2#accounts-heading {
 
 /* Confidence filter buttons */
 .confidence-filter {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 6px;
     margin-bottom: 8px;
