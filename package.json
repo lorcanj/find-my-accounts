@@ -10,8 +10,8 @@
   },
   "scripts": {
     "test": "vitest",
-    "build": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm && esbuild src/scanners/mboxParser.worker.js --bundle --outfile=dist/mboxParser.worker.js --platform=browser --format=esm",
+    "build": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm && esbuild src/scanners/mbox/mboxParser.worker.js --bundle --outfile=dist/mboxParser.worker.js --platform=browser --format=esm",
     "bundle:emailjs": "esbuild node_modules/emailjs-mime-parser/dist/mimeparser.js --bundle --outfile=src/vendors/emailjs-mime-parser.bundle.js --platform=browser --format=esm",
-    "build:watch": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm --watch & esbuild src/scanners/mboxParser.worker.js --bundle --outfile=dist/mboxParser.worker.js --platform=browser --format=esm --watch"
+    "build:watch": "esbuild src/services/authService.js --bundle --outfile=dist/service-worker.js --platform=browser --format=esm --watch & esbuild src/scanners/mbox/mboxParser.worker.js --bundle --outfile=dist/mboxParser.worker.js --platform=browser --format=esm --watch"
   }
 }
