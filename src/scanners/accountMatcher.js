@@ -1,8 +1,9 @@
 import Account from '../models/Account.js';
 
 const SENDER_REGEX = /(?:^|[._+\-\s])(?:no[._+\-\s]?reply|do[._+\-\s]?not[._+\-\s]?reply|support|billing|accounts?|invoices?|sales|notifications?|updates?|alerts|team|hello|info|help|security|privacy|auth|admin)(?:$|[._+\-\s\d])/i;
-const SUBJECT_REGEX = /(welcome|verify|verification|confirm|activate|activation|subscription|invoice|receipt|order|billing|payment|received|security alert|password|login|sign[ -]?in|account|regist)/i;
+const SUBJECT_REGEX = /\b(welcome|verify|verification|confirm|activate|activation|subscription|invoice|receipt|order|billing|payment|security alert|password|login|sign[ -]?in|account|regist)/i;
 
+// Per-batch dedup only; cross-batch dedup happens in the UI layer (popup.js existingKeys).
 export function extractAccountsFromMessages(messages = []) {
   if (messages === null) {
     throw new TypeError('extractAccountsFromMessages: `messages` must not be null');
@@ -19,11 +20,11 @@ export function extractAccountsFromMessages(messages = []) {
     const key = m.canonicalKey;
     const domain = m.domain || '';
 
-    if (!seen.has(key)) {
+    if (!key || !seen.has(key)) {
       // Fallback to email or from address if display name is missing
       const name = m.displayName || m.email || m.from || 'Unknown Sender';
       foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key }));
-      seen.add(key);
+      if (key) seen.add(key);
     }
   }
 
