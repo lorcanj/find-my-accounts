@@ -416,8 +416,9 @@ function createAccountListItem(account) {
   actionDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_ACTION}`;
   actionDiv.setAttribute('role', 'cell');
 
+  const nameSpan = document.createElement('span');
   if (account.justDeleteMeData !== UI_TEXT.NO_DATA_FOUND) {
-    nameDiv.textContent = account.justDeleteMeData.name;
+    nameSpan.textContent = account.justDeleteMeData.name;
     diffDiv.textContent = account.justDeleteMeData.difficulty;
 
     if (account.justDeleteMeData.url) {
@@ -433,11 +434,12 @@ function createAccountListItem(account) {
       actionDiv.textContent = '-';
     }
   } else {
-    nameDiv.textContent = account.name;
+    nameSpan.textContent = account.name;
     diffDiv.textContent = '-';
     actionDiv.textContent = '-';
   }
 
+  nameDiv.appendChild(nameSpan);
   const subBadge = createSubscriptionBadge(account.subscription);
   if (subBadge) nameDiv.appendChild(subBadge);
 
@@ -479,7 +481,8 @@ function createSubscriptionBadge(subscription) {
     badge.textContent = 'Subscription';
   }
 
-  badge.title = `Subscription confidence: ${subscription.confidence}`;
+  const statusLabel = subscription.status ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) : 'Active';
+  badge.title = `Subscription · ${statusLabel}`;
   return badge;
 }
 
