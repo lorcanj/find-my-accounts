@@ -32,6 +32,9 @@ export function downloadAccountsAsCsv(accounts) {
     const hasJdm = account.justDeleteMeData && typeof account.justDeleteMeData === 'object';
     const jdm = hasJdm ? account.justDeleteMeData : {};
       
+    const sub = account.subscription ?? null;
+    const isSubscription = sub !== null ? 'Yes' : 'No';
+
     return [
       escapeCsv(account.name),
       escapeCsv(account.domain),
@@ -39,7 +42,12 @@ export function downloadAccountsAsCsv(accounts) {
       escapeCsv(account.lastEmailDate),
       escapeCsv(account.confidence),
       escapeCsv(jdm.difficulty),
-      escapeCsv(jdm.url)
+      escapeCsv(jdm.url),
+      escapeCsv(isSubscription),
+      escapeCsv(sub?.confidence),
+      escapeCsv(sub?.amount),
+      escapeCsv(sub?.frequency),
+      escapeCsv(sub?.status),
     ].join(',');
   });
 

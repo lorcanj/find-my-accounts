@@ -11,4 +11,9 @@ export const CSV_HEADERS = Object.freeze([
   'Confidence',
   'Difficulty',
   'Delete URL',
+  'Is Subscription',
+  'Subscription Confidence',
+  'Amount',
+  'Frequency',
+  'Status',
 ]);
