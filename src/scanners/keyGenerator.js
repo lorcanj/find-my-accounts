@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { normaliseEmail, normaliseText } from './normalisers/utils.js';
 
 export function generateCanonicalKey(item = {}) {
@@ -12,15 +11,15 @@ export function generateCanonicalKey(item = {}) {
 
   if (item.provider && item.messageId) return `m:${item.provider}|${item.messageId}`;
 
-  // Fallback: stable hash of a few identifying fields
-  const fallback = JSON.stringify({
-    displayName: item.displayName || null,
-    subject: item.normSubject || item.subject || null,
-    snippet: item.snippet || null,
-    provider: item.provider || null,
-  });
-  const hash = crypto.createHash('sha1').update(fallback).digest('hex');
-  return `u:${hash}`;
+  // Fallback: deterministic, normalised string of a few identifying fields
+  const fallback = [
+    item.displayName || '',
+    item.normSubject || item.subject || '',
+    item.snippet || '',
+    item.provider || ''
+  ].join(' | ');
+  const normalisedFallback = normaliseText(fallback).replace(/\s+/g, '_');
+  return `u:${normalisedFallback}`;
 }
 
 export default generateCanonicalKey;
