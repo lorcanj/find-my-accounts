@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     popOutBtn.addEventListener('click', () => {
       // Check if there's an import in progress
-      const hasProgress = progress && !progress.classList.contains('hidden') && progress.style.display !== 'none';
+      // Use getComputedStyle to check visibility regardless of whether it's via class or inline style
+      const hasProgress = progress && window.getComputedStyle(progress).display !== 'none';
       
       if (hasProgress) {
         const proceed = confirm(
