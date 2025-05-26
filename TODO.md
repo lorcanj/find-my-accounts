@@ -2,15 +2,6 @@
 
 This document outlines the recommended order for merging the split branches and identifies additional work (primarily testing) required for each stage.
 
-## 3. Mbox Worker (`split/mbox-worker`)
-**Status:** Core Logic. Depends on Vendor Bundle and Key Generator.
-- [ ] **Review:** Check `src/scanners/mbox/mboxParser.worker.js` and `normaliser.js`.
-- [ ] **Task:** Create `test/mboxNormaliser.test.js`.
-    - Test `normaliseMboxMessage` with mock raw inputs.
-    - Verify date parsing and field fallback logic.
-- [ ] **Task:** (Optional) Create a worker integration test or a script to run the worker against `src/data/test.mbox` (if available).
-- [ ] **Merge:** Merge into `main`.
-
 ## 4. Service Integration (`split/service-integration`)
 **Status:** Glue Code. Depends on Mbox Worker.
 - [ ] **Review:** Check `src/services/authService.js` for `handleImportRequest`.
