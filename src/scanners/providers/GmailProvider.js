@@ -1,7 +1,6 @@
 import BaseProvider from './BaseProvider.js';
-import Account from '../../models/Account.js'; // Assuming you want to return Account objects
-import { filterGmailBySubject } from '../filters/gmailFilter.js';
-import { normaliseGmailMessage } from '../normalisers/gmailNormaliser.js';
+import filterGmailBySubject from '../filters/gmailFilter.js';
+import normaliseGmailMessage from '../normalisers/gmailNormaliser.js';
 
 const GMAIL_API_BASE = 'https://www.googleapis.com/gmail/v1/users/me/messages';
 
@@ -45,7 +44,7 @@ export default class GmailProvider extends BaseProvider {
 
       const filteredAccounts = filterGmailBySubject(detailDataArray);
 
-      return normaliseGmailMessage(filteredAccounts);
+      return filteredAccounts.map(d => this.normaliseAccount(d));
     } catch (error) {
       console.error('Gmail scan error:', error);
       throw error;
@@ -54,6 +53,6 @@ export default class GmailProvider extends BaseProvider {
 
   // this isn't normalising
   normaliseAccount(gmailData) {
-
+    return normaliseGmailMessage(gmailData);
   }
 }
