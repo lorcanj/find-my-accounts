@@ -8,11 +8,6 @@
   
   "action": {
     "default_popup": "src/popup/popup.html"
-  },
-  
-  "background": {
-    "service_worker": "dist/service-worker.js",
-    "type": "module"
   }
 }
 
