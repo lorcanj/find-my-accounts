@@ -32,6 +32,17 @@ body.popped-out {
     align-items: center;
     margin-bottom: 8px;
 }
+.title-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.logo {
+    color: #444; /* or match your theme color */
+    width: 20px;
+    height: 20px;
+}
+
 .container h1 {
     font-size: 1.1rem;
     margin: 0;
