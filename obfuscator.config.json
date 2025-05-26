@@ -1,9 +1,9 @@
 {
     "compact": true,
-    "controlFlowFlattening": false,
-    "controlFlowFlatteningThreshold": 0.75,
+    "controlFlowFlattening": true,
+    "controlFlowFlatteningThreshold": 0.3,
     "deadCodeInjection": true,
-    "deadCodeInjectionThreshold": 0.4,
+    "deadCodeInjectionThreshold": 0.05,
     "debugProtection": false,
     "debugProtectionInterval": 0,
     "disableConsoleOutput": false,
@@ -12,10 +12,10 @@
     "renameGlobals": false,
     "rotateStringArray": true,
     "selfDefending": false,
-    "splitStrings":true,
+    "splitStrings": false,
     "stringArray": true,
     "stringArrayEncoding": ["base64"],
-    "stringArrayThreshold": 0.75,
+    "stringArrayThreshold": 0.3,
     "transformObjectKeys": true,
     "unicodeEscapeSequence": false
 }
