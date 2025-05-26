@@ -55,7 +55,7 @@ export function enrichAccountWithSubscription(account, signalsArray) {
   else if (hasStrong)                     confidence = CONFIDENCE.LOW;
   else if (hasWeak)                       confidence = CONFIDENCE.LOW;
 
-  if (confidence === null) return account;
+  if (confidence === null || confidence === CONFIDENCE.LOW) return account;
 
   // ── 6. STATUS (latest-wins) ──
   const sorted = [...signalsArray].sort(dateAsc);

@@ -245,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Success (resolved) — enrich accounts with subscription data
         for (const { account } of existingKeys.values()) {
           enrichAccountWithSubscription(account, account._subscriptionSignals || []);
-          delete account._subscriptionSignals;
         }
 
         // Re-render so subscription badges appear on the now-enriched accounts
@@ -265,6 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('Import error:', err);
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
           setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
+        }
+      } finally {
+        // Clean up transient signals regardless of success/cancel/error
+        for (const { account } of existingKeys.values()) {
+          delete account._subscriptionSignals;
         }
       }
     });
@@ -462,7 +466,6 @@ function createSubscriptionBadge(subscription) {
   const badge = document.createElement('span');
   const statusClass = SUB_STATUS_BADGE_CLASS[subscription.status] || SUB_STATUS_BADGE_CLASS.active;
   badge.className = `${CSS_CLASS.BADGE} ${statusClass}`;
-  badge.style.marginLeft = '6px';
 
   if (subscription.amount) {
     const freq = FREQUENCY_SHORT[subscription.frequency] || '';

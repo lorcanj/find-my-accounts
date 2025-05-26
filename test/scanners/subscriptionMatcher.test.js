@@ -41,12 +41,12 @@ describe('enrichAccountWithSubscription', () => {
       expect(acc.subscription.confidence).toBe('high');
     });
 
-    it('strong alone → low', () => {
+    it('strong alone → skipped (low confidence not enriched)', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
         signal({ strongKeywords: ['renewed'] }),
       ]);
-      expect(acc.subscription.confidence).toBe('low');
+      expect(acc.subscription).toBeNull();
     });
 
     it('amount alone (no keywords) → medium', () => {
@@ -73,12 +73,12 @@ describe('enrichAccountWithSubscription', () => {
       expect(acc.subscription.confidence).toBe('medium');
     });
 
-    it('weak only → low', () => {
+    it('weak only → skipped (low confidence not enriched)', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
         signal({ weakKeywords: ['premium'] }),
       ]);
-      expect(acc.subscription.confidence).toBe('low');
+      expect(acc.subscription).toBeNull();
     });
 
     it('3 signals with strong keywords → high (multiple billing emails)', () => {
@@ -103,13 +103,12 @@ describe('enrichAccountWithSubscription', () => {
       expect(acc.subscription).toBeNull();
     });
 
-    it('purchase keywords + strong keyword → flagged (strong wins)', () => {
+    it('purchase keywords + strong keyword (single) → skipped (low confidence)', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
         signal({ purchaseKeywords: ['order confirmed'], strongKeywords: ['invoice'] }),
       ]);
-      expect(acc.subscription).not.toBeNull();
-      expect(acc.subscription.confidence).toBe('low');
+      expect(acc.subscription).toBeNull();
     });
   });
 
@@ -119,7 +118,7 @@ describe('enrichAccountWithSubscription', () => {
     it('subscription confirmed (Jan) then cancellation (Mar) → cancelled', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
-        signal({ strongKeywords: ['subscription confirmed'], dateIso: '2024-01-15T00:00:00Z' }),
+        signal({ strongKeywords: ['subscription confirmed'], isBillingSender: true, dateIso: '2024-01-15T00:00:00Z' }),
         signal({ negativeKeywords: ['cancellation confirmed'], dateIso: '2024-03-10T00:00:00Z' }),
       ]);
       expect(acc.subscription.status).toBe('cancelled');
@@ -129,7 +128,7 @@ describe('enrichAccountWithSubscription', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
         signal({ negativeKeywords: ['cancellation confirmed'], dateIso: '2024-01-15T00:00:00Z' }),
-        signal({ strongKeywords: ['renewed'], dateIso: '2024-03-10T00:00:00Z' }),
+        signal({ strongKeywords: ['renewed'], isBillingSender: true, dateIso: '2024-03-10T00:00:00Z' }),
       ]);
       expect(acc.subscription.status).toBe('active');
     });
@@ -156,7 +155,7 @@ describe('enrichAccountWithSubscription', () => {
     it('null dateIso → treated as oldest', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
-        signal({ strongKeywords: ['renewed'], dateIso: null }),
+        signal({ strongKeywords: ['renewed'], isBillingSender: true, dateIso: null }),
         signal({ negativeKeywords: ['cancelled'], dateIso: '2024-03-01T00:00:00Z' }),
       ]);
       // The dated cancellation is more recent, so status should be cancelled
@@ -165,11 +164,11 @@ describe('enrichAccountWithSubscription', () => {
 
     it('account already enriched → subscription replaced', () => {
       const acc = freshAccount();
-      // First enrichment
+      // First enrichment — medium confidence
       enrichAccountWithSubscription(acc, [
-        signal({ weakKeywords: ['premium'] }),
+        signal({ weakKeywords: ['premium'], isBillingSender: true }),
       ]);
-      expect(acc.subscription.confidence).toBe('low');
+      expect(acc.subscription.confidence).toBe('medium');
 
       // Second enrichment replaces it
       enrichAccountWithSubscription(acc, [
@@ -182,7 +181,7 @@ describe('enrichAccountWithSubscription', () => {
     it('non-subscription fields on account untouched', () => {
       const acc = freshAccount({ name: 'Spotify', domain: 'spotify.com', from: 'billing@spotify.com' });
       enrichAccountWithSubscription(acc, [
-        signal({ strongKeywords: ['renewed'] }),
+        signal({ strongKeywords: ['renewed'], isBillingSender: true }),
       ]);
       expect(acc.name).toBe('Spotify');
       expect(acc.domain).toBe('spotify.com');
@@ -196,7 +195,7 @@ describe('enrichAccountWithSubscription', () => {
     it('trial keyword on latest signal → trial', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
-        signal({ strongKeywords: ['trial ending'], dateIso: '2024-06-01T00:00:00Z' }),
+        signal({ strongKeywords: ['trial ending'], isBillingSender: true, dateIso: '2024-06-01T00:00:00Z' }),
       ]);
       expect(acc.subscription.status).toBe('trial');
     });
@@ -204,7 +203,7 @@ describe('enrichAccountWithSubscription', () => {
     it('strong keyword without trial → active', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
-        signal({ strongKeywords: ['renewed'] }),
+        signal({ strongKeywords: ['renewed'], isBillingSender: true }),
       ]);
       expect(acc.subscription.status).toBe('active');
     });
@@ -233,7 +232,7 @@ describe('enrichAccountWithSubscription', () => {
     it('null when no frequency detected', () => {
       const acc = freshAccount();
       enrichAccountWithSubscription(acc, [
-        signal({ strongKeywords: ['renewed'] }),
+        signal({ strongKeywords: ['renewed'], isBillingSender: true }),
       ]);
       expect(acc.subscription.frequency).toBeNull();
     });
