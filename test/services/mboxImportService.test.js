@@ -273,6 +273,11 @@ describe('mboxImportService', () => {
       mockFileReader.onload({ target: { result: mockFileReader.result } });
       await new Promise(resolve => setTimeout(resolve, 0));
 
+      // Verify worker received first chunk of correct size
+      let chunkCalls = mockWorker.postMessage.mock.calls.filter(c => c[0] && c[0].type === 'chunk');
+      expect(chunkCalls.length).toBeGreaterThanOrEqual(1);
+      expect(chunkCalls[0][0].buffer.byteLength).toBe(CHUNK_SIZE);
+
       // Second chunk should be 5MB to 10MB
       expect(mockFile.slice).toHaveBeenCalledWith(CHUNK_SIZE, CHUNK_SIZE * 2);
 
@@ -280,12 +285,22 @@ describe('mboxImportService', () => {
       mockFileReader.onload({ target: { result: new ArrayBuffer(CHUNK_SIZE) } });
       await new Promise(resolve => setTimeout(resolve, 0));
 
+      // Verify worker received second chunk of correct size
+      chunkCalls = mockWorker.postMessage.mock.calls.filter(c => c[0] && c[0].type === 'chunk');
+      expect(chunkCalls.length).toBeGreaterThanOrEqual(2);
+      expect(chunkCalls[1][0].buffer.byteLength).toBe(CHUNK_SIZE);
+
       // Third chunk should be 10MB to 15MB
       expect(mockFile.slice).toHaveBeenCalledWith(CHUNK_SIZE * 2, CHUNK_SIZE * 3);
 
       // Simulate third read
       mockFileReader.onload({ target: { result: new ArrayBuffer(CHUNK_SIZE) } });
       await new Promise(resolve => setTimeout(resolve, 0));
+
+      // Verify worker received third chunk of correct size
+      chunkCalls = mockWorker.postMessage.mock.calls.filter(c => c[0] && c[0].type === 'chunk');
+      expect(chunkCalls.length).toBeGreaterThanOrEqual(3);
+      expect(chunkCalls[2][0].buffer.byteLength).toBe(CHUNK_SIZE);
 
       // Should send end message after all chunks
       expect(mockWorker.postMessage).toHaveBeenCalledWith({ type: 'end' });
@@ -307,10 +322,20 @@ describe('mboxImportService', () => {
       mockFileReader.onload({ target: { result: new ArrayBuffer(CHUNK_SIZE) } });
       await new Promise(resolve => setTimeout(resolve, 0));
 
+      // Verify worker received first chunk of correct size
+      let chunkCalls = mockWorker.postMessage.mock.calls.filter(c => c[0] && c[0].type === 'chunk');
+      expect(chunkCalls.length).toBeGreaterThanOrEqual(1);
+      expect(chunkCalls[0][0].buffer.byteLength).toBe(CHUNK_SIZE);
+
       // Second (final) chunk: 5MB to 7MB (only 2MB)
       expect(mockFile.slice).toHaveBeenCalledWith(CHUNK_SIZE, 7 * 1024 * 1024);
       mockFileReader.onload({ target: { result: new ArrayBuffer(2 * 1024 * 1024) } });
       await new Promise(resolve => setTimeout(resolve, 0));
+
+      // Verify worker received final partial chunk of correct (smaller) size
+      chunkCalls = mockWorker.postMessage.mock.calls.filter(c => c[0] && c[0].type === 'chunk');
+      expect(chunkCalls.length).toBeGreaterThanOrEqual(2);
+      expect(chunkCalls[1][0].buffer.byteLength).toBe(2 * 1024 * 1024);
 
       // Should send end message
       expect(mockWorker.postMessage).toHaveBeenCalledWith({ type: 'end' });

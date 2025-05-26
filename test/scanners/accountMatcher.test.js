@@ -287,7 +287,8 @@ describe('extractAccountsFromMessages', () => {
 
     it('handles missing snippet field with Account constructor default', () => {
       // Test that when snippet is missing, the Account constructor's default is used
-      // The Account class has a default value for snippet parameter
+      // When message.snippet is undefined, the Account constructor's default
+      // parameter value (an empty string) will be applied
       const messages = [{
         canonicalKey: 'key1',
         displayName: 'Test',
@@ -297,7 +298,7 @@ describe('extractAccountsFromMessages', () => {
       
       const result = extractAccountsFromMessages(messages);
       
-      // Account constructor defaults snippet to '', so undefined becomes ''
+      // Account constructor default for snippet is '', so undefined becomes ''
       expect(result[0].snippet).toBe('');
     });
 
