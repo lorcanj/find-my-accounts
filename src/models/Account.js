@@ -7,7 +7,7 @@ export class JustDeleteMeInfo {
 }
 
 export default class Account {
-  constructor({ name = '', subject = '', from = '', domain = '', canonicalKey = null, justDeleteMeData = null, lastEmailDate = null, confidence = null } = {}) {
+  constructor({ name = '', subject = '', from = '', domain = '', canonicalKey = null, justDeleteMeData = null, lastEmailDate = null, confidence = null, isSubscription = false, subscriptionConfidence = null, amount = null, frequency = null, subscriptionStatus = null } = {}) {
     this.name = name;
     this.subject = subject;
     this.from = from;
@@ -16,5 +16,10 @@ export default class Account {
     this.justDeleteMeData = justDeleteMeData;
     this.lastEmailDate = lastEmailDate;
     this.confidence = confidence;
+    this.isSubscription = isSubscription;
+    this.subscriptionConfidence = subscriptionConfidence;
+    this.amount = amount;
+    this.frequency = frequency;
+    this.subscriptionStatus = subscriptionStatus;
   }
 }
