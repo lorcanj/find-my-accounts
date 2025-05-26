@@ -13,7 +13,7 @@
 .instructions-dropdown summary { cursor: pointer; font-weight: 500; color: #1976d2; }
 .muted { 
     font-size: 0.95rem; 
-    color: #444; 
+    color: #333; 
     line-height: 1.5; 
 }
 .file-info { margin-top: 0.5em; font-size: 0.95rem; color: #222; }

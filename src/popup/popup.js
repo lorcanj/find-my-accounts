@@ -20,12 +20,57 @@ let progressBar;
 let downloadButton;
 let importUiState = IMPORT_UI_STATE.IDLE;
 
+const INSTRUCTION_LINKS = [
+  { messageKey: 'instructionsPart1' },
+  { messageKey: 'instructionsGoogleTakeout', url: 'https://takeout.google.com/' },
+  { messageKey: 'instructionsPart2' },
+  { messageKey: 'instructionsThunderbird', url: 'https://www.thunderbird.net/' },
+  { messageKey: 'instructionsPart3' },
+  { messageKey: 'instructionsAppleMail', url: 'https://support.apple.com/guide/mail/pro-export-mailboxes-mlhlp1030/mac' },
+  { messageKey: 'instructionsPart4' },
+  { messageKey: 'instructionsProtonMail', url: 'https://proton.me/support/export-emails-import-export-app' },
+  { messageKey: 'instructionsPart5' },
+];
+
+function renderInstructions() {
+  const instructionsTextEl = document.getElementById('instructionsText');
+  if (!instructionsTextEl) return;
+
+  // Clear existing content
+  while (instructionsTextEl.firstChild) {
+    instructionsTextEl.removeChild(instructionsTextEl.firstChild);
+  }
+  // Build the sentence with links (first paragraph content)
+  INSTRUCTION_LINKS.forEach(item => {
+    if (item.url) {
+      const link = document.createElement('a');
+      link.href = item.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = chrome.i18n.getMessage(item.messageKey);
+      link.title = item.url;
+      instructionsTextEl.appendChild(link);
+    } else {
+      const text = document.createTextNode(chrome.i18n.getMessage(item.messageKey));
+      instructionsTextEl.appendChild(text);
+    }
+  });
+
+  // Append the next sentences as separate paragraphs for clarity
+  const para1 = document.createElement('p');
+  para1.className = 'muted mt-0-5';
+  para1.textContent = chrome.i18n.getMessage('instructionsPart6');
+  instructionsTextEl.appendChild(para1);
+
+  const para2 = document.createElement('p');
+  para2.className = 'muted';
+  para2.textContent = chrome.i18n.getMessage('instructionsPart7');
+  instructionsTextEl.appendChild(para2);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Load i18n strings
-  const instructionsTextEl = document.getElementById('instructionsText');
-  if (instructionsTextEl) {
-    instructionsTextEl.textContent = chrome.i18n.getMessage('instructionsText');
-  }
+  renderInstructions();
 
   // Check if we are in a popped-out window
   const urlParams = new URLSearchParams(window.location.search);

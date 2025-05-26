@@ -1,5 +1,38 @@
 {
   "instructionsText": {
-    "message": "Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded."
+    "message": "Upload an .mbox file (e.g., from Google Takeout or Thunderbird). Files are processed entirely in your browser. Find My Accounts does not store or track any information you upload."
+  },
+  "instructionsGoogleTakeout": {
+    "message": "Google Takeout"
+  },
+  "instructionsThunderbird": {
+    "message": "Thunderbird"
+  },
+  "instructionsAppleMail": {
+    "message": "Apple Mail"
+  },
+  "instructionsProtonMail": {
+    "message": "Proton Mail"
+  },
+  "instructionsPart1": {
+    "message": "Upload an .mbox file (e.g., from "
+  },
+  "instructionsPart2": {
+    "message": ", "
+  },
+  "instructionsPart3": {
+    "message": ", "
+  },
+  "instructionsPart4": {
+    "message": ", or "
+  },
+  "instructionsPart5": {
+    "message": ")."
+  },
+  "instructionsPart6": {
+    "message": "Files are processed entirely in your browser."
+  },
+  "instructionsPart7": {
+    "message": "find my accounts does not store or track any information you upload."
   }
 }
