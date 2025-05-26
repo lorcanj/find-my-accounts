@@ -12,7 +12,8 @@ const mockState = {
 // Top-level mocked modules. The factories delegate to functions on `mockState`,
 // which are populated in `beforeEach` so tests can control behavior per-test.
 vi.mock('../src/popup/download.js', () => ({
-  downloadAccountsAsJson: (...args) => mockState.downloadMock(...args)
+  downloadAccountsAsJson: (...args) => mockState.downloadMock(...args),
+  downloadAccountsAsCsv: (...args) => mockState.downloadMock(...args)
 }));
 
 vi.mock('../src/services/mboxImportService.js', () => ({
