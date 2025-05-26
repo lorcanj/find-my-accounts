@@ -19,6 +19,12 @@ export const CSS_CLASS = Object.freeze({
   COL_NAME:    'name',
   COL_DIFF:    'difficulty',
   COL_ACTION:  'action',
+  BADGE:       'badge',
+  BADGE_HIGH:  'badge-high',
+  BADGE_MED:   'badge-medium',
+  BADGE_LOW:   'badge-low',
+  FILTER_BTN:  'filter-btn',
+  FILTER_BTN_ACTIVE: 'active',
 });
 
 export const DOM_ID = Object.freeze({
@@ -33,4 +39,5 @@ export const DOM_ID = Object.freeze({
   POP_OUT_BTN:        'popOutBtn',
   INSTRUCTIONS_TEXT:  'instructionsText',
   LARGE_FILE_WARNING: 'largeFileWarning',
+  CONFIDENCE_FILTERS: 'confidenceFilters',
 });

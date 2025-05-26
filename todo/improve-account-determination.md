@@ -29,10 +29,10 @@ Allow non-Latin characters through `normaliseText`.
 ## Chunk 4 — UI: confidence badges & filtering
 Show confidence in the account list and let users filter by it.
 
-- [ ] Add confidence badge/indicator to account list rows
-- [ ] Add CSS styles for high/medium/low badges
-- [ ] Add filter control to show/hide by confidence level
-- [ ] Update account count to reflect active filter
+- [x] Add confidence badge/indicator to account list rows
+- [x] Add CSS styles for high/medium/low badges
+- [x] Add filter control to show/hide by confidence level
+- [x] Update account count to reflect active filter
 
 ## Chunk 5 — Verify & clean up
 End-to-end check and docs.
