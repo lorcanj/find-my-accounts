@@ -20,6 +20,11 @@ body {
     padding: 12px;
     width: 360px;
 }
+
+body.popped-out {
+    width: auto;
+    max-width: 100%;
+}
 .header {
     display: flex;
     justify-content: space-between;

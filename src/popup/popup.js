@@ -15,12 +15,19 @@ let progressBar;
 let downloadButton;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Check if we are in a popped-out window
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPopped = urlParams.get('popped') === 'true';
+
+  if (isPopped) {
+    document.body.classList.add('popped-out');
+  }
+
   // Pop-out button handler
   const popOutBtn = document.getElementById('popOutBtn');
   if (popOutBtn) {
-    // Hide button if we are already in the popped-out window (detected via URL param)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('popped') === 'true') {
+    // Hide button if we are already in the popped-out window
+    if (isPopped) {
       popOutBtn.style.display = 'none';
     }
 
