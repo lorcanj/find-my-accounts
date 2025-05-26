@@ -3,6 +3,11 @@ import { normaliseEmail, normaliseText } from './normalisers/utils.js';
 
 let _fallbackId = 0;
 
+const GENERIC_SUBDOMAINS = new Set([
+  'mail', 'smtp', 'beta', 'test', 'news', 'blog',
+  'shop', 'help', 'info', 'auth', 'send', 'ping',
+]);
+
 // TODO: add documentation for how the key is generated
 export function generateCanonicalKey(item = {}) {
   // Prefer already-normalised fields from provider normalisers; fall back to helpers
@@ -47,7 +52,7 @@ export function generateCanonicalKey(item = {}) {
           const subParts = res.subdomain.split('.');
           for (const part of subParts) {
             // Check for significant parts (avoid short generic subdomains like api, cdn, app)
-            if (part && part.length > 3) {
+            if (part && part.length > 3 && !GENERIC_SUBDOMAINS.has(part.toLowerCase())) {
               const lowerPart = part.toLowerCase();
               const idx = displayName.toLowerCase().indexOf(lowerPart);
               if (idx !== -1) {
