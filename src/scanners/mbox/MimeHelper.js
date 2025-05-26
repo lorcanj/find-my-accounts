@@ -1,3 +1,4 @@
+// Not currently used — kept for future email body parsing.
 export class MimeHelper {
   /**
    * Recursively find a preferred `text/plain` node in the parsed MIME tree.
