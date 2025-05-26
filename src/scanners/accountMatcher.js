@@ -10,11 +10,10 @@ export function extractAccountsFromMessages(messages = []) {
   messages.forEach(m => {
     const from = m.from || '';
     const subject = m.subject || '';
-    const item = { from, subject, snippet: m.snippet || '', provider: m.provider || 'gmail', messageId: m.messageId || m.id || null };
-    // Prefer canonicalKey from a normaliser; fall back to generating one
-    const key = m.canonicalKey || generateCanonicalKey(item);
+    const key = m.canonicalKey
+    console.log(key);
     if (!seen.has(key)) {
-      foundAccounts.push(new Account({ name: m.name || '', subject, from, snippet: item.snippet }));
+      foundAccounts.push(new Account({ name: m.displayName || '', subject, from, snippet: m.snippet }));
       seen.add(key);
     }
   });
