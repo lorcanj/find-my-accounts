@@ -15,6 +15,56 @@ let progressBar;
 let downloadButton;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Check if we are in a popped-out window
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPopped = urlParams.get('popped') === 'true';
+
+  if (isPopped) {
+    document.body.classList.add('popped-out');
+  }
+
+  // Pop-out button handler
+  const popOutBtn = document.getElementById('popOutBtn');
+  if (popOutBtn) {
+    // Hide button if we are already in the popped-out window
+    if (isPopped) {
+      popOutBtn.style.display = 'none';
+    }
+
+    popOutBtn.addEventListener('click', () => {
+      // Check if there's an import in progress
+      // Use getComputedStyle to check visibility regardless of whether it's via class or inline style
+      const hasProgress = progress && window.getComputedStyle(progress).display !== 'none';
+      
+      if (hasProgress) {
+        const proceed = confirm(
+          'Warning: In-progress parsing will not persist when you pop out. You may need to re-select and re-import your file in the new window. Continue?'
+        );
+        if (!proceed) return;
+      }
+
+      // Open new window with ?popped=true param
+      chrome.windows.create({
+        url: chrome.runtime.getURL('src/popup/popup.html?popped=true'),
+        type: 'popup',
+        width: 400,
+        height: 600
+      }, () => {
+        const err = chrome.runtime.lastError;
+        if (err) {
+          console.error('Window creation failed:', err);
+          if (selectedFileInfo) {
+            selectedFileInfo.textContent = `Pop-out failed: ${err.message || String(err)}`;
+          } else {
+            alert(`Pop-out failed: ${err.message || String(err)}`);
+          }
+          return;
+        }
+        window.close();
+      });
+    });
+  }
+  
   // File import UI elements
   mboxInput = document.getElementById('mboxFileInput');
   selectedFileInfo = document.getElementById('selectedFileInfo');

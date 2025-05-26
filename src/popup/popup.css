@@ -20,9 +20,33 @@ body {
     padding: 12px;
     width: 360px;
 }
+
+body.popped-out {
+    width: auto;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
 .container h1 {
     font-size: 1.1rem;
-    margin: 0 0 8px 0;
+    margin: 0;
+}
+.btn-link {
+    background: none;
+    border: none;
+    color: #1976d2;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    text-decoration: none;
+}
+.btn-link:hover {
+    text-decoration: underline;
 }
 .btn {
     padding: 8px 12px;
