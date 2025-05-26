@@ -18,6 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Pop-out button handler
   const popOutBtn = document.getElementById('popOutBtn');
   if (popOutBtn) {
+    // Hide button if we are already in the popped-out window (detected via URL param)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('popped') === 'true') {
+      popOutBtn.style.display = 'none';
+    }
+
     popOutBtn.addEventListener('click', () => {
       // Check if there's an import in progress
       const hasProgress = progress && !progress.classList.contains('hidden') && progress.style.display !== 'none';
@@ -28,16 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         if (!proceed) return;
       }
-      
-      // Open the popup in a new window
+
+      // Open new window with ?popped=true param
       chrome.windows.create({
-        url: chrome.runtime.getURL('src/popup/popup.html'),
+        url: chrome.runtime.getURL('src/popup/popup.html?popped=true'),
         type: 'popup',
         width: 800,
         height: 600
       });
-      
-      // Optionally close the current popup
       window.close();
     });
   }
