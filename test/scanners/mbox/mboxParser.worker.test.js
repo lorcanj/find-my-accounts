@@ -892,6 +892,49 @@ describe('mboxParser.worker.js', () => {
   });
 
   describe('Structured Header Handling (Mocked)', () => {
+    it('passes header-only content to the MIME parser (excluding body)', async () => {
+      vi.resetModules();
+
+      const parseSpy = vi.fn(() => ({
+        headers: {
+          from: [{ value: 'Header Only <header@example.com>' }],
+          subject: [{ value: 'Header-Only Parse' }]
+        },
+        childNodes: []
+      }));
+
+      vi.doMock('../../../src/vendors/emailjs-mime-parser-wrapper.js', () => ({
+        parse: parseSpy
+      }));
+
+      await import('../../../src/scanners/mbox/mboxParser.worker.js');
+      const newOnMessageHandler = global.self.onmessage;
+
+      const bodyMarker = 'BODY-SHOULD-NOT-BE-PARSED-12345';
+      const mboxMessage =
+        'From sender@example.com Mon Jan 15 12:00:00 2024\n' +
+        'From: Header Only <header@example.com>\n' +
+        'Subject: Header-Only Parse\n' +
+        '\n' +
+        `${bodyMarker}\n`;
+
+      const buffer = new TextEncoder().encode(mboxMessage);
+      newOnMessageHandler({ data: { type: 'chunk', buffer: buffer.buffer } });
+      newOnMessageHandler({ data: { type: 'end' } });
+
+      expect(parseSpy).toHaveBeenCalled();
+      const parseInput = parseSpy.mock.calls[0][0];
+      expect(parseInput).toContain('From: Header Only <header@example.com>');
+      expect(parseInput).not.toContain(bodyMarker);
+
+      const batchCalls = mockPostMessage.mock.calls.filter(
+        call => call[0].type === 'batch'
+      );
+      const allMessages = batchCalls.flatMap(call => call[0].messages);
+      expect(allMessages.length).toBeGreaterThan(0);
+      expect(allMessages[0].email).toBe('header@example.com');
+    });
+
     it('correctly formats headers when parser returns structured objects', async () => {
       // Reset modules to allow re-importing with new mocks
       vi.resetModules();
