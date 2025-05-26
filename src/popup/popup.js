@@ -15,9 +15,6 @@ let importBtn;
 let progress;
 let progressBar;
 let downloadButton;
-let accountList;
-let accountCount;
-let error;
 
 document.addEventListener('DOMContentLoaded', () => {
   scanButton = document.getElementById(ACTION_SCAN_GMAIL);
