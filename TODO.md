@@ -2,12 +2,6 @@
 
 This document outlines the recommended order for merging the split branches and identifies additional work (primarily testing) required for each stage.
 
-## 1. Vendor Bundle (`split/vendor-bundle`)
-**Status:** Foundation. Provides the MIME parser required by the worker.
-- [ ] **Review:** Check `src/vendors/emailjs-mime-parser-wrapper.js` and the bundle.
-- [ ] **Test:** Verify `test/emailjsWrapper.test.js` covers basic parsing scenarios.
-- [ ] **Merge:** Merge into `main`.
-
 ## 2. Key Generator (`split/keygen`)
 **Status:** Foundation. Used by Normaliser and Service.
 - [ ] **Review:** Check `src/scanners/keyGenerator.js` for the new heuristic logic.
