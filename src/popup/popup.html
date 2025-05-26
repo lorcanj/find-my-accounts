@@ -3,13 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Account Scanner</title>
+  <title>find my accounts</title>
   <link rel="stylesheet" href="popup.css">
+  <link rel="icon" type="image/png" sizes="16x16" href="../assets/icon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="../assets/icon-48.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="../assets/icon-128.png">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>Account Scanner</h1>
+      <h1>find my accounts</h1>
       <button id="popOutBtn" class="btn-link" title="Pop out" aria-label="Pop out">
         <!-- Icon: external-link from Feather Icons (MIT License) -->
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -21,7 +25,6 @@
     </div>
     
     <div id="importContainer" class="mt-1">
-      <h3>Import .mbox file (processed locally)</h3>
       <p class="muted">Choose an exported .mbox file (Google Takeout or Thunderbird). Files are processed entirely in your browser and never uploaded.</p>
       <div class="file-picker">
         <input id="mboxFileInput" type="file" accept=".mbox" />

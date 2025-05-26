@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Account Scanner",
+  "name": "find my accounts",
   "version": "1.0.0",
   "description": "Scan uploaded .mbox files to discover accounts associated with your email",
   
