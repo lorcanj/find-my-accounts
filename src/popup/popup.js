@@ -36,13 +36,19 @@ function filterAccounts(accounts) {
   const seenAccount = new Set();
   const filtered = [];
   accounts.forEach(account => {
-    const accountName = getAccountName(account);
-    // return will continue with the next account
+    const displayName = extractDisplayName(account);
+    const accountName = normalise(displayName);
     if (seenAccount.has(accountName)) return;
-    account.name = accountName;
+    account.name = displayName; // store original for display
     seenAccount.add(accountName);
     filtered.push(account);
   });
+  // Helper to extract the original display name from the "from" field
+  function extractDisplayName(account) {
+    const from = account.from || '';
+    const nameMatch = from.match(/^"?([^"<]*)"?\s*</);
+    return nameMatch && nameMatch[1] ? nameMatch[1].trim() : from;
+  }
   return filtered;
 }
 
@@ -80,7 +86,7 @@ function createAccountListItem(account) {
   if (account.justDeleteMeData !== NO_DATA_FOUND_MESSAGE) {
     li.textContent = `${account.justDeleteMeData.name} (${account.justDeleteMeData.difficulty})`;
   } else {
-    li.textContent = getAccountName(account);
+    li.textContent = account.name;
   }
   return li;
 }
