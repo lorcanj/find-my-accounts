@@ -87,7 +87,7 @@ describe('downloadAccountsAsCsv - CSV injection protection', () => {
     const csvText = await capturedBlob.text();
     const [headerRow, dataRow] = csvText.split('\n');
 
-    expect(headerRow).toBe('Account Name,Domain,Sender,Difficulty,Delete URL');
+    expect(headerRow).toBe('Account Name,Domain,Sender,Confidence,Difficulty,Delete URL');
     expect(dataRow).toContain('Example Account');
     expect(dataRow).toContain('example.com');
     expect(dataRow).toContain('"Alice ""A"" <alice@example.com>"');
