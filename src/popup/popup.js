@@ -9,6 +9,7 @@ import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
+const activeConfidenceFilters = new Set(['high', 'medium', 'low']);
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -261,7 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
   downloadButton = document.getElementById(DOM_ID.DOWNLOAD_ACCOUNTS);
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
-      downloadAccountsAsCsv(accountsForDownload);
+      const filtered = accountsForDownload.filter(
+        a => !a.confidence || activeConfidenceFilters.has(a.confidence)
+      );
+      downloadAccountsAsCsv(filtered);
     });
   }
 
@@ -282,6 +286,24 @@ document.addEventListener('DOMContentLoaded', () => {
       rerenderAllAccounts(sortSelect.value);
     });
   }
+
+  // Confidence filter buttons
+  const filterContainer = document.getElementById(DOM_ID.CONFIDENCE_FILTER);
+  if (filterContainer) {
+    filterContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest(`.${CSS_CLASS.FILTER_BTN}`);
+      if (!btn) return;
+      const level = btn.dataset.confidence;
+      if (activeConfidenceFilters.has(level)) {
+        activeConfidenceFilters.delete(level);
+        btn.classList.remove(CSS_CLASS.FILTER_BTN_ACTIVE);
+      } else {
+        activeConfidenceFilters.add(level);
+        btn.classList.add(CSS_CLASS.FILTER_BTN_ACTIVE);
+      }
+      applyConfidenceFilter();
+    });
+  }
 });
 
 
@@ -297,6 +319,7 @@ function rerenderAllAccounts(sortOrder) {
       existingKeys.get(key).li = li;
     }
   });
+  applyConfidenceFilter();
 }
 
 function renderAccountList(accounts) {
@@ -310,6 +333,7 @@ function renderAccountList(accounts) {
       existingKeys.get(key).li = li;
     }
   });
+  applyConfidenceFilter();
 }
 
 // Enrich accounts with justdeleteme data
@@ -336,10 +360,20 @@ const normalise = normaliseForLookup;
 function createAccountListItem(account) {
   const li = document.createElement('li');
   li.setAttribute('role', 'row');
+  if (account.confidence) li.dataset.confidence = account.confidence;
 
   const nameDiv = document.createElement('div');
   nameDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_NAME}`;
   nameDiv.setAttribute('role', 'cell');
+
+  const confidenceDiv = document.createElement('div');
+  confidenceDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_CONFIDENCE}`;
+  confidenceDiv.setAttribute('role', 'cell');
+  if (account.confidence) {
+    confidenceDiv.appendChild(createConfidenceBadge(account.confidence));
+  } else {
+    confidenceDiv.textContent = '-';
+  }
 
   const dateDiv = document.createElement('div');
   dateDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_LAST_EMAIL}`;
@@ -355,9 +389,8 @@ function createAccountListItem(account) {
   actionDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_ACTION}`;
   actionDiv.setAttribute('role', 'cell');
 
-  const nameText = document.createElement('span');
   if (account.justDeleteMeData !== UI_TEXT.NO_DATA_FOUND) {
-    nameText.textContent = account.justDeleteMeData.name;
+    nameDiv.textContent = account.justDeleteMeData.name;
     diffDiv.textContent = account.justDeleteMeData.difficulty;
 
     if (account.justDeleteMeData.url) {
@@ -373,16 +406,13 @@ function createAccountListItem(account) {
       actionDiv.textContent = '-';
     }
   } else {
-    nameText.textContent = account.name;
+    nameDiv.textContent = account.name;
     diffDiv.textContent = '-';
     actionDiv.textContent = '-';
   }
-  nameDiv.appendChild(nameText);
-  if (account.confidence) {
-    nameDiv.appendChild(createConfidenceBadge(account.confidence));
-  }
 
   li.appendChild(nameDiv);
+  li.appendChild(confidenceDiv);
   li.appendChild(dateDiv);
   li.appendChild(diffDiv);
   li.appendChild(actionDiv);
@@ -396,6 +426,19 @@ const CONFIDENCE_BADGE_CLASS = {
   low:    CSS_CLASS.BADGE_LOW,
 };
 const CONFIDENCE_LABEL = { high: 'High', medium: 'Med', low: 'Low' };
+
+function applyConfidenceFilter() {
+  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
+  if (!list) return;
+  let visibleCount = 0;
+  for (const li of list.children) {
+    const conf = li.dataset.confidence;
+    const visible = !conf || activeConfidenceFilters.has(conf);
+    li.style.display = visible ? '' : 'none';
+    if (visible) visibleCount++;
+  }
+  updateAccountCount(visibleCount);
+}
 
 function createConfidenceBadge(confidence) {
   const badge = document.createElement('span');
@@ -474,13 +517,10 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
       if (newConf && (!entry.account.confidence || CONFIDENCE_RANK[newConf] > CONFIDENCE_RANK[entry.account.confidence])) {
         entry.account.confidence = newConf;
         if (entry.li) {
-          const existingBadge = entry.li.querySelector('.badge');
-          if (existingBadge) {
-            existingBadge.className = `${CSS_CLASS.BADGE} ${CONFIDENCE_BADGE_CLASS[newConf]}`;
-            existingBadge.textContent = CONFIDENCE_LABEL[newConf];
-          } else {
-            const nameCol = entry.li.querySelector('.name');
-            if (nameCol) nameCol.appendChild(createConfidenceBadge(newConf));
+          const confCell = entry.li.querySelector('.confidence');
+          if (confCell) {
+            confCell.innerHTML = '';
+            confCell.appendChild(createConfidenceBadge(newConf));
           }
         }
       }
