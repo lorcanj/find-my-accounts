@@ -8,8 +8,9 @@ const TRIAL_KEYWORDS = ['trial ending', 'trial expires', 'trial will end'];
  * Enrich an account with subscription info derived from aggregated signals.
  * Mutates account.subscription in place; returns the account for chaining.
  */
-export function enrichAccountWithSubscription(account, signalsArray) {
+export function enrichAccountWithSubscription(account, signalsArray, { isPlatform = false } = {}) {
   if (!signalsArray || signalsArray.length === 0) return account;
+  if (isPlatform) return account;
 
   // ── 2. AGGREGATE ──
   const allStrong = [];

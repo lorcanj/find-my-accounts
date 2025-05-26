@@ -5,6 +5,7 @@ import { extractAccountsFromMessages, updateConfidence } from '../scanners/accou
 import { enrichAccountWithSubscription } from '../scanners/subscriptionMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID, SUBSCRIPTION_UI_ENABLED } from '../constants/ui.js';
+import { PLATFORM_BRAND_MAP } from '../constants/platformBrands.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
@@ -243,7 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Success (resolved) — enrich accounts with subscription data
         for (const { account } of existingKeys.values()) {
-          enrichAccountWithSubscription(account, account._subscriptionSignals || []);
+          const platformName = PLATFORM_BRAND_MAP.get(account.canonicalKey);
+          if (platformName) account.name = platformName;
+          enrichAccountWithSubscription(account, account._subscriptionSignals || [], { isPlatform: !!platformName });
         }
 
         // Re-render so subscription badges appear on the now-enriched accounts
