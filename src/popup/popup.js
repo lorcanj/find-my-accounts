@@ -4,7 +4,7 @@ import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages, updateConfidence } from '../scanners/accountMatcher.js';
 import { enrichAccountWithSubscription } from '../scanners/subscriptionMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
-import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
+import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID, SUBSCRIPTION_UI_ENABLED } from '../constants/ui.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
@@ -317,12 +317,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Subscription filter toggle
   const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
-  if (subToggle) {
+  if (subToggle && SUBSCRIPTION_UI_ENABLED) {
+    subToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
     subToggle.addEventListener('change', applySubscriptionFilter);
   }
 });
 
 function applySubscriptionFilter() {
+  if (!SUBSCRIPTION_UI_ENABLED) return;
   const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   if (!list) return;
@@ -473,6 +475,7 @@ const SUB_STATUS_BADGE_CLASS = {
 const FREQUENCY_SHORT = { monthly: '/mo', annual: '/yr', weekly: '/wk', quarterly: '/qtr' };
 
 function createSubscriptionBadge(subscription) {
+  if (!SUBSCRIPTION_UI_ENABLED) return null;
   if (!subscription) return null;
   if (subscription.confidence === 'low') return null;
 

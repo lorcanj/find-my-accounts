@@ -387,7 +387,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     });
   });
 
-  it('renders subscription badges after scan completion', async () => {
+  it('does not render subscription badges when SUBSCRIPTION_UI_ENABLED is false', async () => {
     const accounts = [
       {
         canonicalKey: 'k-sub',
@@ -428,16 +428,9 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       const rows = document.querySelectorAll('#accountList li[role="row"]');
       expect(rows).toHaveLength(2);
 
-      // Netflix row should have a subscription badge
-      const netflixRow = rows[0];
-      const badge = netflixRow.querySelector('.badge-sub-active');
-      expect(badge).not.toBeNull();
-      expect(badge.textContent).toBe('$15.99/mo');
-
-      // GitHub row should NOT have a subscription badge
-      const githubRow = rows[1];
-      const noBadge = githubRow.querySelector('[class*="badge-sub"]');
-      expect(noBadge).toBeNull();
+      // No subscription badges should render when the feature is disabled
+      const anyBadge = document.querySelector('[class*="badge-sub"]');
+      expect(anyBadge).toBeNull();
     });
   });
 
