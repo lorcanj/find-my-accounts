@@ -28,7 +28,7 @@ export async function importMboxFile(file, onProgress, onBatch) {
       if (msg.type === 'batch') {
         if (!Array.isArray(msg.messages)) {
           worker.terminate();
-          reject(new Error('Worker sent invalid batch payload'));
+          reject(new Error("Worker sent invalid batch payload: expected 'messages' to be an array"));
           return;
         }
         if (onBatch) {
