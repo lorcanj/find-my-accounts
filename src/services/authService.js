@@ -24,16 +24,7 @@ async function handleScanRequest(request) {
   const token = await provider.authenticate();
   
   // 2. Scan
-  const accounts = await provider.scan(token);
+  const normalisedAccounts = await provider.scan(token);
 
-  // Runtime assertion: ensure providers return normalised Account objects
-  function isNormalisedAccount(a) {
-    return a && typeof a.from === 'string' && (typeof a.subject === 'string' || typeof a.name === 'string');
-  }
-
-  if (!Array.isArray(accounts) || !accounts.every(isNormalisedAccount)) {
-    throw new Error(`Provider '${providerName}' returned unexpected data shape; expected Account[]`);
-  }
-
-  return accounts;
+  return normalisedAccounts;
 }

@@ -1,6 +1,7 @@
 import BaseProvider from './BaseProvider.js';
 import Account from '../../models/Account.js'; // Assuming you want to return Account objects
 import { filterGmailBySubject } from '../filters/gmailFilter.js';
+import { normaliseGmailMessage } from '../normalisers/gmailNormaliser.js';
 
 const GMAIL_API_BASE = 'https://www.googleapis.com/gmail/v1/users/me/messages';
 
@@ -36,6 +37,7 @@ export default class GmailProvider extends BaseProvider {
           headers: { Authorization: `Bearer ${token}` }
         })
       );
+      // double check this, esp the promise.all
       const detailResponses = await Promise.all(detailPromises);
       const detailDataArray = await Promise.all(
         detailResponses.map((res) => res.json())
@@ -43,12 +45,7 @@ export default class GmailProvider extends BaseProvider {
 
       const filteredAccounts = filterGmailBySubject(detailDataArray);
 
-      // now need to call normalise
-      const accounts = detailDataArray.map((detailData) =>
-        this.normaliseAccount(detailData)
-      );
-
-      return accounts;
+      return normaliseGmailMessage(filteredAccounts);
     } catch (error) {
       console.error('Gmail scan error:', error);
       throw error;
