@@ -3,7 +3,7 @@ const data = justdeletemeData;
 
 // Helper to normalise strings: lowercase and remove punctuation/spaces
 function normalise(str) {
-  return str.toLowerCase().replace(/[\s\W_]+/g, '');
+  return str.toLocaleLowerCase('en').replace(/[\s\W_]+/g, '');
 }
 
 function buildDomainLookup(data) {
