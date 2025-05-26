@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
+
       try {
         await importMboxFile(
           file,
@@ -150,7 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   downloadButton = document.getElementById('downloadAccounts');
   if (downloadButton) {
     downloadButton.addEventListener('click', function() {
