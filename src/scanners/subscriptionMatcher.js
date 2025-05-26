@@ -10,6 +10,7 @@ const TRIAL_KEYWORDS = ['trial ending', 'trial expires', 'trial will end'];
  */
 export function enrichAccountWithSubscription(account, signalsArray) {
   if (!signalsArray || signalsArray.length === 0) return account;
+  if (account.isPlatform) return account;
 
   // ── 2. AGGREGATE ──
   const allStrong = [];

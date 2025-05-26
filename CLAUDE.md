@@ -37,7 +37,7 @@ Once the plan is approved:
 
 ## What this project is
 
-A Firefox browser extension that helps users discover which online services have their email address, then guides them toward deleting those accounts. It works by parsing exported email archives (.mbox files) entirely in the browser — no data ever leaves the user's machine.
+A browser extension that helps users discover which online services have their email address, then guides them toward deleting those accounts. It works by parsing exported email archives (.mbox files) entirely in the browser — no data ever leaves the user's machine.
 
 ## Core user flow
 
