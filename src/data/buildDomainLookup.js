@@ -1,10 +1,8 @@
-const data = require('./justdeleteme.json');
+const data = window.justdeletemeData;
 
 // Helper to normalize strings: lowercase and remove punctuation/spaces
 function normalise(str) {
-  return str
-    .toLowerCase()
-    .replace(/[\s\W_]+/g, ''); // Remove all non-alphanumeric chars
+  return str.toLowerCase().replace(/[\s\W_]+/g, '');
 }
 
 function buildDomainLookup(data) {
@@ -25,4 +23,5 @@ function buildDomainLookup(data) {
 // Build the lookup once at module load
 const domainLookup = buildDomainLookup(data);
 
-module.exports = domainLookup;
+window.domainLookup = domainLookup;
+delete window.justdeletemeData;
