@@ -24,8 +24,7 @@ export default function normaliseMboxMessage(raw = {}) {
 
   let domain = null;
   if (email) {
-    const parts = email.split('@');
-    if (parts[1]) domain = parts[1].toLowerCase();
+    domain = email.split('@')[1] || null;
   }
 
   const normSubject = normaliseText(subject);
