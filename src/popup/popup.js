@@ -10,6 +10,7 @@ import { sortAccounts, formatEmailDate } from './sortUtils.js';
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
 const activeConfidenceFilters = new Set(['high', 'medium', 'low']);
+let showSubscriptionBadges = true;
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -310,6 +311,16 @@ document.addEventListener('DOMContentLoaded', () => {
       applyConfidenceFilter();
     });
   }
+
+  // Subscription badge toggle
+  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  if (subToggle) {
+    subToggle.addEventListener('change', () => {
+      showSubscriptionBadges = subToggle.checked;
+      const sortSel = document.getElementById(DOM_ID.SORT_SELECT);
+      rerenderAllAccounts(sortSel ? sortSel.value : 'default');
+    });
+  }
 });
 
 
@@ -444,6 +455,7 @@ const SUB_STATUS_BADGE_CLASS = {
 const FREQUENCY_SHORT = { monthly: '/mo', annual: '/yr', weekly: '/wk', quarterly: '/qtr' };
 
 function createSubscriptionBadge(subscription) {
+  if (!showSubscriptionBadges) return null;
   if (!subscription) return null;
   if (subscription.confidence === 'low') return null;
 

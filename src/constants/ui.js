@@ -46,4 +46,5 @@ export const DOM_ID = Object.freeze({
   LARGE_FILE_WARNING: 'largeFileWarning',
   SORT_SELECT:        'sortSelect',
   CONFIDENCE_FILTER:  'confidenceFilter',
+  SHOW_SUBSCRIPTIONS: 'showSubscriptions',
 });

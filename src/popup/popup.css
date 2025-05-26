@@ -222,6 +222,20 @@ h2#accounts-heading {
     letter-spacing: 0.02em;
 }
 .filter-btn:hover { background: #eee; }
+.sub-toggle-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.sub-toggle {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
 .filter-btn.active[data-confidence="high"]   { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
 .filter-btn.active[data-confidence="medium"] { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
 .filter-btn.active[data-confidence="low"]    { background: #fce4ec; color: #c62828; border-color: #ef9a9a; }

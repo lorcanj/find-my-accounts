@@ -75,6 +75,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
           <ul id="accountList"></ul>
           <span id="accountCount">0</span>
           <button id="downloadAccounts">Download</button>
+          <input type="checkbox" id="showSubscriptions" checked />
         </body>
       </html>
     `, { url: 'http://localhost' });
