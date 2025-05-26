@@ -1,14 +1,11 @@
 
-/**
- * Handles the mbox import process using a Web Worker and chunked streaming.
- * 
- * @param {File} file - The mbox file to import.
- * @param {Function} onProgress - Callback for progress updates (percent).
- * @param {Function} onBatch - Callback for receiving a batch of normalised messages.
- * @returns {Promise<void>} - Resolves when import is complete.
- */
 let activeGlobalSession = null;
 
+/**
+ * Cancels the currently active mbox import session if one exists.
+ *
+ * @returns {boolean} - Returns true if an active session was successfully cancelled, false otherwise.
+ */
 export function cancelMboxImport() {
   if (!activeGlobalSession || activeGlobalSession.settled) return false;
 
@@ -36,6 +33,14 @@ export function cancelMboxImport() {
   return true;
 }
 
+/**
+ * Handles the mbox import process using a Web Worker and chunked streaming.
+ *
+ * @param {File} file - The mbox file to import.
+ * @param {Function} onProgress - Callback for progress updates (percent).
+ * @param {Function} onBatch - Callback for receiving a batch of normalised messages.
+ * @returns {Promise<void>} - Resolves when import is complete.
+ */
 export async function importMboxFile(file, onProgress, onBatch) {
   return new Promise((resolve, reject) => {
     const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
