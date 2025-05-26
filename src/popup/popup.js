@@ -141,15 +141,19 @@ function normalise(str) {
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
+  li.setAttribute('role', 'row');
   
   const nameDiv = document.createElement('div');
   nameDiv.className = 'col name';
+  nameDiv.setAttribute('role', 'cell');
   
   const diffDiv = document.createElement('div');
   diffDiv.className = 'col difficulty';
+  diffDiv.setAttribute('role', 'cell');
   
   const actionDiv = document.createElement('div');
   actionDiv.className = 'col action';
+  actionDiv.setAttribute('role', 'cell');
 
   if (account.justDeleteMeData !== NO_DATA_FOUND_MESSAGE) {
     nameDiv.textContent = account.justDeleteMeData.name;
