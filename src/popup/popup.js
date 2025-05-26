@@ -1,4 +1,5 @@
 const ACTION_SCAN_GMAIL = 'scanGmail';
+const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -59,7 +60,7 @@ function enrichAccounts(accounts) {
   return accounts.map(account => {
     const lookupKey = getAccountName(account);
     const domainInfo = window.domainLookup && window.domainLookup[lookupKey];
-    account.justDeleteMeData = domainInfo || 'No data found.';
+    account.justDeleteMeData = domainInfo || NO_DATA_FOUND_MESSAGE;
     return account;
   });
 }
@@ -76,8 +77,8 @@ function normalise(str) {
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
-  if (account.justDeleteMe) {
-    li.textContent = `${account.justDeleteMe.name} (${account.justDeleteMe.difficulty})`;
+  if (account.justDeleteMeData !== NO_DATA_FOUND_MESSAGE) {
+    li.textContent = `${account.justDeleteMeData.name} (${account.justDeleteMeData.difficulty})`;
   } else {
     li.textContent = getAccountName(account);
   }
