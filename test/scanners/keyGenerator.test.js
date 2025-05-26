@@ -140,11 +140,22 @@ describe('generateCanonicalKey', () => {
   });
 
   it('handles hyphenated display names with word boundaries', () => {
-    // "shop" should match in "Shop-Now" since hyphen is a word boundary
-    expect(generateCanonicalKey({ 
-      email: 'deals@shop.retailer.com', 
-      displayName: 'Shop-Now Deals' 
-    })).toBe('brand:shop');
+    // "acme" should match in "Acme-Now" since hyphen is a word boundary
+    expect(generateCanonicalKey({
+      email: 'deals@acme.retailer.com',
+      displayName: 'Acme-Now Deals'
+    })).toBe('brand:acme');
+  });
+
+  it('skips generic subdomains like mail, shop, blog', () => {
+    expect(generateCanonicalKey({
+      email: 'noreply@mail.spotify.com',
+      displayName: 'Mail from Spotify'
+    })).toBe('brand:spotify');
+    expect(generateCanonicalKey({
+      email: 'deals@shop.retailer.com',
+      displayName: 'Shop-Now Deals'
+    })).toBe('brand:retailer');
   });
 });
 

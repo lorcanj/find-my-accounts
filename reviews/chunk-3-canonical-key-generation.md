@@ -20,30 +20,6 @@ A subdomain heuristic overrides the brand stem if a subdomain part (>3 chars) ap
 
 ## Findings
 
-### 1. Regex injection in subdomain heuristic (Medium-High)
-
-`keyGenerator.js:49`: `new RegExp(`\\b${part}\\b`, 'i')` interpolates the subdomain part directly into a regex without escaping. DNS labels are restricted to alphanumerics and hyphens (RFC 1035), so in practice this is safe. However, the input comes from parsing an email address string, not from DNS resolution — a malformed address could contain regex metacharacters (e.g., `foo(bar)`), causing a `SyntaxError`.
-
-The `regex.test()` call isn't wrapped in a try/catch, so a malformed subdomain would crash the entire key generation for that item.
-
-**Fix:** Escape the part with a regex-escape utility, or use `displayName.includes(part)` with a manual word-boundary check.
-
-### 2. The `u:` fallback can incorrectly merge unrelated items (Medium)
-
-If an item has no email and both display name and subject normalise to empty strings, the key becomes `u:` (empty after the prefix). Every such item gets the same key, incorrectly deduplicating completely unrelated unknown senders.
-
-The CLAUDE.md describes this tier as "Hash of display name + subject" but the code doesn't hash — it just normalises and concatenates.
-
-**Fix:** Consider appending a unique identifier (e.g., a counter or the raw `from` value) for truly empty items.
-
-### 3. Subdomain length threshold of >3 may be too permissive (Low)
-
-The threshold skips subdomains of 3 chars or fewer (`api`, `cdn`, `app`). But 4-char generic subdomains like `mail`, `smtp`, `beta`, `test`, `news`, `blog` pass through. If a display name contains one of these as a standalone word, the subdomain would override the brand stem.
-
-Example: `noreply@mail.spotify.com` with display name `"Mail from Spotify"` → brand would become `mail` instead of `spotify`.
-
-**Fix:** Consider a blocklist for common generic subdomains.
-
 ### 4. `n:` key separator is safe by accident (Info)
 
 `keyGenerator.js:68`: `n:${name}|${subject}` — the `|` separator can't appear in the values because `normaliseText` strips all non-alphanumeric characters except apostrophes. Safe but only because of the normaliser's aggressiveness, not by explicit design.
