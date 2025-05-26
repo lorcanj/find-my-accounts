@@ -1,118 +1,175 @@
 // mbox parser worker — import bundled emailjs-mime-parser from src/vendors after bundling.
-import parserDefault, { parse as parseNamed } from '../../vendors/emailjs-mime-parser-wrapper.js';
+import { parse as parseNamed } from '../../vendors/emailjs-mime-parser-wrapper.js';
 import normaliseMboxMessage from './normaliser.js';
 
-self.onmessage = (e) => {
-  const { buffer, _fileName } = e.data || {};
-  try {
-    const decoder = new TextDecoder('utf-8');
-    const text = decoder.decode(buffer || new ArrayBuffer());
+// State for streaming
+let decoder = new TextDecoder('utf-8');
+let remainder = '';
+let batch = [];
+let count = 0;
+let totalBytesProcessed = 0;
+const BATCH_SIZE = 50;
 
-    // Resolve callable parse function once (avoid resolving it per-message)
-    // Prefer the named `parse` export from the wrapper first, then fall back to
-    // a callable default export when available.
-    const parseFn = parseNamed || (typeof parserDefault === 'function' ? parserDefault : null);
+// Resolve callable parse function once (prefer the named `parse` export)
+const parseFn = parseNamed || null;
+
+// Helper: recursively find a preferred `text/plain` node in the parsed MIME tree.
+function findTextNode(node) {
+  if (!node) return null;
+  const ct = node.contentType && node.contentType.value ? node.contentType.value : '';
+  if (/^text\/plain/i.test(ct)) return node;
+  if (node.childNodes && node.childNodes.length) {
+    for (const c of node.childNodes) {
+      const r = findTextNode(c);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+// Helper: extract an unfolded header string from the parser's `headers` map.
+function getHeaderValue(parsedHeaders, name) {
+  const key = String(name).toLowerCase();
+  const entry = parsedHeaders[key] && parsedHeaders[key][0];
+  if (!entry) return '';
+  if (entry.value) {
+    if (Array.isArray(entry.value)) {
+      return entry.value.map(v => {
+        if (typeof v === 'string') return v;
+        if (v && v.name) return `${v.name} <${v.address || ''}>`;
+        return String(v);
+      }).join(', ');
+    }
+    return String(entry.value);
+  }
+  return String(entry.initial || '');
+}
+
+function extractAndProcessMessages(inputBuffer, delimiterRegex) {
+  let remainingBuffer = inputBuffer;
+  while (true) {
+    const match = remainingBuffer.match(delimiterRegex);
+    if (!match) break;
+
+    const matchIndex = match.index;
+    const messageChunk = remainingBuffer.slice(0, matchIndex);
+    processMessage(messageChunk);
+
+    const delimiterNewlineLength = match[0].length - 5;
+    remainingBuffer = remainingBuffer.slice(matchIndex + delimiterNewlineLength);
+  }
+  return remainingBuffer;
+}
+
+function processMessage(part) {
+  if (!part || !part.trim()) return;
+
+  try {
+    // Strip the mbox envelope line ("From <addr> ...") before handing to the MIME parser
+    const mimeMessage = part.replace(/^From .*?(?:\r?\n)+/, '');
+
     if (!parseFn) {
       throw new Error('emailjs-mime-parser.parse not found');
     }
 
-    // Helper: recursively find a preferred `text/plain` node in the parsed MIME tree.
-    // Declared once to avoid re-allocating the function on every message iteration.
-    function findTextNode(node) {
-      if (!node) return null;
-      const ct = node.contentType && node.contentType.value ? node.contentType.value : '';
-      if (/^text\/plain/i.test(ct)) return node;
-      if (node.childNodes && node.childNodes.length) {
-        for (const c of node.childNodes) {
-          const r = findTextNode(c);
-          if (r) return r;
-        }
-      }
-      return null;
+    // Parse the cleaned MIME message
+    const parsed = parseFn(mimeMessage);
+
+    // Use the structured headers produced by the parser when available
+    const parsedHeaders = parsed.headers || {};
+
+    // Extract header values using the shared helper
+    const subject = getHeaderValue(parsedHeaders, 'Subject') || '';
+    const from = getHeaderValue(parsedHeaders, 'From') || '';
+
+    // Find preferred text/plain content node from the parsed tree
+    const textNode = findTextNode(parsed) || null;
+    let decodedText = '';
+    if (textNode && textNode.body) {
+      if (typeof textNode.body === 'string') decodedText = textNode.body;
+      else if (textNode.body instanceof Uint8Array) decodedText = new TextDecoder(textNode.charset || 'utf-8').decode(textNode.body);
     }
 
-    // Helper: extract an unfolded header string from the parser's `headers` map.
-    // Accepts the parsed headers object and header name, returns a string or empty string.
-    function getHeaderValue(parsedHeaders, name) {
-      const key = String(name).toLowerCase();
-      const entry = parsedHeaders[key] && parsedHeaders[key][0];
-      if (!entry) return '';
-      if (entry.value) {
-        if (Array.isArray(entry.value)) {
-          return entry.value.map(v => {
-            if (typeof v === 'string') return v;
-            if (v && v.name) return `${v.name} <${v.address || ''}>`;
-            return String(v);
-          }).join(', ');
-        }
-        return String(entry.value);
-      }
-      return String(entry.initial || '');
+    const snippet = decodedText ? decodedText.slice(0, 200) : '';
+
+    // Build a minimal raw message shape for the normaliser
+    const rawMsg = {
+      subject: subject || '',
+      from: from || '',
+      snippet: snippet || '',
+      date: getHeaderValue(parsedHeaders, 'Date') || null,
+      messageId: getHeaderValue(parsedHeaders, 'Message-ID') || null,
+      threadId: getHeaderValue(parsedHeaders, 'Thread-Index') || null,
+      headers: parsedHeaders || {},
+      raw: mimeMessage
+    };
+
+    // Normalise to produce canonicalKey and consistent output
+    const normalised = normaliseMboxMessage(rawMsg);
+
+    batch.push(normalised);
+    count++;
+
+    if (batch.length >= BATCH_SIZE) {
+      self.postMessage({ type: 'batch', messages: batch });
+      batch = [];
     }
+  } catch (err) {
+    // Log error but continue processing other messages
+    console.error('Error processing message:', err);
+  }
+}
 
-    // Split messages by lines that start with "From " (mbox separator)
-    const parts = text.split(/\n(?=From )/);
-    const nonEmptyParts = parts.filter(p => p && p.trim());
-    const total = nonEmptyParts.length || 0;
-    const messages = [];
+self.onmessage = (e) => {
+  const data = e.data;
+  const { type, buffer } = data || {};
 
-    let count = 0;
-    for (const part of nonEmptyParts) {
-      if (!part || !part.trim()) continue;
+  // Basic runtime assertions for incoming messages
+  if (!data || typeof type !== 'string') {
+    self.postMessage({ type: 'error', message: 'Invalid message: missing or invalid `type` field' });
+    return;
+  }
 
-      // Strip the mbox envelope line ("From <addr> ...") before handing to the MIME parser
-      const mimeMessage = part.replace(/^From .*?(?:\r?\n)+/, '');
-
-      // Parse the cleaned MIME message
-      const parsed = parseFn(mimeMessage);
-
-      // Use the structured headers produced by the parser when available
-      const parsedHeaders = parsed.headers || {};
-
-      // Extract header values using the shared helper
-      const subject = getHeaderValue(parsedHeaders, 'Subject') || '';
-      const from = getHeaderValue(parsedHeaders, 'From') || '';
-
-      // Find preferred text/plain content node from the parsed tree
-      const textNode = findTextNode(parsed) || null;
-      let decodedText = '';
-      if (textNode && textNode.body) {
-        if (typeof textNode.body === 'string') decodedText = textNode.body;
-        // can't assume that utf-8 can be the fallback, will need to update
-        else if (textNode.body instanceof Uint8Array) decodedText = new TextDecoder(textNode.charset || 'utf-8').decode(textNode.body);
+  try {
+    if (type === 'chunk') {
+      // Ensure buffer-like object with byteLength
+      if (!buffer || typeof buffer.byteLength !== 'number') {
+        self.postMessage({ type: 'error', message: 'Invalid chunk: missing ArrayBuffer/TypedArray buffer' });
+        return;
       }
+      const decoded = decoder.decode(buffer, { stream: true });
+      let currentBuffer = remainder + decoded;
+      
+      let searchStartIndex = 0;
+      
+      currentBuffer = extractAndProcessMessages(currentBuffer, /\r?\nFrom /);
+      
+      remainder = currentBuffer;
+      totalBytesProcessed += buffer.byteLength;
+      self.postMessage({ type: 'progress', totalBytesProcessed });
 
-      const snippet = decodedText ? decodedText.slice(0, 200) : '';
-
-      // Build a minimal raw message shape for the normaliser
-      const rawMsg = {
-        subject: subject || '',
-        from: from || '',
-        snippet: snippet || '',
-        date: getHeaderValue(parsedHeaders, 'Date') || null,
-        messageId: getHeaderValue(parsedHeaders, 'Message-ID') || null,
-        threadId: getHeaderValue(parsedHeaders, 'Thread-Index') || null,
-        headers: parsedHeaders || {},
-        raw: mimeMessage
-      };
-
-      // Normalise to produce canonicalKey and consistent output
-      const normalised = normaliseMboxMessage(rawMsg);
-
-      // Do NOT collect or retain attachment binaries; push only the normalised object
-      messages.push(normalised);
-
-      count++;
-      if (count % 20 === 0 && total > 0) {
-        const percent = Math.min(100, Math.round((count / total) * 100));
-        self.postMessage({ type: 'progress', percent });
+    } else if (type === 'end') {
+      // Flush decoder
+      const finalDecoded = decoder.decode();
+      let finalBuffer = remainder + finalDecoded;
+      
+      finalBuffer = extractAndProcessMessages(finalBuffer, /\r?\nFrom /);
+      
+      // Process the very last part
+      if (finalBuffer && finalBuffer.trim()) {
+        processMessage(finalBuffer);
       }
+      
+      // Send any remaining batched messages
+      if (batch.length > 0) {
+        self.postMessage({ type: 'batch', messages: batch });
+        batch = [];
+      }
+      
+      self.postMessage({ type: 'done' });
+      self.close();
     }
-
-    self.postMessage({ type: 'done', messages });
-    self.close();
   } catch (err) {
     self.postMessage({ type: 'error', message: err?.message ?? String(err) });
-    self.close();
   }
 };

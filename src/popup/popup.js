@@ -1,6 +1,7 @@
 import { domainLookup } from '../data/buildDomainLookup.js';
 import { downloadAccountsAsJson } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
+import { importMboxFile } from '../services/mboxImportService.js';
 
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
 let accountsForDownload = [];
@@ -12,9 +13,6 @@ let importBtn;
 let progress;
 let progressBar;
 let downloadButton;
-let accountList;
-let accountCount;
-let error;
 
 document.addEventListener('DOMContentLoaded', () => {
   // File import UI elements
@@ -60,54 +58,44 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       importBtn.disabled = true;
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
+
       try {
-        const ab = await readFileAsArrayBuffer(file);
-
-        // Create the parser worker in the popup (Worker is defined in window scope)
-        const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
-        const worker = new Worker(workerUrl, { type: 'module' });
-
-        worker.onmessage = (e) => {
-          const msg = e.data || {};
-          if (msg.type === 'progress') {
-            const pct = Math.max(0, Math.min(100, Number(msg.percent) || 0));
+        await importMboxFile(
+          file,
+          // onProgress
+          (pct) => {
             if (progress) progress.style.display = 'block';
             if (progressBar) progressBar.style.width = `${pct}%`;
             if (selectedFileInfo) selectedFileInfo.textContent = `Parsing ${file.name}: ${pct}%`;
-          } else if (msg.type === 'done') {
-            resetProgressIndicator();
-            handleImportResponse({ success: true, data: msg.messages || [] });
-            worker.terminate();
-          } else if (msg.type === 'error') {
-            resetProgressIndicator();
-            if (selectedFileInfo) selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
-            if (importBtn) importBtn.disabled = false;
-            worker.terminate();
+          },
+          // onBatch
+          (batchMessages) => {
+            if (batchMessages && batchMessages.length) {
+              // TODO: update variable names to make clear these are batches of accounts
+              const accounts = extractAccountsFromMessages(batchMessages);
+              
+              // TODO: potential rework, might want to do enrichment after the deduplication
+              const enrichedAccounts = enrichAccounts(accounts);
+              
+              const newUnique = deduplicateAccounts(enrichedAccounts);
+              
+              // probably just want to append rather than keep making new one?
+              accountsForDownload.push(...newUnique);
+              renderAccountList(accountsForDownload);
+              updateAccountCount(accountsForDownload.length);
+            }
           }
-        };
+        );
 
-        worker.onerror = (ev) => {
-          console.error('Worker onerror event:', ev);
-          resetProgressIndicator();
-          // ErrorEvent in workers contains message/filename/lineno/colno
-          const message = (ev && (ev.message || (ev.error && ev.error.message))) || String(ev);
-          if (selectedFileInfo) selectedFileInfo.textContent = `Worker error: ${message}`;
-          if (importBtn) importBtn.disabled = false;
-          try { worker.terminate(); } catch (e) {}
-        };
-
-        try {
-          // Transfer buffer where supported
-          worker.postMessage({ buffer: ab, fileName: file.name }, [ab]);
-        } catch (e) {
-          worker.postMessage({ buffer: ab, fileName: file.name });
-        }
-
-        if (selectedFileInfo) selectedFileInfo.textContent = `Imported ${file.name}, parsing...`;
-        if (progress) progress.style.display = 'block';
-        if (progressBar) progressBar.style.width = '0%';
+        // Success (resolved)
+        resetProgressIndicator();
+        if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
       } catch (err) {
-        if (selectedFileInfo) selectedFileInfo.textContent = `Failed to read file: ${err.message}`;
+        // Error (rejected)
+        resetProgressIndicator();
+        console.error('Import error:', err);
+        if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
+      } finally {
         if (importBtn) importBtn.disabled = false;
       }
     });
@@ -120,9 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-// need to use chrome.runtime
-// for communication between the popup and service worker
 
 function renderAccountList(accounts) {
   const list = document.getElementById('accountList');
@@ -172,15 +157,6 @@ function getAccountName(account) {
   return normalise(displayName);
 }
 
-function readFileAsArrayBuffer(file) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onerror = () => reject(new Error('File read error'));
-    fr.onload = () => resolve(fr.result);
-    fr.readAsArrayBuffer(file);
-  });
-}
-
 function resetProgressIndicator() {
   const progressEl = document.getElementById('importProgress');
   const progressBar = document.getElementById('importProgressBar');
@@ -188,19 +164,19 @@ function resetProgressIndicator() {
   if (progressBar) progressBar.style.width = '0%';
 }
 
-function handleImportResponse(response) {
-  if (response && response.success) {
-    const accounts = extractAccountsFromMessages(response.data || []);
-    const enrichedAccounts = enrichAccounts(accounts);
-    renderAccountList(enrichedAccounts);
-    accountsForDownload = enrichedAccounts;
-    updateAccountCount(enrichedAccounts.length);
-    document.getElementById('selectedFileInfo').textContent = 'Import complete.';
-  } else {
-    const msg = response && response.error ? response.error : 'Import failed.';
-    document.getElementById('selectedFileInfo').textContent = msg;
-    console.log('Import failed:', response);
+function deduplicateAccounts(batchedEnrichedAccounts) {
+  // assume that canonicalKey has fallbacks
+  const existingKeys = new Set(accountsForDownload.map(a => a.canonicalKey));
+
+  const newUnique = [];
+
+  for (const batchedAccount of batchedEnrichedAccounts) {
+    const key = batchedAccount.canonicalKey;
+    if (!key || !existingKeys.has(key)) {
+      newUnique.push(batchedAccount);
+      existingKeys.add(key);
+    }
   }
-  const importBtn = document.getElementById('importMboxBtn');
-  if (importBtn) importBtn.disabled = false;
+  
+  return newUnique;
 }
