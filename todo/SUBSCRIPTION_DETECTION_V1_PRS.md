@@ -152,6 +152,7 @@ New module that takes a deduplicated account and its accumulated signals (from a
    - Amount alone → medium
    - Weak keyword + amount → medium
    - Weak keyword only → low
+   - Weak keyword + billing sender (no amount) → medium
 5. **Surface amount and frequency.** Use the most recent non-null values (latest-wins).
 6. **Set fields.** `isSubscription = true`, plus confidence, amount, frequency, status.
 
@@ -168,6 +169,7 @@ New module that takes a deduplicated account and its accumulated signals (from a
 - [ ] Strong keyword + billing sender → high confidence
 - [ ] Strong keyword alone → medium confidence
 - [ ] Weak keyword only → low confidence
+- [ ] Weak keyword + billing sender (no amount) → medium confidence
 - [ ] Amount only (no keywords) → medium confidence
 - [ ] Purchase keywords with no strong keywords → account NOT flagged as subscription
 - [ ] Purchase keywords WITH strong keywords → account still flagged
@@ -187,6 +189,7 @@ New module that takes a deduplicated account and its accumulated signals (from a
 - Single signal: amount only, no keywords → medium
 - Single signal: weak keyword + amount → medium
 - Single signal: weak keyword only → low
+- Single signal: weak keyword + billing sender, no amount → medium
 - Three signals all with strong keywords → high (multiple billing emails)
 
 **Purchase suppression:**
@@ -200,7 +203,7 @@ New module that takes a deduplicated account and its accumulated signals (from a
 
 **Edge cases:**
 - Account with no signals → unchanged, `isSubscription` stays false
-- Signal with no dateIso → still processed, treated as oldest (sorted last)
+- Signal with no dateIso → still processed, treated as oldest (sorted first in ascending order, so real dates always take precedence in latest-wins logic)
 - Account already enriched (idempotency) → fields overwritten cleanly
 
 ---
@@ -218,22 +221,26 @@ Wire signal extraction and subscription enrichment into the existing scan pipeli
 
 | File | Change |
 |---|---|
-| `src/scanners/accountMatcher.js` | After creating each `Account`, run `extractSubscriptionSignals()` on the source message and attach signals to the account object (new `_subscriptionSignals` array field) |
-| `src/popup/popup.js` | In `deduplicateAccounts()`: when merging on key collision, concatenate `_subscriptionSignals` arrays. After dedup is fully complete (scan finished), iterate all accounts and call `enrichAccountWithSubscription()` |
+| `src/scanners/accountMatcher.js` | For every message that passes `isAccountRelated()`, run `extractSubscriptionSignals()` and attach the result to the account's `_subscriptionSignals` array. This applies to **both** code paths: the create path (new canonicalKey) and the merge path (key collision / duplicate within the same batch). Without this, signals from duplicate messages within a batch are silently dropped |
+| `src/popup/popup.js` | In `deduplicateAccounts()`: when merging on key collision, concatenate `_subscriptionSignals` arrays. After the scan-complete callback fires (see below), iterate all accounts and call `enrichAccountWithSubscription()`, then delete `_subscriptionSignals` from each account to prevent transient data leaking into exports |
 
 ### Decisions
 
-- **Signals attached as `_subscriptionSignals` (underscore-prefixed).** This is transient pipeline data — not part of the public Account model and not exported. The underscore signals "internal, don't rely on this shape."
+- **Signals attached as `_subscriptionSignals` (underscore-prefixed).** This is transient pipeline data — not part of the public Account model and not exported. The underscore signals "internal, don't rely on this shape." After enrichment completes, `_subscriptionSignals` is deleted from each account to prevent it leaking into JSON exports (PR 6 exports account objects as-is).
+- **Signal extraction runs on every message, not just the first per key.** In `accountMatcher.js`, accounts are only *created* on the first encounter of a `canonicalKey` within a batch — subsequent messages with the same key hit the merge path. Signal extraction must run on both paths, otherwise signals from duplicate messages within a batch are lost (e.g. a renewal email that happens to be the 3rd email from a sender in the same batch).
 - **Enrichment runs after scan completion, not per-batch.** Temporal logic (latest-wins) requires seeing ALL signals for an account across all batches. Running enrichment per-batch would give incorrect results if a cancellation email arrives in a later batch than the subscription email. This means subscription badges only appear once the scan finishes.
+- **Scan-complete trigger.** The existing `mboxImportService` fires a completion callback when the worker finishes streaming. Enrichment hooks into this callback in `popup.js` — after the final dedup pass, iterate all accounts and call `enrichAccountWithSubscription()`.
 - **Alternative considered: per-batch enrichment with re-evaluation.** Could enrich per-batch and re-enrich at end, but adds complexity for no UX benefit — users aren't acting on subscription data mid-scan.
+- **Divergence from spec:** `SUBSCRIPTION_DETECTION.md` lists `src/scanners/mbox/normaliser.js` as a file to change. This PR plan deliberately keeps the normaliser untouched — signal extraction is a heuristic-matching concern, separate from structural normalisation. A new `subscriptionSignalExtractor.js` (PR 2) handles it instead, called from `accountMatcher.js` rather than the normaliser. This keeps the normaliser focused on its single responsibility and makes signal extraction independently testable.
 
 ### Acceptance criteria
 
-- [ ] Signals are extracted for every account-related message during batch processing
+- [ ] Signals are extracted for every account-related message during batch processing (both create and merge paths in accountMatcher)
 - [ ] Signals accumulate correctly across batches for the same `canonicalKey`
 - [ ] Subscription enrichment runs after scan completion
 - [ ] Accounts with subscription signals are correctly enriched with all five fields
 - [ ] Accounts without subscription signals are unaffected
+- [ ] `_subscriptionSignals` is removed from all accounts after enrichment (not present in export data)
 - [ ] No performance regression on large files (signal extraction is lightweight regex on already-parsed headers)
 - [ ] Existing account detection behaviour is unchanged — same accounts found, same confidence levels
 
@@ -285,12 +292,13 @@ Render subscription metadata in the results table. Add subscription filter and s
 ### Decisions
 
 - **Badge, not a separate column.** Adding a full column for subscription data makes the table too wide, especially in the extension popup. A badge/pill inline with the account name is more compact.
-- **Confidence not shown prominently.** Showing "low confidence subscription" to users is confusing. Use confidence to decide whether to show the badge at all (see open question in `SUBSCRIPTION_DETECTION.md` about threshold). Expose confidence in tooltip for power users.
+- **Confidence not shown prominently.** Showing "low confidence subscription" to users is confusing. Badges only appear for medium+ confidence subscriptions — low-confidence results are present in the data but not badged in the default view. Expose confidence in tooltip for power users.
 - **Post-scan badge rendering is acceptable.** Users don't need subscription info mid-scan. A brief "enriching..." state or simply adding badges when scan completes is fine.
 
 ### Acceptance criteria
 
-- [ ] Subscription badge appears on rows where `isSubscription === true`
+- [ ] Subscription badge appears on rows where `isSubscription === true` and confidence is medium or high
+- [ ] Low-confidence subscriptions do NOT show a badge in the default view
 - [ ] Badge shows amount and frequency when available
 - [ ] Badge colour reflects status (active/cancelled/trial)
 - [ ] Badge does not appear on non-subscription accounts
@@ -351,6 +359,18 @@ Include subscription metadata in CSV and JSON exports.
 - Export account with amount `=$9.99` → formula injection escaped
 - JSON export includes subscription fields with correct types
 - CSV column order: existing columns first, then subscription columns appended
+
+---
+
+## Resolved open questions
+
+The parent spec (`SUBSCRIPTION_DETECTION.md`) has three open questions. Decisions for this PR plan:
+
+1. **How aggressively should we mark things as subscriptions?** Lean conservative — false positives (telling someone they're paying when they're not) feel worse than false negatives. The confidence tier system handles this: low-confidence results are still flagged internally but can be hidden in the UI (see #3 below). Purchase suppression also prevents common false positives from e-commerce.
+
+2. **Should email cadence frequency detection be v1 or deferred?** **Deferred to v2.** Cadence analysis (detecting ~30-day intervals between billing emails) requires tracking per-key email timestamps across batches and adds significant complexity. v1 uses signal count only (multiple billing emails → high confidence) without interval analysis. Frequency is detected from subject keywords and amount patterns only.
+
+3. **Minimum signal threshold for display?** **Show medium and above by default.** Low-confidence subscriptions (weak keyword only) are flagged in the data model but the UI badge is only shown for medium+ confidence. Low-confidence results still appear in exports and are accessible via the "Show subscriptions only" filter, but don't get a visible badge in the default view. This can be tuned after evaluating real-world hit rates.
 
 ---
 
