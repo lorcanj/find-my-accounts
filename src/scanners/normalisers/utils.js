@@ -37,7 +37,7 @@ export function normaliseEmail(email) {
   const at = e.lastIndexOf('@');
   if (at === -1) return e;
   let local = e.slice(0, at);
-  let domain = e.slice(at + 1).toLowerCase();
+  let domain = e.slice(at + 1);
 
   // Remove leading/trailing dots from domain (accidental punctuation)
   domain = domain.replace(/^\.+|\.+$/g, '');
