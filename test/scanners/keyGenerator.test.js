@@ -123,6 +123,22 @@ describe('generateCanonicalKey', () => {
     })).toBe('brand:acme');
   });
 
+  it('matches subdomain with diacritics in displayName (e.g. "latte" in "Latté")', () => {
+    // normalized text handles diacritics
+    expect(generateCanonicalKey({ 
+      email: 'user@latte.cafe.com', 
+      displayName: 'Latté Cafe' 
+    })).toBe('brand:latte');
+  });
+
+  it('handles "item.normDisplayName" pre-calculation optimization', () => {
+    expect(generateCanonicalKey({ 
+      email: 'user@fast.domain.com', 
+      displayName: 'Slow', // would fail match if used directly
+      normDisplayName: 'fast service' // matches "fast"
+    })).toBe('brand:fast'); 
+  });
+
   it('handles hyphenated display names with word boundaries', () => {
     // "shop" should match in "Shop-Now" since hyphen is a word boundary
     expect(generateCanonicalKey({ 

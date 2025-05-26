@@ -40,7 +40,7 @@ export function generateCanonicalKey(item = {}) {
       // This helps with cases like "Lenovo Order Tracking" <no-reply@lenovo.aftershiptracking.com>
       // where the specific brand is in the subdomain rather than the service domain.
       if (res.subdomain) {
-        const displayName = (item.displayName || item.name || '').toLowerCase();
+        const displayName = item.normDisplayName || normaliseText(item.displayName || item.name || '');
         if (displayName) {
           const subParts = res.subdomain.split('.');
           for (const part of subParts) {
