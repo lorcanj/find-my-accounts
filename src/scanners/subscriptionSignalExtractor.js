@@ -1,0 +1,81 @@
+import { normaliseText } from './normalisers/utils.js';
+import {
+  STRONG_KEYWORDS, WEAK_KEYWORDS, NEGATIVE_KEYWORDS, PURCHASE_KEYWORDS,
+  BILLING_SENDER_PATTERNS, FREQUENCY_KEYWORDS, AMOUNT_REGEX,
+} from '../constants/subscriptionSignals.js';
+
+// Pre-normalise keyword lists so they match against normSubject consistently
+// (e.g. 'auto-renew' → 'auto renew', 'invoice #' → 'invoice')
+const NORM_STRONG = STRONG_KEYWORDS.map(normaliseText);
+const NORM_WEAK = WEAK_KEYWORDS.map(normaliseText);
+const NORM_NEGATIVE = NEGATIVE_KEYWORDS.map(normaliseText);
+const NORM_PURCHASE = PURCHASE_KEYWORDS.map(normaliseText);
+
+function findMatches(normSubject, normKeywords, originalKeywords) {
+  const matched = [];
+  for (let i = 0; i < normKeywords.length; i++) {
+    if (normSubject.includes(normKeywords[i])) {
+      matched.push(originalKeywords[i]);
+    }
+  }
+  return matched;
+}
+
+function checkBillingSender(email) {
+  if (!email) return false;
+  const localPart = email.split('@')[0];
+  return BILLING_SENDER_PATTERNS.some(p => localPart.startsWith(p));
+}
+
+function extractAmount(subject) {
+  if (!subject) return null;
+  const match = subject.match(AMOUNT_REGEX);
+  return match ? match[0] : null;
+}
+
+function detectFrequency(normSubject, amount) {
+  // Check amount string for slash patterns first (more specific signal)
+  if (amount) {
+    const amountLower = amount.toLowerCase();
+    for (const [freq, keywords] of Object.entries(FREQUENCY_KEYWORDS)) {
+      for (const kw of keywords) {
+        if (kw.startsWith('/') && amountLower.includes(kw)) return freq;
+      }
+    }
+  }
+
+  // Fall back to subject keyword matching
+  for (const [freq, keywords] of Object.entries(FREQUENCY_KEYWORDS)) {
+    for (const kw of keywords) {
+      if (!kw.startsWith('/') && normSubject.includes(kw)) return freq;
+    }
+  }
+
+  return null;
+}
+
+export function extractSubscriptionSignals(message) {
+  const normSubject = message?.normSubject || '';
+  const subject = message?.subject || '';
+  const email = message?.email || null;
+  const dateIso = message?.dateIso || null;
+
+  const strongKeywords = findMatches(normSubject, NORM_STRONG, STRONG_KEYWORDS);
+  const weakKeywords = findMatches(normSubject, NORM_WEAK, WEAK_KEYWORDS);
+  const negativeKeywords = findMatches(normSubject, NORM_NEGATIVE, NEGATIVE_KEYWORDS);
+  const purchaseKeywords = findMatches(normSubject, NORM_PURCHASE, PURCHASE_KEYWORDS);
+  const isBillingSender = checkBillingSender(email);
+  const amount = extractAmount(subject);
+  const frequency = detectFrequency(normSubject, amount);
+
+  return {
+    strongKeywords,
+    weakKeywords,
+    negativeKeywords,
+    purchaseKeywords,
+    isBillingSender,
+    amount,
+    frequency,
+    dateIso,
+  };
+}

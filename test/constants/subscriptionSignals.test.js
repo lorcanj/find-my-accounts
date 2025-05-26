@@ -83,7 +83,7 @@ describe('subscriptionSignals constants', () => {
         'subscription confirmed', 'subscription active',
         'billing cycle', 'billing period',
         'payment processed', 'payment received', 'payment successful',
-        'invoice #', 'receipt for your',
+        'invoice', 'receipt for your',
         'trial ending', 'trial expires', 'trial will end',
         'plan upgrade', 'plan change',
       ];
