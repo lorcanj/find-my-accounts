@@ -22,6 +22,9 @@
       <div class="file-picker">
         <input id="mboxFileInput" type="file" accept=".mbox" />
         <div id="selectedFileInfo" style="margin-top:0.5em; font-size:0.9em; color:#222;"></div>
+        <div id="importProgress" class="progress" style="display:none; margin-top:0.5em;">
+          <div id="importProgressBar" class="progress-bar" style="width:0%"></div>
+        </div>
       </div>
       <div style="margin-top:0.5em;">
         <button id="importMboxBtn" class="btn btn-primary" disabled>Import .mbox</button>

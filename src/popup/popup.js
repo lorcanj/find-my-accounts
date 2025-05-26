@@ -60,12 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         worker.onmessage = (e) => {
           const msg = e.data || {};
+          const progressEl = document.getElementById('importProgress');
+          const progressBar = document.getElementById('importProgressBar');
           if (msg.type === 'progress') {
-            selectedFileInfo.textContent = `Parsing ${file.name}: ${msg.percent}%`;
+            const pct = Math.max(0, Math.min(100, Number(msg.percent) || 0));
+            if (progressEl) progressEl.style.display = 'block';
+            if (progressBar) progressBar.style.width = `${pct}%`;
+            selectedFileInfo.textContent = `Parsing ${file.name}: ${pct}%`;
           } else if (msg.type === 'done') {
+            if (progressEl) progressEl.style.display = 'none';
+            if (progressBar) progressBar.style.width = '0%';
             handleImportResponse({ success: true, data: msg.messages || [] });
             worker.terminate();
           } else if (msg.type === 'error') {
+            if (progressEl) progressEl.style.display = 'none';
+            if (progressBar) progressBar.style.width = '0%';
             selectedFileInfo.textContent = `Parsing error: ${msg.message}`;
             importBtn.disabled = false;
             worker.terminate();
@@ -74,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         worker.onerror = (ev) => {
           console.error('Worker onerror event:', ev);
+          const progressEl = document.getElementById('importProgress');
+          const progressBar = document.getElementById('importProgressBar');
+          if (progressEl) progressEl.style.display = 'none';
+          if (progressBar) progressBar.style.width = '0%';
           // ErrorEvent in workers contains message/filename/lineno/colno
           const message = (ev && (ev.message || (ev.error && ev.error.message))) || String(ev);
           selectedFileInfo.textContent = `Worker error: ${message}`;
@@ -89,6 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         selectedFileInfo.textContent = `Imported ${file.name}, parsing...`;
+        const progressEl = document.getElementById('importProgress');
+        const progressBar = document.getElementById('importProgressBar');
+        if (progressEl) progressEl.style.display = 'block';
+        if (progressBar) progressBar.style.width = '0%';
       } catch (err) {
         selectedFileInfo.textContent = `Failed to read file: ${err.message}`;
         importBtn.disabled = false;
