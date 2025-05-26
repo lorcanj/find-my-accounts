@@ -106,41 +106,23 @@ That's the entire change — a counter, a `while` loop, and `MAX_INFLIGHT = 2`.
 
 ---
 
-## Expected gain
+## Benchmark results
 
-Modest — roughly **5–15%** on large files where disk read time is close to worker processing time. The gain is limited by whichever is slower: if the worker always processes faster than the disk reads, there's no idle time to reclaim. If the disk is faster than the worker, the chunks pile up anyway.
+Tested against a 137MB Gmail Takeout export in Chrome with `MAX_INFLIGHT = 1` vs `2`:
 
-Most visible on:
-- Large mbox files (1GB+) on spinning HDDs
-- SSDs with high sequential throughput
+| Run | MAX_INFLIGHT | Time |
+|-----|:---:|-----:|
+| 1 | 1 | 20,387ms |
+| 2 | 2 | 19,620ms |
 
-Least visible on:
-- Small files (I/O completes almost instantly regardless)
-- Machines where the worker is the clear bottleneck
+~4% difference — within noise margin. Not a meaningful gain.
 
----
+An earlier test showed `MAX_INFLIGHT = 2` at **33,248ms** vs `1` at **13,945ms** — 2.4x *slower*. The variability between runs suggests the effect is highly dependent on system load at time of measurement.
 
-## Risk
+## Conclusion: not worth it
 
-Very low. The change is confined to a single function in one file. The worker, the streaming logic, and the cancellation path are all unchanged. Cancellation still works correctly — `perRunSession.cancelled` is checked before each read and before each postMessage.
+On SSD hardware where I/O is fast, the bottleneck is worker CPU time, not disk reads. Read-ahead doesn't help because the worker can't drain chunks faster regardless of how quickly they arrive. Flooding the worker's message queue ahead of time adds structured-clone overhead with no benefit.
 
-The only subtle point: with 2 reads in flight simultaneously, it's possible to receive `done = true` on one read while another is still pending. This is fine — the `done` path posts `WORKER_MSG.END` which the worker handles at the end of its own queue, after processing any already-sent chunks.
+The complexity introduced (inflight counter, streamDone flag, updated tests) is not justified by the results. The code has been left at `MAX_INFLIGHT = 1`, which makes the while loop behave identically to the original recursive `readNext()`.
 
----
-
-## Verification
-
-After implementing, run the perf harness on a large file before and after:
-
-```bash
-npx esbuild scripts/perf.js --bundle --platform=node --format=esm --outfile=dist/perf.bundle.js
-node dist/perf.bundle.js "/path/to/large.mbox"
-```
-
-The perf script measures the parsing pipeline, not the I/O overlap — so the real test is a manual end-to-end scan in Firefox with browser DevTools performance recording open. Look for reduced idle gaps in the main thread timeline between chunk posts.
-
----
-
-## Relationship to the worker pool (Opportunity 1)
-
-These two changes are **independent and stackable**. Read-ahead reduces I/O idle time; the worker pool reduces CPU time. Implement read-ahead first — it's a 10-line change with no architectural impact, and it establishes a clean baseline before the more invasive pool work.
+**The worker pool (Opportunity 1) is the correct lever for this workload** — CPU parallelism, not I/O read-ahead.
