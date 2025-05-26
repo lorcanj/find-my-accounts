@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
- import { justdeletemeData } from '../../src/data/justdeletemeData.js'
+import { describe, it, expect } from 'vitest';
+import { justdeletemeData } from '../../src/data/justdeletemeData.js';
 
 describe('justdeletemeData (data structure)', () => {
   it('exports an array or object with entries', () => {

@@ -2,6 +2,9 @@ import Account from '../models/Account.js';
 
 // extracts accounts from normalised data
 export function extractAccountsFromMessages(messages = []) {
+  if (messages === null) {
+    throw new TypeError('extractAccountsFromMessages: `messages` must not be null');
+  }
   if (!Array.isArray(messages)) messages = [messages];
   const foundAccounts = [];
   const seen = new Set();

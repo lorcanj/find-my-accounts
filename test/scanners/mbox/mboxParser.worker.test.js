@@ -633,6 +633,7 @@ describe('mboxParser.worker.js', () => {
    * Scenario: Send messages that don't start with "From " line, or have corrupted format
    * Expected: Worker should handle gracefully, skip malformed parts, continue processing
    */
+  // TODO: check these tests
   describe('Malformed messages without From envelope', () => {
     it('handles content without any From delimiter (just raw headers)', () => {
       // No "From " envelope line at all - just raw MIME headers

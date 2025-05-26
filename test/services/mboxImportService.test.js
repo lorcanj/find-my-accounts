@@ -35,9 +35,8 @@ describe('mboxImportService', () => {
       }
     };
 
-    // Mock Worker constructor
+    // Mock Worker constructor - return the mock worker instance
     global.Worker = vi.fn(function(url, options) {
-      // Return the mock worker instance
       return mockWorker;
     });
 
@@ -325,8 +324,11 @@ describe('mboxImportService', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
 
       // Simulate FileReader error by calling the handler that the service assigned
+      // FileReader.onerror receives a ProgressEvent with the error at event.target.error
       const readerError = new Error('Failed to read file');
-      if (mockFileReader.onerror) mockFileReader.onerror(readerError);
+      if (mockFileReader.onerror) {
+        mockFileReader.onerror({ target: { error: readerError } });
+      }
 
       await expect(promise).rejects.toThrow('Failed to read file');
       expect(mockWorker.terminate).toHaveBeenCalled();

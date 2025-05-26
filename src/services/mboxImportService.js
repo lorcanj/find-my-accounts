@@ -100,9 +100,10 @@ export async function importMboxFile(file, onProgress, onBatch) {
           readNextChunk();
         };
         
-        reader.onerror = (err) => {
+        reader.onerror = (event) => {
           worker.terminate();
-          reject(err);
+          const error = event?.target?.error || new Error('Failed to read file');
+          reject(error);
         };
         
         reader.readAsArrayBuffer(blob);
