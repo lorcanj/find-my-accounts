@@ -516,7 +516,148 @@ describe('extractAccountsFromMessages', () => {
   });
 
   // ========================================
-  // 7. Performance and edge cases
+  // 7. lastEmailDate tracking
+  // ========================================
+
+  describe('lastEmailDate tracking', () => {
+    it('sets lastEmailDate from message dateIso', () => {
+      const messages = [{
+        canonicalKey: 'key1',
+        from: 'noreply@service.com',
+        subject: 'Welcome',
+        displayName: 'Service',
+        dateIso: '2025-06-15T12:00:00.000Z'
+      }];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result[0].lastEmailDate).toBe('2025-06-15T12:00:00.000Z');
+    });
+
+    it('sets lastEmailDate to null when dateIso is missing', () => {
+      const messages = [{
+        canonicalKey: 'key1',
+        from: 'noreply@service.com',
+        subject: 'Welcome',
+        displayName: 'Service'
+      }];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result[0].lastEmailDate).toBeNull();
+    });
+
+    it('keeps the most recent date when deduplicating by canonicalKey', () => {
+      const messages = [
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Welcome',
+          displayName: 'Service',
+          dateIso: '2024-01-01T00:00:00.000Z'
+        },
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Verify your account',
+          displayName: 'Service',
+          dateIso: '2025-06-15T00:00:00.000Z'
+        }
+      ];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].lastEmailDate).toBe('2025-06-15T00:00:00.000Z');
+    });
+
+    it('keeps existing date when duplicate has no dateIso', () => {
+      const messages = [
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Welcome',
+          displayName: 'Service',
+          dateIso: '2025-01-01T00:00:00.000Z'
+        },
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Update',
+          displayName: 'Service'
+        }
+      ];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].lastEmailDate).toBe('2025-01-01T00:00:00.000Z');
+    });
+
+    it('updates null date when duplicate has a dateIso', () => {
+      const messages = [
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Welcome',
+          displayName: 'Service'
+        },
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Confirm your account',
+          displayName: 'Service',
+          dateIso: '2025-03-01T00:00:00.000Z'
+        }
+      ];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].lastEmailDate).toBe('2025-03-01T00:00:00.000Z');
+    });
+
+    it('does not replace a newer date with an older one', () => {
+      const messages = [
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Welcome',
+          displayName: 'Service',
+          dateIso: '2025-06-15T00:00:00.000Z'
+        },
+        {
+          canonicalKey: 'same-key',
+          from: 'noreply@service.com',
+          subject: 'Old email',
+          displayName: 'Service',
+          dateIso: '2020-01-01T00:00:00.000Z'
+        }
+      ];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].lastEmailDate).toBe('2025-06-15T00:00:00.000Z');
+    });
+
+    it('tracks lastEmailDate independently per canonicalKey', () => {
+      const messages = [
+        { canonicalKey: 'key-a', from: 'a@example.com', subject: 'Welcome', displayName: 'A', dateIso: '2024-01-01T00:00:00.000Z' },
+        { canonicalKey: 'key-b', from: 'b@example.com', subject: 'Welcome', displayName: 'B', dateIso: '2025-06-01T00:00:00.000Z' },
+        { canonicalKey: 'key-a', from: 'a@example.com', subject: 'Verify your account', displayName: 'A', dateIso: '2025-03-01T00:00:00.000Z' },
+      ];
+
+      const result = extractAccountsFromMessages(messages);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].lastEmailDate).toBe('2025-03-01T00:00:00.000Z'); // key-a updated
+      expect(result[1].lastEmailDate).toBe('2025-06-01T00:00:00.000Z'); // key-b unchanged
+    });
+  });
+
+  // ========================================
+  // 8. Performance and edge cases
   // ========================================
   
   describe('performance and stress tests', () => {

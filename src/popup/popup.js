@@ -4,6 +4,7 @@ import { downloadAccountsAsCsv } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
 import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
+import { sortAccounts, formatEmailDate } from './sortUtils.js';
 
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
@@ -265,42 +266,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const sortSelect = document.getElementById(DOM_ID.SORT_SELECT);
   if (sortSelect) {
+    sortSelect.setAttribute('aria-label', chrome.i18n.getMessage('sortAccountsAriaLabel'));
+    const sortMessages = {
+      default: 'sortDefault',
+      recent: 'sortRecentFirst',
+      oldest: 'sortOldestFirst',
+      'name-asc': 'sortNameAsc',
+    };
+    for (const option of sortSelect.options) {
+      const key = sortMessages[option.value];
+      if (key) option.textContent = chrome.i18n.getMessage(key);
+    }
     sortSelect.addEventListener('change', () => {
       rerenderAllAccounts(sortSelect.value);
     });
   }
 });
 
-function sortAccounts(accounts, sortOrder) {
-  if (sortOrder === 'default') return accounts;
-  const sorted = [...accounts];
-  switch (sortOrder) {
-    case 'recent':
-      sorted.sort((a, b) => {
-        if (!a.lastEmailDate && !b.lastEmailDate) return 0;
-        if (!a.lastEmailDate) return 1;
-        if (!b.lastEmailDate) return -1;
-        return b.lastEmailDate.localeCompare(a.lastEmailDate);
-      });
-      break;
-    case 'oldest':
-      sorted.sort((a, b) => {
-        if (!a.lastEmailDate && !b.lastEmailDate) return 0;
-        if (!a.lastEmailDate) return 1;
-        if (!b.lastEmailDate) return -1;
-        return a.lastEmailDate.localeCompare(b.lastEmailDate);
-      });
-      break;
-    case 'name-asc':
-      sorted.sort((a, b) => {
-        const nameA = (a.justDeleteMeData && typeof a.justDeleteMeData === 'object' ? a.justDeleteMeData.name : a.name) || '';
-        const nameB = (b.justDeleteMeData && typeof b.justDeleteMeData === 'object' ? b.justDeleteMeData.name : b.name) || '';
-        return nameA.localeCompare(nameB);
-      });
-      break;
-  }
-  return sorted;
-}
 
 function rerenderAllAccounts(sortOrder) {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
@@ -348,11 +330,6 @@ function updateAccountCount(count) {
 // Alias for the shared lookup normaliser
 const normalise = normaliseForLookup;
 
-function formatEmailDate(isoString) {
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) return '-';
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
