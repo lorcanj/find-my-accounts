@@ -62,6 +62,89 @@ describe('generateCanonicalKey', () => {
 
   it('handles missing @ symbol', () => {
     expect(generateCanonicalKey({email: 'userexample.com'})).toBe('e:userexample.com');
-  })
+  });
+
+  it('uses subdomain brand if it matches display name (Lenovo/Aftership)', () => {
+    expect(generateCanonicalKey({ 
+      email: 'no-reply@lenovo.aftershiptracking.com',
+      displayName: 'Lenovo Order Tracking' 
+    })).toBe('brand:lenovo');
+  });
+
+  it('ignores subdomain if it does NOT match display name (Netflix)', () => {
+    expect(generateCanonicalKey({ 
+      email: 'info@members.netflix.com',
+      displayName: 'Netflix' 
+    })).toBe('brand:netflix');
+  });
+
+  it('ignores subdomain matching display name if subdomain is too short', () => {
+    expect(generateCanonicalKey({ 
+      email: 'notifications@hr.company.com',
+      displayName: 'HR Department' 
+    })).toBe('brand:company');
+  });
+
+  it('avoids partial matches in subdomain heuristic (e.g. "sub" in "Subscribe")', () => {
+    // "sub" appears in "Subscribe", but it's not a whole word. 
+    // Should NOT pick "sub" as brand, should fall back to domain "domain"
+    expect(generateCanonicalKey({ 
+      email: 'user@sub.domain.com', 
+      displayName: 'Subscribe Now' 
+    })).toBe('brand:domain');
+  });
+
+  it('avoids partial matches for "api" in "Capital One"', () => {
+    expect(generateCanonicalKey({ 
+      email: 'alerts@api.capital.com', 
+      displayName: 'Capital One Alerts' 
+    })).toBe('brand:capital');
+  });
+
+  it('ignores short subdomains (3 chars or less) even if they match a word', () => {
+    // "app" is only 3 chars, should be ignored even if displayName contains "App"
+    expect(generateCanonicalKey({ 
+      email: 'noreply@app.myservice.com', 
+      displayName: 'App Store' 
+    })).toBe('brand:myservice');
+  });
+
+  it('matches subdomain when it appears as a whole word in displayName', () => {
+    expect(generateCanonicalKey({ 
+      email: 'noreply@lenovo.aftershiptracking.com', 
+      displayName: 'Lenovo Order Tracking' 
+    })).toBe('brand:lenovo');
+  });
+
+  it('matches subdomain case-insensitively', () => {
+    expect(generateCanonicalKey({ 
+      email: 'noreply@acme.platform.com', 
+      displayName: 'ACME Corporation' 
+    })).toBe('brand:acme');
+  });
+
+  it('matches subdomain with diacritics in displayName (e.g. "latte" in "Latté")', () => {
+    // normalized text handles diacritics
+    expect(generateCanonicalKey({ 
+      email: 'user@latte.cafe.com', 
+      displayName: 'Latté Cafe' 
+    })).toBe('brand:latte');
+  });
+
+  it('handles "item.normDisplayName" pre-calculation optimization', () => {
+    expect(generateCanonicalKey({ 
+      email: 'user@fast.domain.com', 
+      displayName: 'Slow', // would fail match if used directly
+      normDisplayName: 'fast service' // matches "fast"
+    })).toBe('brand:fast'); 
+  });
+
+  it('handles hyphenated display names with word boundaries', () => {
+    // "shop" should match in "Shop-Now" since hyphen is a word boundary
+    expect(generateCanonicalKey({ 
+      email: 'deals@shop.retailer.com', 
+      displayName: 'Shop-Now Deals' 
+    })).toBe('brand:shop');
+  });
 });
 

@@ -389,18 +389,17 @@ describe('mboxParser.worker.js', () => {
       const allMessages = batchCalls.flatMap(call => call[0].messages);
       expect(allMessages.length).toBe(1);
       expect(allMessages[0].subject).toBe('No Body');
-      expect(allMessages[0].snippet).toBe('');
     });
   });
 
   /**
    * Test 7: Message content extraction
    * 
-   * Scenario: Test that headers, body, and snippet are correctly extracted
-   * Expected: Worker should extract Subject, From, body text, and create snippet
+   * Scenario: Test that headers and body
+   * Expected: Worker should extract Subject, From
    */
   describe('Content extraction', () => {
-    it('extracts subject, from, and snippet correctly', () => {
+    it('extracts subject and from correctly', () => {
       const longBody = 'This is a test message body. '.repeat(20); // > 200 chars
       const mboxMessage = 
         'From sender@example.com Mon Jan 15 12:00:00 2024\n' +
@@ -423,13 +422,6 @@ describe('mboxParser.worker.js', () => {
       expect(msg.from).toBe('Joe Bloggs <joe.bloggs@example.co.uk>');
       expect(msg.email).toBe('joe.bloggs@example.co.uk');
       expect(msg.displayName).toBe('Joe Bloggs');
-      
-      // Snippet should be present (may be empty if body parsing fails, but typically has content)
-      expect(msg.snippet).toBeDefined();
-      // If snippet is not empty, it should be truncated to max 200 characters
-      if (msg.snippet.length > 0) {
-        expect(msg.snippet.length).toBeLessThanOrEqual(200);
-      }
     });
 
     it('handles messages with display name and email in From header', () => {
@@ -896,6 +888,72 @@ describe('mboxParser.worker.js', () => {
       expect(allMessages.length).toBe(2);
       expect(allMessages[0].subject).toBe('LF');
       expect(allMessages[1].subject).toBe('CRLF');
+    });
+  });
+
+  describe('Structured Header Handling (Mocked)', () => {
+    it('correctly formats headers when parser returns structured objects', async () => {
+      // Reset modules to allow re-importing with new mocks
+      vi.resetModules();
+
+      // Mock emailjs-mime-parser-wrapper to return structured objects
+      vi.doMock('../../../src/vendors/emailjs-mime-parser-wrapper.js', () => ({
+        parse: (mime) => ({
+          headers: {
+            from: [{ 
+              value: { name: 'Structured Name', address: 'structured@example.com' } 
+            }],
+            subject: [{ 
+              value: 'Structured Subject' 
+            }],
+            date: [{
+              initial: 'Mon, 01 Jan 2024 10:00:00 +0000'
+            }]
+          },
+          childNodes: []
+        })
+      }));
+
+      // We need to re-mock normaliser if it was mocked, or rely on real one. 
+      // The parent beforeEach didn't mock normaliser, so it's real.
+      
+      // Re-initialize worker with mocked dependency
+      // We need to ensure global.self is set up (it persists from beforeEach, 
+      // but onmessage needs to be captured from the NEW module evaluation)
+      
+      const newWorkerModule = await import('../../../src/scanners/mbox/mboxParser.worker.js');
+      
+      // Although global.self.onmessage is assigned by the module execution, 
+      // we need to make sure we are using that handler.
+      const newOnMessageHandler = global.self.onmessage;
+
+      const mboxMessage = 
+        'From sender@example.com Mon Jan 15 12:00:00 2024\n' +
+        'From: ignored in mock\n' + 
+        '\n' +
+        'Body\n';
+      
+      const buffer = new TextEncoder().encode(mboxMessage);
+      
+      // Send chunk
+      newOnMessageHandler({ data: { type: 'chunk', buffer: buffer.buffer } });
+      newOnMessageHandler({ data: { type: 'end' } });
+
+      const batchCalls = mockPostMessage.mock.calls.filter(
+        call => call[0].type === 'batch'
+      );
+      
+      const allMessages = batchCalls.flatMap(call => call[0].messages);
+      expect(allMessages.length).toBeGreaterThan(0);
+      
+      const msg = allMessages[0];
+      // Expect that the worker extracted "Structured Name <structured@example.com>" 
+      // instead of "[object Object]"
+      // And the normaliser parsed it.
+      
+      expect(msg.email).toBe('structured@example.com');
+      expect(msg.displayName).toBe('Structured Name');
+      expect(msg.subject).toBe('Structured Subject');
     });
   });
 });

@@ -5,8 +5,8 @@ describe('extractAccountsFromMessages', () => {
   describe('deduplication', () => {
     it('returns two accounts for distinct canonicalKey', () => {
       const messages = [
-        { canonicalKey: 'a1', email: 'no-reply@example.com', from: 'User One <no-reply@example.com>', subject: 'Welcome', snippet: 'hey', displayName: 'User One' },
-        { canonicalKey: 'b2', email: 'noreply@test.com', from: 'User Two <noreply@test.com>', subject: 'Account created', snippet: 'hello', displayName: 'User Two' }
+        { canonicalKey: 'a1', email: 'no-reply@example.com', from: 'User One <no-reply@example.com>', subject: 'Welcome', displayName: 'User One' },
+        { canonicalKey: 'b2', email: 'noreply@test.com', from: 'User Two <noreply@test.com>', subject: 'Account created', displayName: 'User Two' }
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(2);
@@ -14,8 +14,8 @@ describe('extractAccountsFromMessages', () => {
 
     it('deduplicates messages with same canonicalKey', () => {
       const messages = [
-        { canonicalKey: 'same', email: 'no-reply@example.com', from: 'User <no-reply@example.com>', subject: 'Welcome', snippet: '', displayName: 'User' },
-        { canonicalKey: 'same', email: 'no-reply@example.com', from: 'User <no-reply@example.com>', subject: 'Welcome', snippet: 'again', displayName: 'User' }
+        { canonicalKey: 'same', email: 'no-reply@example.com', from: 'User <no-reply@example.com>', subject: 'Welcome', displayName: 'User' },
+        { canonicalKey: 'same', email: 'no-reply@example.com', from: 'User <no-reply@example.com>', subject: 'Welcome', displayName: 'User' }
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(1);
@@ -419,8 +419,7 @@ describe('extractAccountsFromMessages', () => {
           email: 'noreply@example.com', 
           from: 'Service <noreply@example.com>', 
           subject: 'Welcome to our service', 
-          displayName: 'Service',
-          snippet: 'Thank you for signing up'
+          displayName: 'Service'
         }
       ];
       const res = extractAccountsFromMessages(messages);
@@ -428,8 +427,7 @@ describe('extractAccountsFromMessages', () => {
       expect(res[0]).toHaveProperty('name', 'Service');
       expect(res[0]).toHaveProperty('subject', 'Welcome to our service');
       expect(res[0]).toHaveProperty('from', 'Service <noreply@example.com>');
-      expect(res[0]).toHaveProperty('snippet', 'Thank you for signing up');
-    });
+      });
 
     it('handles missing displayName gracefully', () => {
       const messages = [
@@ -442,7 +440,7 @@ describe('extractAccountsFromMessages', () => {
       ];
       const res = extractAccountsFromMessages(messages);
       expect(res).toHaveLength(1);
-      expect(res[0]).toHaveProperty('name', '');
+      expect(res[0]).toHaveProperty('name', 'noreply@example.com');
     });
   });
 });

@@ -36,6 +36,26 @@ export function generateCanonicalKey(item = {}) {
         }
       }
 
+      // HEURISTIC: If we have subdomains, check if one of them appears in the sender's name.
+      // This helps with cases like "Lenovo Order Tracking" <no-reply@lenovo.aftershiptracking.com>
+      // where the specific brand is in the subdomain rather than the service domain.
+      if (res.subdomain) {
+        const displayName = item.normDisplayName || normaliseText(item.displayName || item.name || '');
+        if (displayName) {
+          const subParts = res.subdomain.split('.');
+          for (const part of subParts) {
+            // Check for significant parts (avoid short generic subdomains like api, cdn, app)
+            if (part && part.length > 3) {
+              const regex = new RegExp(`\\b${part}\\b`, 'i');
+              if (regex.test(displayName)) {
+                brandStem = part;
+                break;
+              }
+            }
+          }
+        }
+      }
+
       // using English locale rules, 
       // may mis-handle locale‑specific letters (e.g. Turkish İ/ı)
       return `brand:${brandStem.toLocaleLowerCase('en')}`;
@@ -47,14 +67,10 @@ export function generateCanonicalKey(item = {}) {
   const subject = item.normSubject ?? normaliseText(item.subject || '');
   if (name || subject) return `n:${name}|${subject}`;
 
-  if (item.provider && item.messageId) return `m:${item.provider}|${item.messageId}`;
-
   // Fallback: deterministic, normalised string of a few identifying fields
   const fallback = [
     item.displayName || '',
-    item.normSubject || item.subject || '',
-    item.snippet || '',
-    item.provider || ''
+    item.normSubject || item.subject || ''
   ].join(' | ');
   const normalisedFallback = normaliseText(fallback).replace(/\s+/g, '_');
   return `u:${normalisedFallback}`;
