@@ -257,3 +257,13 @@ h2#accounts-heading {
     background: #fff;
     color: #333;
 }
+
+/* Bug report footer */
+.bug-report {
+    line-height: 1.8;
+}
+
+.bug-report button {
+    vertical-align: middle;
+    margin-left: 2px;
+}

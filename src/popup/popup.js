@@ -325,6 +325,31 @@ document.addEventListener('DOMContentLoaded', () => {
     subToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
     subToggle.addEventListener('change', applySubscriptionFilter);
   }
+
+  // Bug report email (assembled at runtime to deter scrapers)
+  const bugReportText = document.getElementById('bugReportText');
+  const copyEmailBtn = document.getElementById('copyEmailBtn');
+  if (bugReportText) {
+    const addr = 'findmyaccts+feedback' + '@' + 'gmail.com';
+    bugReportText.textContent = `Found an issue? Email us at ${addr}`;
+
+    if (copyEmailBtn) {
+      copyEmailBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(addr).then(() => {
+          const img = copyEmailBtn.querySelector('img');
+          if (img) {
+            img.style.opacity = '0.4';
+            setTimeout(() => { img.style.opacity = '1'; }, 600);
+          }
+          copyEmailBtn.title = 'Copied!';
+          setTimeout(() => { copyEmailBtn.title = 'Copy email address'; }, 1500);
+        }).catch(() => {
+          copyEmailBtn.title = 'Copy failed — try manually selecting the address';
+          setTimeout(() => { copyEmailBtn.title = 'Copy email address'; }, 3000);
+        });
+      });
+    }
+  }
 });
 
 function applySubscriptionFilter() {
