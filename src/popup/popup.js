@@ -6,7 +6,7 @@ import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID } from '../constants/ui.js';
 
 let accountsForDownload = [];
-const existingKeys = new Set();
+const existingKeys = new Map(); // canonicalKey → { account, li }
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -262,13 +262,70 @@ document.addEventListener('DOMContentLoaded', () => {
       downloadAccountsAsCsv(accountsForDownload);
     });
   }
+
+  const sortSelect = document.getElementById(DOM_ID.SORT_SELECT);
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+      rerenderAllAccounts(sortSelect.value);
+    });
+  }
 });
+
+function sortAccounts(accounts, sortOrder) {
+  if (sortOrder === 'default') return accounts;
+  const sorted = [...accounts];
+  switch (sortOrder) {
+    case 'recent':
+      sorted.sort((a, b) => {
+        if (!a.lastEmailDate && !b.lastEmailDate) return 0;
+        if (!a.lastEmailDate) return 1;
+        if (!b.lastEmailDate) return -1;
+        return b.lastEmailDate.localeCompare(a.lastEmailDate);
+      });
+      break;
+    case 'oldest':
+      sorted.sort((a, b) => {
+        if (!a.lastEmailDate && !b.lastEmailDate) return 0;
+        if (!a.lastEmailDate) return 1;
+        if (!b.lastEmailDate) return -1;
+        return a.lastEmailDate.localeCompare(b.lastEmailDate);
+      });
+      break;
+    case 'name-asc':
+      sorted.sort((a, b) => {
+        const nameA = (a.justDeleteMeData && typeof a.justDeleteMeData === 'object' ? a.justDeleteMeData.name : a.name) || '';
+        const nameB = (b.justDeleteMeData && typeof b.justDeleteMeData === 'object' ? b.justDeleteMeData.name : b.name) || '';
+        return nameA.localeCompare(nameB);
+      });
+      break;
+  }
+  return sorted;
+}
+
+function rerenderAllAccounts(sortOrder) {
+  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
+  list.innerHTML = '';
+  const sorted = sortAccounts(accountsForDownload, sortOrder);
+  sorted.forEach(account => {
+    const li = createAccountListItem(account);
+    list.appendChild(li);
+    const key = account.canonicalKey;
+    if (key && existingKeys.has(key)) {
+      existingKeys.get(key).li = li;
+    }
+  });
+}
 
 function renderAccountList(accounts) {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   accounts.forEach(account => {
     const li = createAccountListItem(account);
     list.appendChild(li);
+    // Store li reference so cross-batch dedup can update the date cell
+    const key = account.canonicalKey;
+    if (key && existingKeys.has(key)) {
+      existingKeys.get(key).li = li;
+    }
   });
 }
 
@@ -291,18 +348,30 @@ function updateAccountCount(count) {
 // Alias for the shared lookup normaliser
 const normalise = normaliseForLookup;
 
+function formatEmailDate(isoString) {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
 function createAccountListItem(account) {
   const li = document.createElement('li');
   li.setAttribute('role', 'row');
-  
+
   const nameDiv = document.createElement('div');
   nameDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_NAME}`;
   nameDiv.setAttribute('role', 'cell');
-  
+
+  const dateDiv = document.createElement('div');
+  dateDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_LAST_EMAIL}`;
+  dateDiv.setAttribute('role', 'cell');
+  dateDiv.textContent = account.lastEmailDate ? formatEmailDate(account.lastEmailDate) : '-';
+  if (account.lastEmailDate) dateDiv.title = account.lastEmailDate;
+
   const diffDiv = document.createElement('div');
   diffDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_DIFF}`;
   diffDiv.setAttribute('role', 'cell');
-  
+
   const actionDiv = document.createElement('div');
   actionDiv.className = `${CSS_CLASS.COL} ${CSS_CLASS.COL_ACTION}`;
   actionDiv.setAttribute('role', 'cell');
@@ -310,7 +379,7 @@ function createAccountListItem(account) {
   if (account.justDeleteMeData !== UI_TEXT.NO_DATA_FOUND) {
     nameDiv.textContent = account.justDeleteMeData.name;
     diffDiv.textContent = account.justDeleteMeData.difficulty;
-    
+
     if (account.justDeleteMeData.url) {
       const link = document.createElement('a');
       link.href = account.justDeleteMeData.url;
@@ -330,9 +399,10 @@ function createAccountListItem(account) {
   }
 
   li.appendChild(nameDiv);
+  li.appendChild(dateDiv);
   li.appendChild(diffDiv);
   li.appendChild(actionDiv);
-  
+
   return li;
 }
 
@@ -386,9 +456,22 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
     // Accounts with failed key generation (null) are filtered out.
     if (key && !existingKeys.has(key)) {
       newUnique.push(batchedAccount);
-      existingKeys.add(key);
+      // Store reference; the li element is assigned later in renderAccountList
+      existingKeys.set(key, { account: batchedAccount, li: null });
+    } else if (key && existingKeys.has(key)) {
+      // Update lastEmailDate if this message is more recent
+      const entry = existingKeys.get(key);
+      const newDate = batchedAccount.lastEmailDate;
+      if (newDate && (!entry.account.lastEmailDate || newDate > entry.account.lastEmailDate)) {
+        entry.account.lastEmailDate = newDate;
+        // Update the already-rendered DOM element
+        if (entry.li) {
+          const dateCell = entry.li.querySelector('.last-email');
+          if (dateCell) dateCell.textContent = formatEmailDate(newDate);
+        }
+      }
     }
   }
-  
+
   return newUnique;
 }

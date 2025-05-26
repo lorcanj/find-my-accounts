@@ -44,6 +44,15 @@ Show the last email date per account so users can see which accounts are dormant
 - [ ] Display last-seen date in the account list UI
 - [ ] Allow sorting/filtering by recency
 
+| Area | Complexity | Notes |
+|---|---|---|
+| Account model | Low | Add `lastEmailDate` field |
+| Per-batch dedup upgrade | Medium | `Set` → `Map`, date comparison logic |
+| Cross-batch dedup upgrade | Medium | Same pattern, must update existing DOM rows |
+| UI column | Low | One extra `<td>` + date formatting |
+| CSV export | Low | One extra column |
+| Sort/filter controls | Medium-High | Requires retaining a sortable account array and re-rendering the list |
+
 ## 5. Account Categorization
 Auto-tag accounts (finance, social, shopping, dev tools, etc.) based on domain or JustDeleteMe data.
 

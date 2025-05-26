@@ -32,6 +32,7 @@ export function downloadAccountsAsCsv(accounts) {
       escapeCsv(account.name),
       escapeCsv(account.domain),
       escapeCsv(account.from),
+      escapeCsv(account.lastEmailDate),
       escapeCsv(jdm.difficulty),
       escapeCsv(jdm.url)
     ].join(',');

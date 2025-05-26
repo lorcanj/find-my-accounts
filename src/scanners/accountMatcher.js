@@ -10,7 +10,7 @@ export function extractAccountsFromMessages(messages = []) {
   }
   if (!Array.isArray(messages)) messages = [messages];
   const foundAccounts = [];
-  const seen = new Set();
+  const seen = new Map(); // canonicalKey → index in foundAccounts
 
   for (const m of messages) {
     if (!isAccountRelated(m)) continue;
@@ -19,16 +19,25 @@ export function extractAccountsFromMessages(messages = []) {
     const subject = m.subject || '';
     const key = m.canonicalKey;
     const domain = m.domain || '';
+    const lastEmailDate = m.dateIso || null;
 
     if (!key || !seen.has(key)) {
-      // Fallback to email or from address if display name is missing
       const name = m.displayName || m.email || m.from || 'Unknown Sender';
-      foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key }));
-      if (key) seen.add(key);
+      const idx = foundAccounts.length;
+      foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key, lastEmailDate }));
+      if (key) seen.set(key, idx);
+    } else {
+      updateLastEmailDate(foundAccounts[seen.get(key)], lastEmailDate);
     }
   }
 
   return foundAccounts;
+}
+
+function updateLastEmailDate(account, newDate) {
+  if (newDate && (!account.lastEmailDate || newDate > account.lastEmailDate)) {
+    account.lastEmailDate = newDate;
+  }
 }
 
 function isAccountRelated(message) {

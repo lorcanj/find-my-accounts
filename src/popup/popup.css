@@ -137,10 +137,10 @@ h2#accounts-heading {
     color: #202124;
 }
 
-/* Layout for account list headers and rows: three columns */
+/* Layout for account list headers and rows: four columns */
 .account-list-headers {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 8px;
     align-items: center;
     padding: 8px 4px;
@@ -153,7 +153,7 @@ h2#accounts-heading {
 
 .account-list li {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 8px;
     align-items: center;
     padding: 10px 4px;
@@ -164,4 +164,21 @@ h2#accounts-heading {
 .account-list li .col { padding: 0 6px; }
 
 .account-list .name { word-break: break-word; }
+.account-list .last-email { color: #555; white-space: nowrap; }
 .account-list .action { text-align: right; }
+
+/* Results toolbar: heading + sort control */
+.results-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.sort-select {
+    font-size: 0.8rem;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+}
