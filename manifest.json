@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Account Scanner",
+  "version": "1.0.0",
+  "description": "Scan your Gmail inbox and password manager to discover all accounts associated with your email",
+  
+  "permissions": [
+    "identity",
+    "storage"
+  ],
+  
+  "host_permissions": [
+    "https://www.googleapis.com/*"
+  ],
+  
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  
+  "background": {
+    "service_worker": "services/authService.js"
+  },
+  
+  "oauth2": {
+    "client_id": "540669513328-c58t5k5tgfbrbdhtsgo0ivnvl5qm0d5k.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.readonly"
+    ]
+  }
+}

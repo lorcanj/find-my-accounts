@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Scanner</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Account Scanner</h1>
+    
+    <div class="actions">
+      <button id="scanGmail" class="btn btn-primary">
+        Scan Gmail
+      </button>
+      <button id="scanPasswords" class="btn btn-secondary">
+        Check Passwords
+      </button>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+      <p>Scanning...</p>
+    </div>
+
+    <div id="results" class="results">
+      <h2>Found Accounts: <span id="accountCount">0</span></h2>
+      <ul id="accountList" class="account-list">
+        <!-- Accounts will be added here by popup.js -->
+      </ul>
+    </div>
+
+    <div id="error" class="error" style="display: none;">
+      <!-- Error messages will appear here -->
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
