@@ -27,6 +27,20 @@ function findTextNode(node) {
   return null;
 }
 
+// Helper to format a single address object or string
+function formatAddress(v) {
+  if (typeof v === 'string') return v;
+  if (v && typeof v === 'object') {
+    if (v.name && v.address) return `${v.name} <${v.address}>`;
+    if (v.name) return v.name;
+    if (v.address) return v.address;
+    // Return the original object when we can't format it to a string.
+    // Caller can decide how to handle non-string header values.
+    return v;
+  } 
+  return String(v);
+}
+
 // Helper: extract an unfolded header string from the parser's `headers` map.
 function getHeaderValue(parsedHeaders, name) {
   const key = String(name).toLowerCase();
@@ -34,13 +48,14 @@ function getHeaderValue(parsedHeaders, name) {
   if (!entry) return '';
   if (entry.value) {
     if (Array.isArray(entry.value)) {
-      return entry.value.map(v => {
-        if (typeof v === 'string') return v;
-        if (v && v.name) return `${v.name} <${v.address || ''}>`;
-        return String(v);
-      }).join(', ');
+      const mapped = entry.value.map(formatAddress);
+      const allStrings = mapped.every(item => typeof item === 'string' && String(item).trim() !== '');
+      // If all items formatted to non-empty strings, join and return.
+      if (allStrings) return mapped.filter(Boolean).join(', ');
+    } else {
+      const formatted = formatAddress(entry.value);
+      if (typeof formatted === 'string' && String(formatted).trim() !== '') return formatted;
     }
-    return String(entry.value);
   }
   return String(entry.initial || '');
 }
