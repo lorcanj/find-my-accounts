@@ -17,11 +17,12 @@ export function extractAccountsFromMessages(messages = []) {
     const from = m.from || '';
     const subject = m.subject || '';
     const key = m.canonicalKey;
+    const domain = m.domain || '';
 
     if (!seen.has(key)) {
       // Fallback to email or from address if display name is missing
       const name = m.displayName || m.email || m.from || 'Unknown Sender';
-      foundAccounts.push(new Account({ name, subject, from, canonicalKey: key }));
+      foundAccounts.push(new Account({ name, subject, from, domain, canonicalKey: key}));
       seen.add(key);
     }
   }
