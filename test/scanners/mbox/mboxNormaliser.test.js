@@ -41,4 +41,18 @@ describe('normaliseMboxMessage', () => {
     const n = normaliseMboxMessage(raw);
     expect(n.dateIso).toBeNull();
   });
+
+  it('falls back to email address as displayName when name in parsed address is missing', () => {
+    const raw = {
+      from: 'only.email@example.com',
+      subject: 'No Name Header',
+      date: 1609459200000
+    };
+    
+    // parsed address will be { address: 'only.email@example.com', name: null }
+    const n = normaliseMboxMessage(raw);
+    
+    expect(n.email).toBe('only.email@example.com');
+    expect(n.displayName).toBe('only.email@example.com');
+  });
 });

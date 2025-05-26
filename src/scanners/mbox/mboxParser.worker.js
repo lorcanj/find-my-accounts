@@ -27,8 +27,8 @@ function findTextNode(node) {
   return null;
 }
 
-// Helper to format a single address object or string
-function formatAddress(v) {
+// Helper to format a single header value (address object, date, or string)
+function formatHeaderValue(v) {
   if (typeof v === 'string') return v;
   if (v && typeof v === 'object') {
     if (v.name && v.address) return `${v.name} <${v.address}>`;
@@ -48,13 +48,13 @@ function getHeaderValue(parsedHeaders, name) {
   if (!entry) return '';
   if (entry.value) {
     if (Array.isArray(entry.value)) {
-      const mapped = entry.value.map(formatAddress);
+      const mapped = entry.value.map(formatHeaderValue);
       // Join all successfully formatted items (skip nulls)
       const joined = mapped.filter(Boolean).join(', ');
       // If we have any valid items, return the joined string.
       if (joined.length > 0) return joined;
     } else {
-      const formatted = formatAddress(entry.value);
+      const formatted = formatHeaderValue(entry.value);
       if (typeof formatted === 'string' && String(formatted).trim() !== '') return formatted;
     }
   }
