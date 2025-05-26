@@ -57,14 +57,17 @@ body.popped-out {
 .btn-primary { background: #1976d2; color: white; }
 .btn-secondary { background: #eee; color: #222; }
 
-/* Make the download image button visually neutral (no grey background) */
-#downloadAccounts {
+/* Icon-only button style */
+.btn-icon {
     background: transparent;
-    background-color: transparent;
     border: none;
     padding: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
-#downloadAccounts img {
+.btn-icon img {
     display: inline-block;
     vertical-align: middle;
 }
