@@ -21,10 +21,11 @@ function handleScanResponse(response) {
   if (response && response.success) {
     const accounts = extractAccountsFromMessages(response.data);
     const filteredAccounts = filterAccounts(accounts);
-    renderAccountList(filteredAccounts);
-    // Store the filtered, deduplicated accounts for download/export
-    accountsForDownload = filteredAccounts;
-    updateAccountCount(filteredAccounts.length);
+    const enrichedAccounts = enrichAccounts(filteredAccounts);
+    renderAccountList(enrichedAccounts);
+    // Store the enriched, deduplicated accounts for download/export
+    accountsForDownload = enrichedAccounts;
+    updateAccountCount(enrichedAccounts.length);
   } else {
     console.log('Scan failed:', response && response.error);
   }
@@ -35,6 +36,7 @@ function filterAccounts(accounts) {
   const filtered = [];
   accounts.forEach(account => {
     const accountName = getAccountName(account);
+    // return will continue with the next account
     if (seenAccount.has(accountName)) return;
     account.name = accountName;
     seenAccount.add(accountName);
@@ -52,16 +54,20 @@ function renderAccountList(accounts) {
   });
 }
 
-function updateAccountCount(count) {
-  document.getElementById('accountCount').textContent = count;
+// Enrich accounts with justdeleteme data
+function enrichAccounts(accounts) {
+  return accounts.map(account => {
+    const lookupKey = getAccountName(account);
+    const domainInfo = window.domainLookup && window.domainLookup[lookupKey];
+    return {
+      ...account,
+      justDeleteMe: domainInfo || null
+    };
+  });
 }
 
-// Extracts and normalizes the account name for deduplication
-function getAccountName(account) {
-  const from = account.from || '';
-  const nameMatch = from.match(/^"?([^"<]*)"?\s*</);
-  const displayName = nameMatch && nameMatch[1] ? nameMatch[1].trim() : from;
-  return normalise(displayName);
+function updateAccountCount(count) {
+  document.getElementById('accountCount').textContent = count;
 }
 
 // Normalises a string for lookup/deduplication
@@ -72,15 +78,18 @@ function normalise(str) {
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
-  
-  // Normalize the display name for lookup
-  const lookupKey = getAccountName(account);
-  const domainInfo = window.domainLookup && window.domainLookup[lookupKey];
-
-  if (domainInfo) {
-    li.textContent = `${domainInfo.name} (${domainInfo.difficulty})`;
+  if (account.justDeleteMe) {
+    li.textContent = `${account.justDeleteMe.name} (${account.justDeleteMe.difficulty})`;
   } else {
-    li.textContent = lookupKey;
+    li.textContent = getAccountName(account);
   }
   return li;
+}
+
+// Extracts and normalises the account name for deduplication
+function getAccountName(account) {
+  const from = account.from || '';
+  const nameMatch = from.match(/^"?([^"<]*)"?\s*</);
+  const displayName = nameMatch && nameMatch[1] ? nameMatch[1].trim() : from;
+  return normalise(displayName);
 }
