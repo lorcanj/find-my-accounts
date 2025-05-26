@@ -20,13 +20,18 @@ const extensionFolderPath = path.join(parentDir, extensionFolderName);
 const sourceFolderPath = path.join(parentDir, sourceFolderName);
 
 // Helper to copy files/folders
-function copyItem(src, dest) {
+function copyItem(src, dest, required = true) {
   const srcPath = path.join(rootDir, src);
   const destPath = path.join(dest, src);
 
   if (!fs.existsSync(srcPath)) {
-    console.warn(`Warning: ${src} does not exist, skipping.`);
-    return;
+    if (required) {
+      console.error(`Error: Required item '${src}' does not exist. Failing release.`);
+      process.exit(1);
+    } else {
+      console.warn(`Warning: Optional item '${src}' does not exist, skipping.`);
+      return;
+    }
   }
 
   const stat = fs.statSync(srcPath);
@@ -34,7 +39,7 @@ function copyItem(src, dest) {
     fs.mkdirSync(destPath, { recursive: true });
     const items = fs.readdirSync(srcPath);
     for (const item of items) {
-      copyItem(path.join(src, item), dest);
+      copyItem(path.join(src, item), dest, required);
     }
   } else {
     const destDir = path.dirname(destPath);
