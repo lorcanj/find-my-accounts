@@ -6,9 +6,15 @@ export function generateCanonicalKey(item = {}) {
   const email = item.email ?? normaliseEmail(item.from || item.address || null);
 
   if (email) {
+    // if multiple @ symbols then the parsing doesn't work properly
     const parts = email.split('@');
     if (parts.length === 2) {
-      const hostname = parts[1];
+      const hostname = (parts[1] || '').trim();
+      
+      if (!hostname) {
+        return `e:${email}`;
+      }
+      
       const res = parse(hostname);
 
       // registrableDomain is the SLD+TLD (e.g. github.com)
@@ -28,7 +34,9 @@ export function generateCanonicalKey(item = {}) {
         }
       }
 
-      return `brand:${brandStem.toLowerCase()}`;
+      // using English locale rules, 
+      // may mis-handle locale‑specific letters (e.g. Turkish İ/ı)
+      return `brand:${brandStem.toLocaleLowerCase('en')}`;
     }
     return `e:${email}`;
   }
