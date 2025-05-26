@@ -7,10 +7,64 @@
  * @param {Function} onBatch - Callback for receiving a batch of normalised messages.
  * @returns {Promise<void>} - Resolves when import is complete.
  */
+let activeImport = null;
+
+export function cancelMboxImport() {
+  if (!activeImport || activeImport.settled) return false;
+
+  activeImport.cancelled = true;
+
+  if (activeImport.reader && typeof activeImport.reader.cancel === 'function') {
+    activeImport.reader.cancel().catch(() => {});
+  }
+
+  if (activeImport.fileReader && typeof activeImport.fileReader.abort === 'function') {
+    try {
+      activeImport.fileReader.abort();
+    } catch {
+      // noop
+    }
+  }
+
+  if (activeImport.worker) {
+    activeImport.worker.terminate();
+  }
+
+  activeImport.settled = true;
+  activeImport.reject(new Error('Import cancelled'));
+  activeImport = null;
+  return true;
+}
+
 export async function importMboxFile(file, onProgress, onBatch) {
   return new Promise((resolve, reject) => {
     const workerUrl = chrome.runtime.getURL('dist/mboxParser.worker.js');
     const worker = new Worker(workerUrl, { type: 'module' });
+
+    activeImport = {
+      worker,
+      reader: null,
+      fileReader: null,
+      reject,
+      cancelled: false,
+      settled: false
+    };
+
+    function settleResolve() {
+      if (activeImport) {
+        activeImport.settled = true;
+        activeImport = null;
+      }
+      resolve();
+    }
+
+    function settleReject(error) {
+      if (activeImport) {
+        activeImport.settled = true;
+        activeImport = null;
+      }
+      reject(error);
+    }
     
     const CHUNK_SIZE = 1024 * 1024 * 5; // 5MB chunks
     let offset = 0;
@@ -28,7 +82,7 @@ export async function importMboxFile(file, onProgress, onBatch) {
       if (msg.type === 'batch') {
         if (!Array.isArray(msg.messages)) {
           worker.terminate();
-          reject(new Error("Worker sent invalid batch payload: expected 'messages' to be an array"));
+          settleReject(new Error("Worker sent invalid batch payload: expected 'messages' to be an array"));
           return;
         }
         if (onBatch) {
@@ -43,24 +97,35 @@ export async function importMboxFile(file, onProgress, onBatch) {
         }
       } else if (msg.type === 'done') {
         worker.terminate();
-        resolve();
+        settleResolve();
       } else if (msg.type === 'error') {
         worker.terminate();
-        reject(new Error(msg.message || 'Worker parse error'));
+        settleReject(new Error(msg.message || 'Worker parse error'));
       }
     };
     
     worker.onerror = (event) => {
       worker.terminate();
-      reject(new Error(event.message || 'Worker error'));
+      settleReject(new Error(event.message || 'Worker error'));
     };
 
     if (file.stream) {
       const stream = file.stream();
       const reader = stream.getReader();
+      if (activeImport) {
+        activeImport.reader = reader;
+      }
       
       function readNext() {
+        if (activeImport && activeImport.cancelled) {
+          return;
+        }
+
         reader.read().then(({ done, value: chunk }) => {
+          if (activeImport && activeImport.cancelled) {
+            return;
+          }
+
           if (done) {
             worker.postMessage({ type: 'end' });
             return;
@@ -72,7 +137,7 @@ export async function importMboxFile(file, onProgress, onBatch) {
           readNext();
         }).catch(err => {
           worker.terminate();
-          reject(err);
+          settleReject(err);
         });
       }
       
@@ -90,8 +155,15 @@ export async function importMboxFile(file, onProgress, onBatch) {
         const end = Math.min(offset + CHUNK_SIZE, totalSize);
         const blob = file.slice(offset, end);
         const reader = new FileReader();
+        if (activeImport) {
+          activeImport.fileReader = reader;
+        }
         
         reader.onload = (e) => {
+          if (activeImport && activeImport.cancelled) {
+            return;
+          }
+
           const buffer = e.target.result;
           worker.postMessage({ type: 'chunk', buffer }, [buffer]);
           
@@ -103,7 +175,7 @@ export async function importMboxFile(file, onProgress, onBatch) {
         reader.onerror = (event) => {
           worker.terminate();
           const error = event?.target?.error || new Error('Failed to read file');
-          reject(error);
+          settleReject(error);
         };
         
         reader.readAsArrayBuffer(blob);

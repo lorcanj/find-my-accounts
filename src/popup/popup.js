@@ -1,9 +1,11 @@
 import { domainLookup } from '../data/buildDomainLookup.js';
 import { downloadAccountsAsJson } from './download.js';
 import { extractAccountsFromMessages } from '../scanners/accountMatcher.js';
-import { importMboxFile } from '../services/mboxImportService.js';
+import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.js';
 
 const NO_DATA_FOUND_MESSAGE = 'No data found.';
+const DEFAULT_IMPORT_BUTTON_TEXT = 'Import .mbox';
+const CANCEL_IMPORT_BUTTON_TEXT = 'Cancel scan';
 let accountsForDownload = [];
 const existingKeys = new Set();
 // Cached DOM elements (assigned in DOMContentLoaded)
@@ -13,6 +15,7 @@ let importBtn;
 let progress;
 let progressBar;
 let downloadButton;
+let importInProgress = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   // Check if we are in a popped-out window
@@ -100,13 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (importBtn) {
     importBtn.addEventListener('click', async () => {
+      if (importInProgress) {
+        const cancelled = cancelMboxImport();
+        if (cancelled && selectedFileInfo) {
+          selectedFileInfo.textContent = 'Cancelling import...';
+        }
+        return;
+      }
+
       const file = mboxInput.files && mboxInput.files[0];
       if (!file) return;
       if (!currentMboxFileValid) {
         if (selectedFileInfo) selectedFileInfo.textContent = 'Selected file is not a valid .mbox. Import cancelled.';
         return;
       }
-      importBtn.disabled = true;
+
+      setImportUiState(true);
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
@@ -143,12 +155,16 @@ document.addEventListener('DOMContentLoaded', () => {
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
       } catch (err) {
-        // Error (rejected)
+        // Error (rejected) or cancellation
         resetProgressIndicator();
-        console.error('Import error:', err);
-        if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
+        if (isImportCancelledError(err)) {
+          if (selectedFileInfo) selectedFileInfo.textContent = 'Import cancelled.';
+        } else {
+          console.error('Import error:', err);
+          if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
+        }
       } finally {
-        if (importBtn) importBtn.disabled = false;
+        setImportUiState(false, true);
       }
     });
   }
@@ -245,8 +261,23 @@ function getAccountName(account) {
 function resetProgressIndicator() {
   const progressEl = document.getElementById('importProgress');
   const progressBar = document.getElementById('importProgressBar');
-    if (progressEl) progressEl.style.display = 'none';
+  if (progressEl) progressEl.style.display = 'none';
   if (progressBar) progressBar.style.width = '0%';
+}
+
+function setImportUiState(scanning, hasValidFile = false) {
+  importInProgress = scanning;
+
+  if (!importBtn) return;
+
+  importBtn.textContent = scanning ? CANCEL_IMPORT_BUTTON_TEXT : DEFAULT_IMPORT_BUTTON_TEXT;
+  importBtn.disabled = scanning ? false : !hasValidFile;
+}
+
+function isImportCancelledError(error) {
+  if (!error) return false;
+  const message = String(error.message || error).toLowerCase();
+  return message.includes('cancelled') || message.includes('aborted');
 }
 
 function deduplicateAccounts(batchedEnrichedAccounts) {

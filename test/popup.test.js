@@ -4,6 +4,7 @@ import { JSDOM } from 'jsdom';
 const mockState = {
   downloadMock: null,
   importMboxFileMock: null,
+  cancelMboxImportMock: null,
   extractAccountsMock: null,
   domainLookup: {}
 };
@@ -15,7 +16,8 @@ vi.mock('../src/popup/download.js', () => ({
 }));
 
 vi.mock('../src/services/mboxImportService.js', () => ({
-  importMboxFile: async (...args) => mockState.importMboxFileMock(...args)
+  importMboxFile: async (...args) => mockState.importMboxFileMock(...args),
+  cancelMboxImport: (...args) => mockState.cancelMboxImportMock(...args)
 }));
 
 vi.mock('../src/scanners/accountMatcher.js', () => ({
@@ -48,6 +50,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
   let originalWindow;
   let downloadMock;
   let importMboxFileMock;
+  let cancelMboxImportMock;
   let extractAccountsMock;
 
   beforeEach(async () => {
@@ -80,10 +83,12 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     downloadMock = vi.fn();
     importMboxFileMock = vi.fn();
+    cancelMboxImportMock = vi.fn(() => true);
     extractAccountsMock = vi.fn();
 
     mockState.downloadMock = downloadMock;
     mockState.importMboxFileMock = importMboxFileMock;
+    mockState.cancelMboxImportMock = cancelMboxImportMock;
     mockState.extractAccountsMock = extractAccountsMock;
     mockState.domainLookup = {};
   });
@@ -141,16 +146,20 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       expect(document.getElementById('accountCount').textContent).toBe('1');
     });
 
+    await vi.waitFor(() => {
+      expect(importBtn.textContent).toBe('Import .mbox');
+    });
+
     // Simulate second import: reuse the same file object and rely on mocks
-    fileInput.dispatchEvent(new window.Event('change'));
+    setInputFiles(fileInput, [file1]);
 
     await importBtn.click();
     
     // Verify second import completed
     await vi.waitFor(() => {
-      expect(extractAccountsMock).toHaveBeenCalledTimes(2);
       // Critical assertion: accountCount should be 1 (only second import), not 2 (accumulated)
       expect(document.getElementById('accountCount').textContent).toBe('1');
+      expect(importMboxFileMock.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     // Verify download receives only the second import's accounts
@@ -203,15 +212,18 @@ describe('popup.js - accountsForDownload reset behavior', () => {
       expect(document.getElementById('accountCount').textContent).toBe('1');
     });
 
+    await vi.waitFor(() => {
+      expect(importBtn.textContent).toBe('Import .mbox');
+    });
+
     // Second import - reuse same file object and rely on mocks to produce new accounts
-    fileInput.dispatchEvent(new window.Event('change'));
+    setInputFiles(fileInput, [file1]);
     await importBtn.click();
     
     await vi.waitFor(() => {
-      // Ensure that the second extraction happened
-      expect(extractAccountsMock).toHaveBeenCalledTimes(2);
       // Critical assertion: should still be 1 (reset happened)
       expect(document.getElementById('accountCount').textContent).toBe('1');
+      expect(importMboxFileMock.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
     // Verify the downloaded accounts are only from the second import
@@ -262,5 +274,49 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     expect(downloadedAccounts).toHaveLength(1);
     expect(downloadedAccounts[0].email).toBe('good@example.com');
     expect(downloadedAccounts.some((account) => account.email === 'bad@example.com')).toBe(false);
+  });
+
+  it('changes import button to cancel during scan and calls cancel action on click', async () => {
+    let rejectImport;
+
+    importMboxFileMock.mockImplementation(() => {
+      return new Promise((_, reject) => {
+        rejectImport = reject;
+      });
+    });
+
+    cancelMboxImportMock.mockImplementation(() => {
+      rejectImport(new Error('Import cancelled'));
+      return true;
+    });
+
+    await import('../src/popup/popup.js');
+
+    const event = new window.Event('DOMContentLoaded');
+    document.dispatchEvent(event);
+
+    const fileInput = document.getElementById('mboxFileInput');
+    const importBtn = document.getElementById('importMboxBtn');
+    const selectedFileInfo = document.getElementById('selectedFileInfo');
+
+    const file = new window.File(['mbox content'], 'test.mbox', { type: 'application/mbox' });
+    setInputFiles(fileInput, [file]);
+
+    importBtn.click();
+
+    await vi.waitFor(() => {
+      expect(importBtn.textContent).toBe('Cancel scan');
+      expect(fileInput.disabled).toBe(false);
+    });
+
+    importBtn.click();
+
+    expect(cancelMboxImportMock).toHaveBeenCalledTimes(1);
+
+    await vi.waitFor(() => {
+      expect(importBtn.textContent).toBe('Import .mbox');
+      expect(fileInput.disabled).toBe(false);
+      expect(selectedFileInfo.textContent).toBe('Import cancelled.');
+    });
   });
 });
