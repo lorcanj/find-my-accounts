@@ -10,32 +10,36 @@ Implements headers-only subscription detection as described in `SUBSCRIPTION_DET
 
 ### Summary
 
-Add subscription fields to the Account model and define all signal constants (keyword lists, sender patterns, confidence rules). Foundation for everything else — no behaviour change.
+Add a `SubscriptionInfo` class and a `subscription` field on the Account model, plus all signal constants (keyword lists, sender patterns, confidence rules). Foundation for everything else — no behaviour change.
 
 ### Work
 
 | File | Change |
 |---|---|
-| `src/models/Account.js` | Add five fields: `isSubscription` (bool), `subscriptionConfidence` (string\|null), `amount` (string\|null), `frequency` (string\|null), `subscriptionStatus` (string\|null) |
+| `src/models/Account.js` | Add `SubscriptionInfo` class (exported) with four fields: `confidence` (string), `amount` (string\|null), `frequency` (string\|null), `status` (string\|null). Add single `subscription` field on `Account` (default `null`). Presence of `account.subscription` means it's a subscription — no separate `isSubscription` boolean needed |
 | `src/constants/subscriptionSignals.js` | **New file.** Export frozen objects: `STRONG_KEYWORDS`, `WEAK_KEYWORDS`, `NEGATIVE_KEYWORDS` (cancellation), `PURCHASE_KEYWORDS` (one-time suppression), `BILLING_SENDER_PATTERNS`, `FREQUENCY_KEYWORDS`, `AMOUNT_REGEX`, `CONFIDENCE` enum, `STATUS` enum, `FREQUENCY` enum |
 
 ### Decisions
 
+- **`SubscriptionInfo` class, not flat fields on Account.** Mirrors the `JustDeleteMeInfo` pattern already in the codebase. Groups related subscription data under a single nullable field — `account.subscription` is either a `SubscriptionInfo` or `null`. Avoids ambiguous field names like `account.amount` (amount of what?) and replaces the five-field null-check with a single presence check.
 - **Constants in a separate file, not inline in the matcher.** Makes them easy to test and tune independently. Mirrors how `accountMatcher.js` currently inlines its regex — but subscription has enough keyword lists to warrant extraction.
 - **`amount` stored as raw string, not parsed.** No currency normalisation in v1 — just surface what the subject line says.
-- **New fields default to `null`/`false`.** Existing accounts are unaffected. No migration needed.
+- **`subscription` defaults to `null`.** Existing accounts are unaffected. No migration needed.
 
 ### Acceptance criteria
 
-- [ ] `new Account(...)` initialises all five subscription fields to defaults
+- [ ] `new Account(...)` initialises `subscription` to `null`
+- [ ] `new SubscriptionInfo(...)` stores confidence, amount, frequency, status
+- [ ] `SubscriptionInfo` defaults: amount/frequency/status `null`, confidence required
 - [ ] All keyword lists from `SUBSCRIPTION_DETECTION.md` are represented in constants
 - [ ] Constants are frozen (immutable)
 - [ ] Existing tests pass unchanged — no regression
 
 ### Tests
 
-- `Account` constructor sets subscription fields to defaults
-- `Account` constructor accepts and stores subscription field overrides
+- `Account` constructor sets `subscription` to `null` by default
+- `Account` constructor accepts a `SubscriptionInfo` instance for `subscription`
+- `SubscriptionInfo` constructor stores all four fields
 - Constants file exports all expected lists and they are non-empty
 - Constants are frozen (`Object.isFrozen`)
 
@@ -137,7 +141,7 @@ New module that takes a deduplicated account and its accumulated signals (from a
 
 | File | Change |
 |---|---|
-| `src/scanners/subscriptionMatcher.js` | **New file.** Export `enrichAccountWithSubscription(account, signalsArray)` → mutates account in place with subscription fields |
+| `src/scanners/subscriptionMatcher.js` | **New file.** Export `enrichAccountWithSubscription(account, signalsArray)` → constructs a `SubscriptionInfo` and assigns it to `account.subscription` (or leaves it `null`) |
 
 ### Logic
 
@@ -154,30 +158,30 @@ New module that takes a deduplicated account and its accumulated signals (from a
    - Weak keyword only → low
    - Weak keyword + billing sender (no amount) → medium
 5. **Surface amount and frequency.** Use the most recent non-null values (latest-wins).
-6. **Set fields.** `isSubscription = true`, plus confidence, amount, frequency, status.
+6. **Set `account.subscription`.** Construct a `new SubscriptionInfo({ confidence, amount, frequency, status })` and assign to `account.subscription`. If no subscription detected, leave as `null`.
 
 ### Decisions
 
-- **Mutates account in place rather than returning a new object.** Matches the existing pattern in popup.js where dedup updates accounts in place. Avoids creating a parallel account list.
+- **Constructs `SubscriptionInfo`, assigns to `account.subscription`.** Mutates the account in place (matching the existing dedup pattern in popup.js) but subscription data is encapsulated in a proper class rather than spread across flat fields. `account.subscription !== null` is the subscription check.
 - **Signals array, not single signal.** An account may have 50 emails — each produces a signal object. The matcher sees all of them to make a holistic decision.
 - **Purchase suppression only blocks if no strong subscription keywords exist.** A service might send both order confirmations (for hardware) and subscription receipts — the subscription signal should still win.
 - **"Low" confidence accounts still get flagged.** Whether to show them is a UI decision (PR 5), not a matcher decision.
 
 ### Acceptance criteria
 
-- [ ] Strong keyword + amount → high confidence, `isSubscription: true`
+- [ ] Strong keyword + amount → high confidence, `account.subscription` is a `SubscriptionInfo`
 - [ ] Strong keyword + billing sender → high confidence
 - [ ] Strong keyword alone → medium confidence
 - [ ] Weak keyword only → low confidence
 - [ ] Weak keyword + billing sender (no amount) → medium confidence
 - [ ] Amount only (no keywords) → medium confidence
-- [ ] Purchase keywords with no strong keywords → account NOT flagged as subscription
+- [ ] Purchase keywords with no strong keywords → `account.subscription` stays `null`
 - [ ] Purchase keywords WITH strong keywords → account still flagged
-- [ ] Most recent negative keyword → `subscriptionStatus: 'cancelled'`, still flagged as subscription
-- [ ] Trial keyword → `subscriptionStatus: 'trial'`
+- [ ] Most recent negative keyword → `subscription.status: 'cancelled'`, still flagged as subscription
+- [ ] Trial keyword → `subscription.status: 'trial'`
 - [ ] Multiple amounts across signals → most recent used
 - [ ] Multiple frequencies → most recent used
-- [ ] Empty signals array → account unchanged
+- [ ] Empty signals array → `account.subscription` stays `null`
 - [ ] Account fields not related to subscriptions are untouched
 
 ### Tests
@@ -202,9 +206,9 @@ New module that takes a deduplicated account and its accumulated signals (from a
 - Two signals: `amount: '$4.99'` (Jan 2024) then `amount: '$9.99'` (Mar 2024) → amount: `'$9.99'`
 
 **Edge cases:**
-- Account with no signals → unchanged, `isSubscription` stays false
+- Account with no signals → unchanged, `subscription` stays `null`
 - Signal with no dateIso → still processed, treated as oldest (sorted first in ascending order, so real dates always take precedence in latest-wins logic)
-- Account already enriched (idempotency) → fields overwritten cleanly
+- Account already enriched (idempotency) → `subscription` replaced cleanly
 
 ---
 
@@ -238,7 +242,7 @@ Wire signal extraction and subscription enrichment into the existing scan pipeli
 - [ ] Signals are extracted for every account-related message during batch processing (both create and merge paths in accountMatcher)
 - [ ] Signals accumulate correctly across batches for the same `canonicalKey`
 - [ ] Subscription enrichment runs after scan completion
-- [ ] Accounts with subscription signals are correctly enriched with all five fields
+- [ ] Accounts with subscription signals have `account.subscription` set to a `SubscriptionInfo`
 - [ ] Accounts without subscription signals are unaffected
 - [ ] `_subscriptionSignals` is removed from all accounts after enrichment (not present in export data)
 - [ ] No performance regression on large files (signal extraction is lightweight regex on already-parsed headers)
@@ -278,7 +282,7 @@ Render subscription metadata in the results table. Add subscription filter and s
 
 ### UI spec
 
-**Badge:** Inline pill on account rows. Only shown when `isSubscription === true`.
+**Badge:** Inline pill on account rows. Only shown when `account.subscription !== null`.
 - Format: `$9.99/mo` or `Subscription` (if no amount/frequency)
 - Colour: contextual by status — green (active), grey (cancelled), amber (trial)
 - Confidence shown as tooltip or secondary text, not in badge itself (avoid clutter)
@@ -297,7 +301,7 @@ Render subscription metadata in the results table. Add subscription filter and s
 
 ### Acceptance criteria
 
-- [ ] Subscription badge appears on rows where `isSubscription === true` and confidence is medium or high
+- [ ] Subscription badge appears on rows where `account.subscription !== null` and confidence is medium or high
 - [ ] Low-confidence subscriptions do NOT show a badge in the default view
 - [ ] Badge shows amount and frequency when available
 - [ ] Badge colour reflects status (active/cancelled/trial)
@@ -311,9 +315,9 @@ Render subscription metadata in the results table. Add subscription filter and s
 
 ### Tests
 
-- Account with `isSubscription: true`, `amount: '$9.99'`, `frequency: 'monthly'` → badge reads `$9.99/mo`
-- Account with `isSubscription: true`, no amount → badge reads `Subscription`
-- Account with `isSubscription: false` → no badge
+- Account with `subscription: { amount: '$9.99', frequency: 'monthly' }` → badge reads `$9.99/mo`
+- Account with `subscription: { amount: null }` → badge reads `Subscription`
+- Account with `subscription: null` → no badge
 - Subscription filter on → only subscription accounts visible
 - Subscription filter off → all accounts visible
 - Sort "subscriptions first" → subscription accounts at top
@@ -333,22 +337,22 @@ Include subscription metadata in CSV and JSON exports.
 
 | File | Change |
 |---|---|
-| `src/popup/download.js` | Add subscription columns to CSV: `Is Subscription`, `Subscription Confidence`, `Amount`, `Frequency`, `Subscription Status`. Add same fields to JSON export. New columns appended at end of CSV for backward compatibility |
+| `src/popup/download.js` | Add subscription columns to CSV: `Is Subscription`, `Confidence`, `Amount`, `Frequency`, `Status`. Read from `account.subscription` (null-safe). Add same fields to JSON export. New columns appended at end of CSV for backward compatibility |
 
 ### Decisions
 
-- **Columns appended at end of CSV row.** Anyone parsing by column index won't break. New columns are: `Is Subscription`, `Subscription Confidence`, `Amount`, `Frequency`, `Subscription Status`.
-- **Boolean `Is Subscription` exports as `"Yes"` / `"No"`.** More readable in spreadsheets than `true`/`false`.
+- **Columns appended at end of CSV row.** Anyone parsing by column index won't break. New columns are: `Is Subscription`, `Confidence`, `Amount`, `Frequency`, `Status`.
+- **`Is Subscription` derived from `account.subscription !== null`**, exported as `"Yes"` / `"No"`. More readable in spreadsheets than `true`/`false`.
 - **Null fields export as empty string.** Consistent with existing behaviour for missing justDeleteMe data.
-- **JSON export includes all fields as-is.** No transformation — `isSubscription: false`, `amount: null`, etc.
+- **JSON export includes `subscription` object as-is.** `null` when not a subscription, `{ confidence, amount, frequency, status }` when it is.
 
 ### Acceptance criteria
 
-- [ ] CSV header row includes five new columns at the end
-- [ ] Subscription accounts have populated values in new columns
-- [ ] Non-subscription accounts have `No` and empty strings in new columns
+- [ ] CSV header row includes five new subscription columns at the end
+- [ ] Accounts with `subscription !== null` have populated values in new columns
+- [ ] Accounts with `subscription === null` have `No` and empty strings in new columns
 - [ ] Amount values with commas are properly quoted (CSV safety)
-- [ ] JSON export includes all five subscription fields per account
+- [ ] JSON export includes `subscription` object (or `null`) per account
 - [ ] Existing CSV columns unchanged in position and content
 - [ ] Formula injection prevention applies to new fields (amounts like `=$9.99` could trigger)
 
