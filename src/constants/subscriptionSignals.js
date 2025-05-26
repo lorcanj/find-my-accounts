@@ -6,7 +6,9 @@ export const STRONG_KEYWORDS = Object.freeze([
   'subscription confirmed', 'subscription active',
   'billing cycle', 'billing period',
   'payment processed', 'payment received', 'payment successful',
-  'invoice', 'receipt for your',
+  'invoice',
+  'receipt for your subscription', 'receipt for your plan',
+  'receipt for your renewal', 'receipt for your membership',
   'trial ending', 'trial expires', 'trial will end',
   'plan upgrade', 'plan change',
 ]);
@@ -44,6 +46,12 @@ export const FREQUENCY_KEYWORDS = Object.freeze({
 
 // Matches currency amounts in subject lines, e.g. $9.99, €14.99/month, A$49.00/year, USD 9.99
 export const AMOUNT_REGEX = /(?:(?:A|CA|NZ|HK|SG)?\$|€|£|¥|USD|EUR|GBP|CAD|AUD)\s?\d+(?:[.,]\d{1,2})?(?:\s?\/\s?(?:mo(?:nth)?|yr|year|week|quarter))?/i;
+
+// Post-match patterns that indicate the amount is not a subscription fee
+export const AMOUNT_REJECT_AFTER = /^k\b|^\s*(?:off|discount|saving|cashback)\b/i;
+
+// Upper bound for plausible subscription amounts — anything above this is likely not a subscription fee
+export const AMOUNT_MAX = 999.99;
 
 export const SUB_CONFIDENCE = CONFIDENCE;
 

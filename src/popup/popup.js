@@ -10,6 +10,7 @@ import { sortAccounts, formatEmailDate } from './sortUtils.js';
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
 const activeConfidenceFilters = new Set(['high', 'medium', 'low']);
+let showSubscriptionBadges = true;
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -244,8 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Success (resolved) — enrich accounts with subscription data
         for (const { account } of existingKeys.values()) {
           enrichAccountWithSubscription(account, account._subscriptionSignals || []);
-          delete account._subscriptionSignals;
         }
+
+        // Re-render so subscription badges appear on the now-enriched accounts
+        const sortSelect = document.getElementById(DOM_ID.SORT_SELECT);
+        rerenderAllAccounts(sortSelect ? sortSelect.value : 'default');
 
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
@@ -260,6 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('Import error:', err);
           if (selectedFileInfo) selectedFileInfo.textContent = `Import error: ${err.message || String(err)}`;
           setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
+        }
+      } finally {
+        // Clean up transient signals regardless of success/cancel/error
+        for (const { account } of existingKeys.values()) {
+          delete account._subscriptionSignals;
         }
       }
     });
@@ -304,6 +313,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add(CSS_CLASS.FILTER_BTN_ACTIVE);
       }
       applyConfidenceFilter();
+    });
+  }
+
+  // Subscription badge toggle
+  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  if (subToggle) {
+    subToggle.addEventListener('change', () => {
+      showSubscriptionBadges = subToggle.checked;
+      const sortSel = document.getElementById(DOM_ID.SORT_SELECT);
+      rerenderAllAccounts(sortSel ? sortSel.value : 'default');
     });
   }
 });
@@ -413,6 +432,9 @@ function createAccountListItem(account) {
     actionDiv.textContent = '-';
   }
 
+  const subBadge = createSubscriptionBadge(account.subscription);
+  if (subBadge) nameDiv.appendChild(subBadge);
+
   li.appendChild(nameDiv);
   li.appendChild(confidenceDiv);
   li.appendChild(dateDiv);
@@ -428,6 +450,33 @@ const CONFIDENCE_BADGE_CLASS = {
   low:    CSS_CLASS.BADGE_LOW,
 };
 const CONFIDENCE_LABEL = { high: 'High', medium: 'Med', low: 'Low' };
+
+const SUB_STATUS_BADGE_CLASS = {
+  active:    CSS_CLASS.BADGE_SUB_ACTIVE,
+  cancelled: CSS_CLASS.BADGE_SUB_CANCELLED,
+  trial:     CSS_CLASS.BADGE_SUB_TRIAL,
+};
+const FREQUENCY_SHORT = { monthly: '/mo', annual: '/yr', weekly: '/wk', quarterly: '/qtr' };
+
+function createSubscriptionBadge(subscription) {
+  if (!showSubscriptionBadges) return null;
+  if (!subscription) return null;
+  if (subscription.confidence === 'low') return null;
+
+  const badge = document.createElement('span');
+  const statusClass = SUB_STATUS_BADGE_CLASS[subscription.status] || SUB_STATUS_BADGE_CLASS.active;
+  badge.className = `${CSS_CLASS.BADGE} ${statusClass}`;
+
+  if (subscription.amount) {
+    const freq = FREQUENCY_SHORT[subscription.frequency] || '';
+    badge.textContent = `${subscription.amount}${freq}`;
+  } else {
+    badge.textContent = 'Subscription';
+  }
+
+  badge.title = `Subscription confidence: ${subscription.confidence}`;
+  return badge;
+}
 
 function applyConfidenceFilter() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);

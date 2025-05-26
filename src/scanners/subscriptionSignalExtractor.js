@@ -1,7 +1,7 @@
 import { normaliseText } from './normalisers/utils.js';
 import {
   STRONG_KEYWORDS, WEAK_KEYWORDS, NEGATIVE_KEYWORDS, PURCHASE_KEYWORDS,
-  BILLING_SENDER_PATTERNS, FREQUENCY_KEYWORDS, AMOUNT_REGEX,
+  BILLING_SENDER_PATTERNS, FREQUENCY_KEYWORDS, AMOUNT_REGEX, AMOUNT_REJECT_AFTER, AMOUNT_MAX,
 } from '../constants/subscriptionSignals.js';
 
 // Pre-normalise keyword lists so they match against normSubject consistently
@@ -30,7 +30,17 @@ function checkBillingSender(email) {
 function extractAmount(subject) {
   if (!subject) return null;
   const match = subject.match(AMOUNT_REGEX);
-  return match ? match[0] : null;
+  if (!match) return null;
+
+  // Reject discount/salary contexts by checking what follows the match
+  const afterMatch = subject.slice(match.index + match[0].length);
+  if (AMOUNT_REJECT_AFTER.test(afterMatch)) return null;
+
+  // Parse numeric value and reject amounts above the upper bound
+  const numeric = parseFloat(match[0].replace(/[^0-9.]/g, ''));
+  if (numeric > AMOUNT_MAX) return null;
+
+  return match[0];
 }
 
 function detectFrequency(normSubject, amount) {
@@ -65,7 +75,11 @@ export function extractSubscriptionSignals(message) {
   const negativeKeywords = findMatches(normSubject, NORM_NEGATIVE, NEGATIVE_KEYWORDS);
   const purchaseKeywords = findMatches(normSubject, NORM_PURCHASE, PURCHASE_KEYWORDS);
   const isBillingSender = checkBillingSender(email);
-  const amount = extractAmount(subject);
+  const rawAmount = extractAmount(subject);
+
+  // An isolated amount with no subscription context is not a subscription signal
+  const hasContext = strongKeywords.length > 0 || weakKeywords.length > 0 || isBillingSender;
+  const amount = hasContext ? rawAmount : null;
   const frequency = detectFrequency(normSubject, amount);
 
   return {
