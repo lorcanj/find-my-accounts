@@ -141,11 +141,38 @@ function normalise(str) {
 
 function createAccountListItem(account) {
   const li = document.createElement('li');
+  
+  const nameDiv = document.createElement('div');
+  nameDiv.className = 'col name';
+  
+  const diffDiv = document.createElement('div');
+  diffDiv.className = 'col difficulty';
+  
+  const actionDiv = document.createElement('div');
+  actionDiv.className = 'col action';
+
   if (account.justDeleteMeData !== NO_DATA_FOUND_MESSAGE) {
-    li.textContent = `${account.justDeleteMeData.name} (${account.justDeleteMeData.difficulty})`;
+    nameDiv.textContent = account.justDeleteMeData.name;
+    diffDiv.textContent = account.justDeleteMeData.difficulty;
+    
+    if (account.justDeleteMeData.url) {
+      const link = document.createElement('a');
+      link.href = account.justDeleteMeData.url;
+      link.textContent = 'Delete';
+      link.title = account.justDeleteMeData.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      actionDiv.appendChild(link);
+    }
   } else {
-    li.textContent = account.name;
+    nameDiv.textContent = account.name;
+    diffDiv.textContent = '-';
   }
+
+  li.appendChild(nameDiv);
+  li.appendChild(diffDiv);
+  li.appendChild(actionDiv);
+  
   return li;
 }
 
