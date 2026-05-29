@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "find my accounts",
+  "name": "Find My Accounts - Find & delete old accounts",
   "version": "1.1.1",
-  "description": "Scan uploaded .mbox files to discover accounts associated with your email",
+  "description": "Discover accounts and subscriptions hidden in your email. Get deletion links for each one. Nothing leaves your device.",
   "default_locale": "en",
   "browser_specific_settings": {
     "gecko": {
