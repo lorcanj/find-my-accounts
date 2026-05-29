@@ -4,7 +4,7 @@
     "esbuild": "^0.27.2",
     "jsdom": "^27.4.0",
     "vitest": "4.0.16",
-    "web-ext": "^9.3.0"
+    "web-ext": "^10.3.0"
   },
   "dependencies": {
     "email-addresses": "^3.1.0",
