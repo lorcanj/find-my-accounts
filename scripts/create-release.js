@@ -67,7 +67,7 @@ const extensionItems = [
   'src/assets',
   '_locales',
   'LICENCE',
-  'LICENSES'
+  'LICENCES'
 ];
 
 for (const item of extensionItems) {
@@ -88,7 +88,7 @@ const sourceItems = [
   'manifest.json',
   'README.md',
   'LICENCE',
-  'LICENSES',
+  'LICENCES',
   'src',
   '_locales',
   'test'
