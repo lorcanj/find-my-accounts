@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Find My Accounts - Find & delete old accounts",
+  "name": "find my accounts - Find & delete old accounts",
   "version": "1.1.2",
   "description": "Discover accounts and subscriptions hidden in your email. Get deletion links for each one. Nothing leaves your device.",
   "default_locale": "en",
