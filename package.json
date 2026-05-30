@@ -1,6 +1,8 @@
 {
+  "name": "find-my-accounts",
   "type": "module",
   "devDependencies": {
+    "archiver": "^6.0.2",
     "esbuild": "^0.27.2",
     "jsdom": "^27.4.0",
     "vitest": "4.0.16",
