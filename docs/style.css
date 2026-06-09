@@ -3,8 +3,7 @@
 :root {
   --green: #43eb34;
   --blue: #2b7cff;
-  --dark: #0f1117;
-  --text: #1a1a2e;
+--text: #1a1a2e;
   --muted: #5a5a72;
   --border: #e2e2ec;
   --surface: #f7f7fb;
@@ -96,14 +95,6 @@ code {
   border: 1.5px solid var(--blue);
 }
 
-.btn-ghost {
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.875rem;
-  padding: 0.4rem 0.8rem;
-}
-
-.btn-ghost:hover { color: var(--text); }
 
 /* ── Hero ── */
 
@@ -265,5 +256,4 @@ code {
 
 @media (max-width: 600px) {
   .hero { padding: 3.5rem 0 3rem; }
-  .privacy-inner { flex-direction: column; gap: 1rem; padding: 1.75rem; }
 }
