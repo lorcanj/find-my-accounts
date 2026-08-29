@@ -1,0 +1,10 @@
+{
+  "Amazon / Audible": ["Amazon", "Audible"],
+  "Apple Account / iTunes": ["Apple", "iCloud", "iTunes"],
+  "Atlassian / Bitbucket": ["Atlassian", "Bitbucket"],
+  "Battle.net / Blizzard": ["Battle.net", "Blizzard"],
+  "EA Games / Origin / Electronic Arts": ["EA Games", "Origin", "Electronic Arts", "EA"],
+  "OpenAI / ChatGPT": ["OpenAI", "ChatGPT"],
+  "Proton": ["ProtonMail"],
+  "X": ["Twitter"]
+}
