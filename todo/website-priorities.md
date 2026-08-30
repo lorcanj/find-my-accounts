@@ -1,23 +1,8 @@
-# SEO / AI-Discoverability — Priorities by ROI
+# Website — Priorities
 
 Distilled from an external audit (28 Aug 2026) of the public site, Chrome listing, and GitHub repo. Full audit not reproduced here — this is the actionable subset, ranked by effort vs. expected impact.
 
-## Tier 1 — do these (cheap, one-time, no downside)
-
-1. **Add GitHub repo metadata** — description, topics, website link. Currently all blank ("No description, website, or topics provided"). 5 minutes, pure omission.
-   - Description: `Privacy-first tool to find forgotten online accounts and subscriptions from an email MBOX archive. Everything runs locally in your browser.`
-   - Topics: `account-discovery`, `forgotten-accounts`, `email-privacy`, `digital-footprint`, `privacy`, `mbox`, `chrome-extension`
-   - Website: `https://lorcanj.github.io/find-my-accounts/`
-
-2. **Homepage hero copy tweak** — swap "Find every account linked to your email address" (implies completeness/guarantee) for language centered on "forgotten accounts" (matches actual search intent, and is more technically honest about what heuristic detection can promise). Small, contained edit to `docs/index.html`.
-
-3. **Ask for reviews at the right moment** — prompt in the popup after a successful scan completes, not on install. Currently near-zero Chrome Web Store reviews despite ~70+ users — this is a bigger trust gap than any copy issue.
-
 ## Tier 2 — worth doing, moderate effort
-
-4. **FAQ section on the homepage** — answer the honest-limitation questions directly (does it access Gmail? does it upload anything? can it find every account? what about accounts that never emailed you?). Cheap to write, doubles as content for the "forgotten accounts" query cluster, and pairs naturally with `FAQPage` schema.
-
-5. **Privacy callout as its own section/block** — "no account access / no upload / open source" is the strongest differentiator already in the copy; worth a dedicated visual block rather than one line in the hero.
 
 6. **One evergreen guide page** — "How to Find Your Forgotten Online Accounts" — genuinely useful on its own (multiple methods, not just the product), with the extension introduced as one method. Highest-leverage single piece of content per the audit, but real writing effort and something you'd want to keep accurate over time.
 
@@ -36,6 +21,14 @@ The one wrinkle: there's currently no shared nav, so a header/footer would need 
 - Localization
 
 Rationale: these are ongoing content-marketing commitments for a solo side project. No point building a funnel before Tier 1 confirms anyone's finding the site. Revisit once GitHub stars/traffic/reviews show organic movement.
+
+## Loose ends from the homepage copy pass (30 Aug 2026)
+
+Small, cheap fixes noticed while reworking `docs/index.html` — not urgent, but worth batching into a future pass.
+
+- **`og:image` is still a placeholder** (`docs/index.html` line ~13). No image means shared links (Slack, X, Discord, iMessage, etc.) show a plain text card with no preview, which hurts click-through. Needs a real 1200×630 image — either a product screenshot or a simple designed card with the logo + tagline — saved into `docs/` and wired up via `<meta property="og:image">`.
+- **No `robots.txt` or `sitemap.xml` in `docs/`** — not required for a one-page site, but cheap standard signals for crawlers if going for thoroughness.
+- **No `<link rel="canonical">` tag** — harmless to omit on a single-page site, one-line addition if being strict about it.
 
 ## Explicitly skip / de-prioritize indefinitely
 
