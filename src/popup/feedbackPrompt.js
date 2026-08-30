@@ -20,8 +20,9 @@ function readState() {
       snoozedUntil: typeof parsed.snoozedUntil === 'number' ? parsed.snoozedUntil : null,
     };
   } catch {
-    // Storage unavailable (private browsing, quota, etc) — fail closed, never show.
-    return { firstSeenAt: null, hasSuccessfulScan: false, dismissedForever: true, snoozedUntil: null };
+    // Storage unavailable or corrupted — treat as unseen rather than persisting
+    // a permanent dismissal; if storage stays broken, writeState() will no-op too.
+    return { firstSeenAt: null, hasSuccessfulScan: false, dismissedForever: false, snoozedUntil: null };
   }
 }
 

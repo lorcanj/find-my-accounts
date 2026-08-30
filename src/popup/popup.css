@@ -30,7 +30,9 @@
 .ack { font-size: 0.9rem; margin-top: 1em; }
 .feedback-banner {
     position: fixed;
-    top: 12px;
+    /* Header (16px body padding + ~30px h1 + 12px margin-bottom) is ~58px tall;
+       sit below it so the title and pop-out button stay visible/clickable. */
+    top: 60px;
     left: 16px;
     right: 16px;
     z-index: 20;

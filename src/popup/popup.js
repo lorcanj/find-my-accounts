@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
 
         recordSuccessfulScan();
-        const feedbackBanner = document.getElementById('feedbackBanner');
+        const feedbackBanner = document.getElementById(DOM_ID.FEEDBACK_BANNER);
         if (feedbackBanner && shouldShowPrompt()) {
           renderFeedbackBanner(feedbackBanner);
         }
