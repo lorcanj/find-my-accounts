@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeConfidenceFilters.add(level);
         btn.classList.add(CSS_CLASS.FILTER_BTN_ACTIVE);
       }
-      applyConfidenceFilter();
+      applyFilters();
     });
   }
 
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
   if (subToggle && SUBSCRIPTION_UI_ENABLED) {
     subToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
-    subToggle.addEventListener('change', applySubscriptionFilter);
+    subToggle.addEventListener('change', applyFilters);
   }
 
   // Bug report email (assembled at runtime to deter scrapers)
@@ -361,15 +361,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function applySubscriptionFilter() {
-  if (!SUBSCRIPTION_UI_ENABLED) return;
-  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+function applyFilters() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   if (!list) return;
-  const showSubsOnly = !!(subToggle && subToggle.checked);
+  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  const showSubsOnly = SUBSCRIPTION_UI_ENABLED && !!(subToggle && subToggle.checked);
   let visibleCount = 0;
   for (const li of list.children) {
-    const visible = !showSubsOnly || li.dataset.hasSubscription === 'true';
+    const conf = li.dataset.confidence;
+    const confidenceOk = !conf || activeConfidenceFilters.has(conf);
+    const subscriptionOk = !showSubsOnly || li.dataset.hasSubscription === 'true';
+    const visible = confidenceOk && subscriptionOk;
     li.style.display = visible ? '' : 'none';
     if (visible) visibleCount++;
   }
@@ -389,8 +391,7 @@ function rerenderAllAccounts(sortOrder) {
       existingKeys.get(key).li = li;
     }
   });
-  applyConfidenceFilter();
-  applySubscriptionFilter();
+  applyFilters();
 }
 
 function renderAccountList(accounts) {
@@ -404,8 +405,7 @@ function renderAccountList(accounts) {
       existingKeys.get(key).li = li;
     }
   });
-  applyConfidenceFilter();
-  applySubscriptionFilter();
+  applyFilters();
 }
 
 // Enrich accounts with justdeleteme data
@@ -531,19 +531,6 @@ function createSubscriptionBadge(subscription) {
   const statusLabel = subscription.status ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) : 'Active';
   badge.title = `Subscription · ${statusLabel}`;
   return badge;
-}
-
-function applyConfidenceFilter() {
-  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
-  if (!list) return;
-  let visibleCount = 0;
-  for (const li of list.children) {
-    const conf = li.dataset.confidence;
-    const visible = !conf || activeConfidenceFilters.has(conf);
-    li.style.display = visible ? '' : 'none';
-    if (visible) visibleCount++;
-  }
-  updateAccountCount(visibleCount);
 }
 
 function createConfidenceBadge(confidence) {
