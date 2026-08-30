@@ -7,6 +7,7 @@ import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID, SUBSCRIPTION_UI_ENABLED } from '../constants/ui.js';
 import { PLATFORM_BRAND_MAP } from '../constants/platformBrands.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
+import { recordFirstSeenIfNeeded, recordSuccessfulScan, shouldShowPrompt, renderFeedbackBanner } from './feedbackPrompt.js';
 
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
@@ -81,6 +82,8 @@ function renderInstructions() {
 document.addEventListener('DOMContentLoaded', () => {
   // Load i18n strings
   renderInstructions();
+
+  recordFirstSeenIfNeeded();
 
   // Check if we are in a popped-out window
   const urlParams = new URLSearchParams(window.location.search);
@@ -257,6 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
+
+        recordSuccessfulScan();
+        const feedbackBanner = document.getElementById('feedbackBanner');
+        if (feedbackBanner && shouldShowPrompt()) {
+          renderFeedbackBanner(feedbackBanner);
+        }
       } catch (err) {
         // Error (rejected) or cancellation
         resetProgressIndicator();
