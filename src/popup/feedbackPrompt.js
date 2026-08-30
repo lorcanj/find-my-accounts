@@ -85,7 +85,7 @@ function buildBanner(onDismiss) {
 
   const message = document.createElement('p');
   message.className = 'muted';
-  message.textContent = 'Enjoying find my accounts?';
+  message.textContent = 'Found find my accounts useful?';
   wrapper.appendChild(message);
 
   const reviewRow = document.createElement('div');
