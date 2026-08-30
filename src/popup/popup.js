@@ -469,7 +469,13 @@ function createAccountListItem(account) {
       link.addEventListener('click', (event) => {
         if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.tabs.create) return;
         event.preventDefault();
-        chrome.tabs.create({ url: link.href, active: false });
+        chrome.tabs.create({ url: link.href, active: false }, () => {
+          const err = chrome.runtime.lastError;
+          if (err) {
+            console.error('Failed to open tab:', err);
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+          }
+        });
       });
       actionDiv.appendChild(link);
     } else {
