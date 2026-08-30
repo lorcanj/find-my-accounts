@@ -466,6 +466,11 @@ function createAccountListItem(account) {
       link.title = account.justDeleteMeData.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
+      link.addEventListener('click', (event) => {
+        if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.tabs.create) return;
+        event.preventDefault();
+        chrome.tabs.create({ url: link.href, active: false });
+      });
       actionDiv.appendChild(link);
     } else {
       actionDiv.textContent = '-';
