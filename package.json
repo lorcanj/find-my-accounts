@@ -2,14 +2,14 @@
   "name": "find-my-accounts",
   "type": "module",
   "devDependencies": {
-    "archiver": "^7.0.1",
-    "esbuild": "^0.28.2",
-    "jsdom": "^29.1.1",
-    "vitest": "4.1.11",
+    "archiver": "^6.0.2",
+    "esbuild": "^0.27.2",
+    "jsdom": "^27.4.0",
+    "vitest": "4.0.16",
     "web-ext": "^10.3.0"
   },
   "dependencies": {
-    "email-addresses": "^5.0.0",
+    "email-addresses": "^3.1.0",
     "emailjs-mime-parser": "^2.0.7",
     "tldts": "^7.0.19"
   },
@@ -20,7 +20,6 @@
     "bundle:emailjs": "esbuild node_modules/emailjs-mime-parser/src/mimeparser.js --bundle --outfile=src/vendors/emailjs-mime-parser.bundle.js --platform=browser --format=esm --alias:ramda=./src/vendors/ramda-shim.js",
     "build:watch": "esbuild mboxParser.worker=src/scanners/mbox/mboxParser.worker.js popup=src/popup/popup.js --bundle --outdir=dist --platform=browser --format=esm --watch",
     "release": "npm run build && node scripts/create-release.js",
-    "update-jdm-data": "node scripts/buildJustDeleteMeData.mjs",
     "start": "web-ext run",
     "bench": "esbuild scripts/perf.js --bundle --platform=node --format=esm --outfile=dist/perf.bundle.js && node dist/perf.bundle.js"
   }

@@ -50,4 +50,5 @@ export const DOM_ID = Object.freeze({
   SORT_SELECT:        'sortSelect',
   CONFIDENCE_FILTER:  'confidenceFilter',
   SHOW_SUBSCRIPTIONS: 'showSubscriptions',
+  FEEDBACK_BANNER:    'feedbackBanner',
 });

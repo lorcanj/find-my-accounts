@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>find my accounts — find forgotten accounts and subscriptions from your email</title>
-  <meta name="description" content="Scan your email archive to find forgotten accounts and subscriptions you've signed up for. Get direct deletion links for each one. Everything runs locally in your browser, and your file is never sent anywhere.">
+  <title>find my accounts — find every account linked to your email address</title>
+  <meta name="description" content="Scan your email archive to find every account and subscription you've signed up for. Get direct deletion links for each one. Everything runs in your browser — nothing is uploaded.">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://lorcanj.github.io/find-my-accounts/">
-  <meta property="og:title" content="find my accounts — find forgotten accounts and subscriptions from your email">
-  <meta property="og:description" content="Scan your email archive to find forgotten accounts and subscriptions you've signed up for. Get direct deletion links for each one. Everything runs locally in your browser, and your file is never sent anywhere.">
+  <meta property="og:title" content="find my accounts — find every account linked to your email address">
+  <meta property="og:description" content="Scan your email archive to find every account and subscription you've signed up for. Get direct deletion links for each one. Everything runs in your browser — nothing is uploaded.">
   <!-- og:image — add a 1200×630 screenshot here when ready -->
 
   <!-- Structured data -->
@@ -18,7 +18,7 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "find my accounts",
-    "description": "Discover forgotten accounts and subscriptions hidden in your email. Get deletion links for each one. Nothing leaves your device.",
+    "description": "Discover accounts and subscriptions hidden in your email. Get deletion links for each one. Nothing leaves your device.",
     "url": "https://lorcanj.github.io/find-my-accounts/",
     "operatingSystem": "Chrome",
     "applicationCategory": "BrowserApplication",
@@ -29,97 +29,6 @@
     }
   }
   </script>
-
-  <!-- FAQ START -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Does this access my email account?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. It never connects to any email account, Gmail or otherwise. You export an .mbox file yourself (via Google Takeout, Thunderbird, Apple Mail, etc.) and upload that file directly."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Is any of my data uploaded anywhere?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. Parsing happens entirely in your browser via a Web Worker. Nothing leaves your machine: no server, no analytics, no tracking."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What permissions does the extension need?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "None. The manifest requests zero browser permissions; everything runs off an explicit file pick."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can it find every account I've ever created?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No tool can guarantee that. It finds accounts it can detect from patterns in your email archive (welcome emails, receipts, password resets, and more). It won't catch accounts that never emailed you or where those emails were deleted."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does it read the body of my emails?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. Detection only looks at email headers, such as the sender address, display name, and subject line. Email bodies aren't analysed."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What about accounts that never emailed me?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Those won't show up. Detection is entirely email-based, so if a service never sent you a confirmation, receipt, or notification, there's no trace to find."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Which email providers does it work with?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Any provider you can export as a standard .mbox file from, including Gmail (via Google Takeout), Thunderbird, Apple Mail, and Proton Mail."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What if my provider isn't listed?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Direct .mbox export is only built into a few providers, such as Gmail (via Google Takeout) and Proton Mail. For others, such as Outlook.com or Yahoo, connect the account via IMAP to a desktop client like Thunderbird and export the folder from there as .mbox."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How long does scanning take?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "It depends on archive size. The streaming parser handles multi-GB files without freezing the browser, but very large archives will take longer than a quick scan."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What do I do once it finds an account?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Each result links to a deletion page (via the JustDeleteMe dataset) with a difficulty rating, so you can go straight to cancelling or deleting it."
-        }
-      }
-    ]
-  }
-  </script>
-  <!-- FAQ END -->
 
   <meta name="google-site-verification" content="zNZ2-KrZsv_xw1E2qfRxl8ALM6-554Y7JxGAG6hantw">
   <link rel="stylesheet" href="style.css">
@@ -148,8 +57,8 @@
 
     <section class="hero">
       <div class="container hero-inner">
-        <h1>Find forgotten accounts and subscriptions linked to your email</h1>
-        <p class="hero-sub">Scan your email archive to find old signups and subscriptions you'd otherwise forget to cancel, then get direct links to delete each one. Everything happens locally in your browser; your file is never sent anywhere.</p>
+        <h1>Find every account linked to your email address.</h1>
+        <p class="hero-sub">Scan your email archive to see every service and subscription you've signed up for — then get direct links to delete each one. Runs entirely in your browser. Nothing is uploaded.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="https://chromewebstore.google.com/detail/find-my-accounts-find-del/apeccjnoepacandnpapofclblfkokiif" target="_blank" rel="noopener">Download extension</a>
           <a class="btn btn-outline" href="https://github.com/lorcanj/find-my-accounts" target="_blank" rel="noopener">View source</a>
@@ -173,14 +82,14 @@
             <span class="step-num">2</span>
             <div>
               <strong>Upload the file</strong>
-              <p>Open the extension and pick your <code>.mbox</code> file. The scan runs entirely inside your browser, with no server involved.</p>
+              <p>Open the extension and pick your <code>.mbox</code> file. The scan runs entirely inside your browser — no server involved.</p>
             </div>
           </li>
           <li class="step">
             <span class="step-num">3</span>
             <div>
               <strong>Discover &amp; delete</strong>
-              <p>See every account found, with difficulty ratings and direct links to deletion pages, powered by the <a href="https://justdeleteme.xyz" target="_blank" rel="noopener">JustDeleteMe</a> dataset.</p>
+              <p>See every account found, with difficulty ratings and direct links to deletion pages — powered by the <a href="https://justdeleteme.xyz" target="_blank" rel="noopener">JustDeleteMe</a> dataset.</p>
             </div>
           </li>
         </ol>
@@ -189,21 +98,8 @@
 
     <section class="privacy">
       <div class="container privacy-inner">
-        <p class="privacy-statement">Everything runs locally in your browser.<br>Your data never leaves your device.</p>
-        <ul class="privacy-grid">
-          <li>
-            <strong>No permissions</strong>
-            <p>The extension requests zero browser permissions. It only ever touches the file you explicitly choose to open.</p>
-          </li>
-          <li>
-            <strong>No tracking</strong>
-            <p>No analytics, no telemetry, no external requests of any kind. There's nothing to send and nowhere for it to go.</p>
-          </li>
-          <li>
-            <strong>Open source</strong>
-            <p>The full source code is public on GitHub, so you can verify these privacy claims yourself.</p>
-          </li>
-        </ul>
+        <p class="privacy-statement">Everything runs in your browser.<br>Nothing is ever uploaded.</p>
+        <p class="privacy-badges">No permissions &nbsp;·&nbsp; No tracking &nbsp;·&nbsp; Open source</p>
       </div>
     </section>
 
@@ -212,16 +108,16 @@
         <h2>What you get</h2>
         <ul class="feature-grid">
           <li>
-            <strong>Finds what you've forgotten</strong>
-            <p>Picks up accounts from registration emails, billing receipts, password resets, and more.</p>
+            <strong>Complete picture</strong>
+            <p>Finds accounts from registration emails, billing receipts, password resets, and more.</p>
           </li>
           <li>
             <strong>Deletion links built in</strong>
-            <p>Matched against the JustDeleteMe directory, showing an easy, medium, or hard difficulty rating for each service.</p>
+            <p>Matched against the JustDeleteMe directory — easy, medium, or hard difficulty shown for each service.</p>
           </li>
           <li>
             <strong>Export your results</strong>
-            <p>Download a full CSV of every account found to use however you like.</p>
+            <p>Download a full CSV or JSON of every account found to use however you like.</p>
           </li>
           <li>
             <strong>Works on large archives</strong>
@@ -231,56 +127,6 @@
       </div>
     </section>
 
-    <!-- FAQ START -->
-    <section class="faq">
-      <div class="container">
-        <h2>FAQ</h2>
-        <dl class="faq-list">
-          <div class="faq-item">
-            <dt>Does this access my email account?</dt>
-            <dd>No. It never connects to any email account, Gmail or otherwise. You export an <code>.mbox</code> file yourself (via Google Takeout, Thunderbird, Apple Mail, etc.) and upload that file directly.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>Is any of my data uploaded anywhere?</dt>
-            <dd>No. Parsing happens entirely in your browser via a Web Worker. Nothing leaves your machine: no server, no analytics, no tracking.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>What permissions does the extension need?</dt>
-            <dd>None. The manifest requests zero browser permissions; everything runs off an explicit file pick.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>Can it find every account I've ever created?</dt>
-            <dd>No tool can guarantee that. It finds accounts it can detect from patterns in your email archive (welcome emails, receipts, password resets, and more). It won't catch accounts that never emailed you or where those emails were deleted.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>Does it read the body of my emails?</dt>
-            <dd>No. Detection only looks at email headers, such as the sender address, display name, and subject line. Email bodies aren't analysed.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>What about accounts that never emailed me?</dt>
-            <dd>Those won't show up. Detection is entirely email-based, so if a service never sent you a confirmation, receipt, or notification, there's no trace to find.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>Which email providers does it work with?</dt>
-            <dd>Any provider you can export as a standard <code>.mbox</code> file from, including Gmail (via Google Takeout), Thunderbird, Apple Mail, and Proton Mail.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>What if my provider isn't listed?</dt>
-            <dd>Direct <code>.mbox</code> export is only built into a few providers, such as Gmail (via Google Takeout) and Proton Mail. For others, such as Outlook.com or Yahoo, connect the account via IMAP to a desktop client like Thunderbird and export the folder from there as <code>.mbox</code>.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>How long does scanning take?</dt>
-            <dd>It depends on archive size. The streaming parser handles multi-GB files without freezing the browser, but very large archives will take longer than a quick scan.</dd>
-          </div>
-          <div class="faq-item">
-            <dt>What do I do once it finds an account?</dt>
-            <dd>Each result links to a deletion page (via the JustDeleteMe dataset) with a difficulty rating, so you can go straight to cancelling or deleting it.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-    <!-- FAQ END -->
-
   </main>
 
   <footer class="site-footer">
@@ -289,8 +135,6 @@
         <a href="https://github.com/lorcanj/find-my-accounts" target="_blank" rel="noopener">GitHub</a>
         &nbsp;·&nbsp;
         <a href="https://github.com/lorcanj/find-my-accounts/issues" target="_blank" rel="noopener">Report an issue</a>
-        &nbsp;·&nbsp;
-        <a href="https://chromewebstore.google.com/detail/find-my-accounts-find-del/apeccjnoepacandnpapofclblfkokiif/reviews" target="_blank" rel="noopener">Leave a review</a>
         &nbsp;·&nbsp;
         Account deletion data by <a href="https://justdeleteme.xyz" target="_blank" rel="noopener">JustDeleteMe</a>
       </p>

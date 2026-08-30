@@ -7,6 +7,7 @@ import { importMboxFile, cancelMboxImport } from '../services/mboxImportService.
 import { IMPORT_UI_STATE, UI_TEXT, CSS_CLASS, DOM_ID, SUBSCRIPTION_UI_ENABLED } from '../constants/ui.js';
 import { PLATFORM_BRAND_MAP } from '../constants/platformBrands.js';
 import { sortAccounts, formatEmailDate } from './sortUtils.js';
+import { recordFirstSeenIfNeeded, recordSuccessfulScan, shouldShowPrompt, renderFeedbackBanner } from './feedbackPrompt.js';
 
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
@@ -81,6 +82,8 @@ function renderInstructions() {
 document.addEventListener('DOMContentLoaded', () => {
   // Load i18n strings
   renderInstructions();
+
+  recordFirstSeenIfNeeded();
 
   // Check if we are in a popped-out window
   const urlParams = new URLSearchParams(window.location.search);
@@ -257,6 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resetProgressIndicator();
         if (selectedFileInfo) selectedFileInfo.textContent = 'Import complete.';
         setImportUiState(IMPORT_UI_STATE.IDLE, { hasValidFile: currentMboxFileValid });
+
+        recordSuccessfulScan();
+        const feedbackBanner = document.getElementById(DOM_ID.FEEDBACK_BANNER);
+        if (feedbackBanner && shouldShowPrompt()) {
+          renderFeedbackBanner(feedbackBanner);
+        }
       } catch (err) {
         // Error (rejected) or cancellation
         resetProgressIndicator();
@@ -466,17 +475,6 @@ function createAccountListItem(account) {
       link.title = account.justDeleteMeData.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
-      link.addEventListener('click', (event) => {
-        if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.tabs.create) return;
-        event.preventDefault();
-        chrome.tabs.create({ url: link.href, active: false }, () => {
-          const err = chrome.runtime.lastError;
-          if (err) {
-            console.error('Failed to open tab:', err);
-            window.open(link.href, '_blank', 'noopener,noreferrer');
-          }
-        });
-      });
       actionDiv.appendChild(link);
     } else {
       actionDiv.textContent = '-';

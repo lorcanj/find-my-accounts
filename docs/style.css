@@ -201,25 +201,11 @@ code {
   margin-bottom: 1.25rem;
 }
 
-.privacy-grid {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  max-width: 780px;
-  margin: 0 auto;
-  text-align: left;
+.privacy-badges {
+  font-size: 0.875rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
 }
-
-.privacy-grid li {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-}
-
-.privacy-grid strong { display: block; margin-bottom: 0.4rem; font-size: 0.975rem; }
-.privacy-grid p { color: var(--muted); font-size: 0.875rem; }
 
 /* ── Features ── */
 
@@ -252,39 +238,6 @@ code {
 
 .feature-grid strong { display: block; margin-bottom: 0.4rem; font-size: 0.975rem; }
 .feature-grid p { color: var(--muted); font-size: 0.9rem; }
-
-/* ── FAQ ── */
-
-.faq {
-  padding: 4rem 0;
-}
-
-.faq h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.faq-list {
-  max-width: 640px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.faq-item dt {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 0.4rem;
-}
-
-.faq-item dd {
-  color: var(--muted);
-  font-size: 0.95rem;
-  margin-left: 0;
-}
 
 /* ── Footer ── */
 
