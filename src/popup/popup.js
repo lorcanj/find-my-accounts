@@ -490,6 +490,21 @@ function createAccountListItem(account) {
       link.title = account.justDeleteMeData.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
+      // Opening a link normally (or via a plain target="_blank" navigation) shifts
+      // focus to the new tab, which makes the browser auto-close this popup —
+      // losing the whole scanned list. Opening the tab in the background keeps
+      // focus here so the popup stays open while the user works through the list.
+      link.addEventListener('click', (event) => {
+        if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.tabs.create) return;
+        event.preventDefault();
+        chrome.tabs.create({ url: link.href, active: false }, () => {
+          const err = chrome.runtime.lastError;
+          if (err) {
+            console.error('Failed to open tab:', err);
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+          }
+        });
+      });
       actionDiv.appendChild(link);
     } else {
       actionDiv.textContent = '-';

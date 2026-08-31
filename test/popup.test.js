@@ -103,7 +103,11 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     mockState.importMboxFileMock = importMboxFileMock;
     mockState.cancelMboxImportMock = cancelMboxImportMock;
     mockState.extractAccountsMock = extractAccountsMock;
-    mockState.domainLookup = {};
+    // Mutate in place rather than reassign: the mocked buildDomainLookup.js module
+    // binds `domainLookup` to whichever object mockState.domainLookup pointed to
+    // the first time the mock factory ran, so a later reassignment here wouldn't
+    // be visible to already-imported instances of popup.js.
+    for (const key of Object.keys(mockState.domainLookup)) delete mockState.domainLookup[key];
 
     // Mock chrome API
     global.chrome = {
@@ -115,6 +119,11 @@ describe('popup.js - accountsForDownload reset behavior', () => {
         lastError: null
       },
       windows: {
+        create: vi.fn((options, callback) => {
+          if (callback) callback();
+        })
+      },
+      tabs: {
         create: vi.fn((options, callback) => {
           if (callback) callback();
         })
@@ -521,5 +530,65 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     expect(getLiByName('A').style.display).not.toBe('none'); // passes both filters
     expect(getLiByName('B').style.display).toBe('none'); // has subscription, but confidence excluded
     expect(getLiByName('C').style.display).toBe('none'); // high confidence, but no subscription
+  });
+
+  describe('Delete link', () => {
+    async function renderWithDeletableAccount() {
+      Object.assign(mockState.domainLookup, {
+        testservice: { name: 'TestService', url: 'https://example.com/delete', difficulty: 'easy' }
+      });
+
+      extractAccountsMock.mockReturnValueOnce([
+        { canonicalKey: 'k1', email: 'a@testservice.com', from: 'TestService', name: 'TestService' }
+      ]);
+
+      importMboxFileMock.mockImplementation(async (file, onProgress, onBatch) => {
+        onProgress(100);
+        onBatch([{ canonicalKey: 'msg' }]);
+        return Promise.resolve();
+      });
+
+      await import('../src/popup/popup.js');
+      document.dispatchEvent(new window.Event('DOMContentLoaded'));
+
+      const fileInput = document.getElementById('mboxFileInput');
+      const startScanBtn = document.getElementById('startScanBtn');
+      const file = new window.File(['mbox'], 'test.mbox', { type: 'application/mbox' });
+      setInputFiles(fileInput, [file]);
+      await startScanBtn.click();
+
+      await vi.waitFor(() => {
+        expect(document.getElementById('accountCount').textContent).toBe('1');
+      });
+
+      const link = document.querySelector('.action a');
+      expect(link).not.toBeNull();
+      return link;
+    }
+
+    it('opens the deletion page in a background tab instead of navigating the popup away', async () => {
+      const link = await renderWithDeletableAccount();
+
+      link.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+      expect(global.chrome.tabs.create).toHaveBeenCalledWith(
+        { url: 'https://example.com/delete', active: false },
+        expect.any(Function)
+      );
+    });
+
+    it('falls back to window.open if chrome.tabs.create errors', async () => {
+      global.chrome.tabs.create = vi.fn((options, callback) => {
+        global.chrome.runtime.lastError = { message: 'boom' };
+        callback();
+        global.chrome.runtime.lastError = null;
+      });
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => {});
+
+      const link = await renderWithDeletableAccount();
+      link.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+      expect(openSpy).toHaveBeenCalledWith('https://example.com/delete', '_blank', 'noopener,noreferrer');
+    });
   });
 });
