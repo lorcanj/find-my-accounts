@@ -75,6 +75,11 @@ describe('popup.js - accountsForDownload reset behavior', () => {
           <ul id="accountList"></ul>
           <span id="accountCount">0</span>
           <button id="downloadAccounts">Download</button>
+          <div id="confidenceFilter">
+            <button class="filter-btn active" data-confidence="high">High</button>
+            <button class="filter-btn active" data-confidence="medium">Medium</button>
+            <button class="filter-btn active" data-confidence="low">Low</button>
+          </div>
           <input type="checkbox" id="showSubscriptions" checked />
         </body>
       </html>
@@ -458,8 +463,59 @@ describe('popup.js - accountsForDownload reset behavior', () => {
 
     // Simulate a programmatic change to ensure it doesn't disrupt the state (even though input is disabled)
     setInputFiles(fileInput, [validFile]);
-    
+
     expect(startScanBtn.textContent).toBe('Cancel scan');
     expect(fileInput.disabled).toBe(true);
+  });
+
+  it('ANDs the confidence filter and subscription filter instead of one clobbering the other', async () => {
+    const accounts = [
+      // High confidence, has a subscription: should stay visible under both filters.
+      { canonicalKey: 'k-high-sub', email: 'a@example.com', from: 'A', name: 'A', confidence: 'high', subscription: { status: 'active' } },
+      // Medium confidence, has a subscription: subscription filter alone would show it,
+      // but the confidence filter should still hide it once medium is deselected.
+      { canonicalKey: 'k-medium-sub', email: 'b@example.com', from: 'B', name: 'B', confidence: 'medium', subscription: { status: 'active' } },
+      // High confidence, no subscription: confidence filter alone would show it,
+      // but the subscription filter should still hide it.
+      { canonicalKey: 'k-high-nosub', email: 'c@example.com', from: 'C', name: 'C', confidence: 'high' },
+    ];
+
+    extractAccountsMock.mockReturnValueOnce(accounts);
+
+    importMboxFileMock.mockImplementation(async (file, onProgress, onBatch) => {
+      onProgress(100);
+      onBatch([{ canonicalKey: 'msg' }]);
+      return Promise.resolve();
+    });
+
+    await import('../src/popup/popup.js');
+    document.dispatchEvent(new window.Event('DOMContentLoaded'));
+
+    const fileInput = document.getElementById('mboxFileInput');
+    const startScanBtn = document.getElementById('startScanBtn');
+    const file = new window.File(['mbox'], 'test.mbox', { type: 'application/mbox' });
+    setInputFiles(fileInput, [file]);
+    await startScanBtn.click();
+
+    await vi.waitFor(() => {
+      expect(document.getElementById('accountCount').textContent).toBe('3');
+    });
+
+    const getLiByName = (name) => Array.from(document.querySelectorAll('#accountList li'))
+      .find((li) => li.querySelector('.name span')?.textContent === name);
+
+    // showSubscriptions starts checked, so only accounts with a subscription pass.
+    expect(getLiByName('A').style.display).not.toBe('none'); // high confidence, has subscription
+    expect(getLiByName('B').style.display).not.toBe('none'); // medium confidence, has subscription
+    expect(getLiByName('C').style.display).toBe('none'); // high confidence, no subscription
+
+    // Deselect the "medium" confidence filter while the subscription filter stays active.
+    const mediumBtn = document.querySelector('#confidenceFilter [data-confidence="medium"]');
+    mediumBtn.click();
+
+    // Both filters must now apply together: neither one should clobber the other's result.
+    expect(getLiByName('A').style.display).not.toBe('none'); // passes both filters
+    expect(getLiByName('B').style.display).toBe('none'); // has subscription, but confidence excluded
+    expect(getLiByName('C').style.display).toBe('none'); // high confidence, but no subscription
   });
 });
