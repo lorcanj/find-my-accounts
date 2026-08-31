@@ -105,17 +105,15 @@ function processMessage(part) {
   if (!part || !part.trim()) return;
 
   try {
+    // Strip the mbox envelope line ("From <addr> ...") before handing to the MIME parser
+    const mimeMessage = part.replace(/^From .*?(?:\r?\n)+/, '');
+
     if (!parseFn) {
       throw new Error('emailjs-mime-parser.parse not found');
     }
 
-    // Extract the header slice first so the envelope-line strip below only
-    // touches a bounded amount of text, not the full message body/attachments.
-    const headerBlockWithEnvelope = extractHeaderBlock(part);
-
-    // Strip the mbox envelope line ("From <addr> ...") before handing to the MIME parser
-    const headerOnlyMessage = headerBlockWithEnvelope.replace(/^From .*?(?:\r?\n)+/, '');
-
+    // Parse only headers to avoid parsing large bodies/attachments.
+    const headerOnlyMessage = extractHeaderBlock(mimeMessage);
     const parsed = parseFn(headerOnlyMessage);
 
     // Use the structured headers produced by the parser when available

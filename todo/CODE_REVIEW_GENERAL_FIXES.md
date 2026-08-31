@@ -4,7 +4,9 @@ Review of the commits on `feature/general-fixes` (vs `main`). Ranked by priority
 
 ## High priority (bugs)
 
-### 1. Header extraction reorder can silently drop a message's real headers
+### 1. Header extraction reorder can silently drop a message's real headers — RESOLVED (reverted)
+Reverted commit 58890d7's reorder in [mboxParser.worker.js](../src/scanners/mbox/mboxParser.worker.js) back to strip-then-extract, since that's edge-case-safe and the perf win wasn't worth the risk for today's release. The perf idea can be revisited later with a proper fix (see suggestion below) instead of shipping the bug.
+
 `processMessage()` in [mboxParser.worker.js](../src/scanners/mbox/mboxParser.worker.js) was reordered (commit 58890d7) to call `extractHeaderBlock()` *before* stripping the `From ...` envelope line, so the envelope-strip regex only touches the small header slice instead of the whole message body. This fixed the wasted-copy issue from item 5 in `CODE_REVIEW_AUG2026.md`, but introduces a new edge case.
 
 If a chunk is shaped like `From sender@x.com Mon Jan 1 00:00:00 2024\r\n\r\n<real headers/body>` — i.e. a blank line immediately follows the envelope line (possible with a malformed/corrupted entry in a real-world mbox export) — `extractHeaderBlock()` stops at that first blank line and returns just the envelope line as "the header block." Stripping the envelope regex from that tiny slice then leaves an empty string, so `parseFn('')` parses nothing: Subject/From/Date all come back empty and the message is silently dropped from account detection.
