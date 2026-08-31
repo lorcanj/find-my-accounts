@@ -80,7 +80,7 @@ describe('popup.js - accountsForDownload reset behavior', () => {
             <button class="filter-btn active" data-confidence="medium">Medium</button>
             <button class="filter-btn active" data-confidence="low">Low</button>
           </div>
-          <input type="checkbox" id="showSubscriptions" checked />
+          <input type="checkbox" id="showSubscriptions" />
         </body>
       </html>
     `, { url: 'http://localhost' });
@@ -504,7 +504,11 @@ describe('popup.js - accountsForDownload reset behavior', () => {
     const getLiByName = (name) => Array.from(document.querySelectorAll('#accountList li'))
       .find((li) => li.querySelector('.name span')?.textContent === name);
 
-    // showSubscriptions starts checked, so only accounts with a subscription pass.
+    // Turn on "show subscriptions only" — only accounts with a subscription should pass.
+    const subToggle = document.getElementById('showSubscriptions');
+    subToggle.checked = true;
+    subToggle.dispatchEvent(new window.Event('change'));
+
     expect(getLiByName('A').style.display).not.toBe('none'); // high confidence, has subscription
     expect(getLiByName('B').style.display).not.toBe('none'); // medium confidence, has subscription
     expect(getLiByName('C').style.display).toBe('none'); // high confidence, no subscription

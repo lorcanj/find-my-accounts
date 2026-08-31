@@ -12,6 +12,7 @@ import { recordFirstSeenIfNeeded, recordSuccessfulScan, shouldShowPrompt, render
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
 const activeConfidenceFilters = new Set(['high', 'medium', 'low']);
+let visibleAccountCount = 0;
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -216,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
+      visibleAccountCount = 0;
       document.getElementById(DOM_ID.ACCOUNT_LIST).innerHTML = ''; // Clear previous results
 
       try {
@@ -240,7 +242,6 @@ document.addEventListener('DOMContentLoaded', () => {
               
               accountsForDownload.push(...newUnique);
               renderAccountList(newUnique);
-              updateAccountCount(accountsForDownload.length);
             }
           }
         );
@@ -361,21 +362,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Shared visibility check used both by the full re-filter (applyFilters) and by
+// the incremental per-row checks during streaming (renderAccountList, deduplicateAccounts).
+function isAccountVisible(li) {
+  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  const showSubsOnly = SUBSCRIPTION_UI_ENABLED && !!(subToggle && subToggle.checked);
+  const conf = li.dataset.confidence;
+  const confidenceOk = !conf || activeConfidenceFilters.has(conf);
+  const subscriptionOk = !showSubsOnly || li.dataset.hasSubscription === 'true';
+  return confidenceOk && subscriptionOk;
+}
+
+// Full re-filter of every rendered row. Used when the filters themselves change
+// (filter button click, subscription toggle) or the list is fully rebuilt (sort).
 function applyFilters() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   if (!list) return;
-  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
-  const showSubsOnly = SUBSCRIPTION_UI_ENABLED && !!(subToggle && subToggle.checked);
   let visibleCount = 0;
   for (const li of list.children) {
-    const conf = li.dataset.confidence;
-    const confidenceOk = !conf || activeConfidenceFilters.has(conf);
-    const subscriptionOk = !showSubsOnly || li.dataset.hasSubscription === 'true';
-    const visible = confidenceOk && subscriptionOk;
+    const visible = isAccountVisible(li);
     li.style.display = visible ? '' : 'none';
     if (visible) visibleCount++;
   }
-  updateAccountCount(visibleCount);
+  visibleAccountCount = visibleCount;
+  updateAccountCount(visibleAccountCount);
 }
 
 
@@ -404,8 +414,13 @@ function renderAccountList(accounts) {
     if (key && existingKeys.has(key)) {
       existingKeys.get(key).li = li;
     }
+    // Only filter-check the newly appended row — during streaming, re-checking
+    // every previously rendered row on each batch is wasted work.
+    const visible = isAccountVisible(li);
+    li.style.display = visible ? '' : 'none';
+    if (visible) visibleAccountCount++;
   });
-  applyFilters();
+  updateAccountCount(visibleAccountCount);
 }
 
 // Enrich accounts with justdeleteme data
@@ -620,6 +635,15 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
         if (confCell) {
           confCell.innerHTML = '';
           confCell.appendChild(createConfidenceBadge(newConf));
+        }
+
+        // The confidence change may flip this row's filter visibility, so
+        // re-check just this row rather than re-filtering the whole list.
+        const wasVisible = entry.li.style.display !== 'none';
+        const nowVisible = isAccountVisible(entry.li);
+        if (wasVisible !== nowVisible) {
+          entry.li.style.display = nowVisible ? '' : 'none';
+          visibleAccountCount += nowVisible ? 1 : -1;
         }
       }
     }
