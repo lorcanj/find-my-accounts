@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toIsoDate, normaliseText } from '../../../src/scanners/normalisers/utils.js';
+import { toIsoDate, normaliseText, normaliseForLookup } from '../../../src/scanners/normalisers/utils.js';
 
 describe('toIsoDate', () => {
   it('returns ISO string for a valid date string', () => {
@@ -86,5 +86,47 @@ describe('normaliseText', () => {
     expect(normaliseText('')).toBe('');
     expect(normaliseText(null)).toBe('');
     expect(normaliseText(undefined)).toBe('');
+  });
+});
+
+describe('normaliseForLookup', () => {
+  it('lowercases and strips whitespace/punctuation', () => {
+    expect(normaliseForLookup('Hello, World!')).toBe('helloworld');
+  });
+
+  it('strips underscores', () => {
+    expect(normaliseForLookup('hello_world')).toBe('helloworld');
+  });
+
+  // Regression: \W is ASCII-only, so every character in a non-Latin name
+  // used to match \W and get stripped, collapsing the whole string to ''.
+  // A '' key then collided with other services that also normalised to ''
+  // in the lookup table, causing the wrong service to render.
+  it('does not collapse Cyrillic names to an empty string', () => {
+    const result = normaliseForLookup('Мій Клас');
+    expect(result).not.toBe('');
+    expect(result).toBe('мійклас');
+  });
+
+  it('does not collapse CJK names to an empty string', () => {
+    const result = normaliseForLookup('楽天市場');
+    expect(result).not.toBe('');
+    expect(result).toBe('楽天市場');
+  });
+
+  it('does not collapse Arabic names to an empty string', () => {
+    const result = normaliseForLookup('مرحبا بك');
+    expect(result).not.toBe('');
+    expect(result).toBe('مرحبابك');
+  });
+
+  it('preserves mixed Latin and non-Latin characters', () => {
+    expect(normaliseForLookup('Hello 你好!')).toBe('hello你好');
+  });
+
+  it('gives distinct keys for distinct non-Latin names (no false collisions)', () => {
+    const a = normaliseForLookup('Мій Клас');
+    const b = normaliseForLookup('Яндекс Почта');
+    expect(a).not.toBe(b);
   });
 });

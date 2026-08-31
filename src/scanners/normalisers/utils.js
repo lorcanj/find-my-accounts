@@ -51,7 +51,7 @@ export function normaliseEmail(email) {
 // Shared lookup normalisation: locale-safe lowercase + strip non-alphanumeric.
 // Used by buildDomainLookup and popup.js for name-based matching.
 export function normaliseForLookup(str) {
-  return str.toLocaleLowerCase('en').replace(/[\s\W_]+/g, '');
+  return str.toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu, '');
 }
 
 export function normaliseText(text) {

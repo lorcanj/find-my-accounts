@@ -12,6 +12,7 @@ import { recordFirstSeenIfNeeded, recordSuccessfulScan, shouldShowPrompt, render
 let accountsForDownload = [];
 const existingKeys = new Map(); // canonicalKey → { account, li }
 const activeConfidenceFilters = new Set(['high', 'medium', 'low']);
+let visibleAccountCount = 0;
 // Cached DOM elements (assigned in DOMContentLoaded)
 let mboxInput;
 let selectedFileInfo;
@@ -19,6 +20,7 @@ let startScanBtn;
 let progress;
 let progressBar;
 let downloadButton;
+let showSubscriptionsToggle;
 let importUiState = IMPORT_UI_STATE.IDLE;
 
 const INSTRUCTION_LINKS = [
@@ -216,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFileInfo) selectedFileInfo.textContent = `Reading ${file.name}...`;
       accountsForDownload = [];
       existingKeys.clear();
+      visibleAccountCount = 0;
       document.getElementById(DOM_ID.ACCOUNT_LIST).innerHTML = ''; // Clear previous results
 
       try {
@@ -240,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
               
               accountsForDownload.push(...newUnique);
               renderAccountList(newUnique);
-              updateAccountCount(accountsForDownload.length);
             }
           }
         );
@@ -324,15 +326,15 @@ document.addEventListener('DOMContentLoaded', () => {
         activeConfidenceFilters.add(level);
         btn.classList.add(CSS_CLASS.FILTER_BTN_ACTIVE);
       }
-      applyConfidenceFilter();
+      applyFilters();
     });
   }
 
   // Subscription filter toggle
-  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
-  if (subToggle && SUBSCRIPTION_UI_ENABLED) {
-    subToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
-    subToggle.addEventListener('change', applySubscriptionFilter);
+  showSubscriptionsToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  if (showSubscriptionsToggle && SUBSCRIPTION_UI_ENABLED) {
+    showSubscriptionsToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
+    showSubscriptionsToggle.addEventListener('change', applyFilters);
   }
 
   // Bug report email (assembled at runtime to deter scrapers)
@@ -361,19 +363,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function applySubscriptionFilter() {
-  if (!SUBSCRIPTION_UI_ENABLED) return;
-  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+// Shared visibility check used both by the full re-filter (applyFilters) and by
+// the incremental per-row checks during streaming (renderAccountList, deduplicateAccounts).
+function isAccountVisible(li) {
+  const showSubsOnly = SUBSCRIPTION_UI_ENABLED && !!(showSubscriptionsToggle && showSubscriptionsToggle.checked);
+  const conf = li.dataset.confidence;
+  const confidenceOk = !conf || activeConfidenceFilters.has(conf);
+  const subscriptionOk = !showSubsOnly || li.dataset.hasSubscription === 'true';
+  return confidenceOk && subscriptionOk;
+}
+
+// Full re-filter of every rendered row. Used when the filters themselves change
+// (filter button click, subscription toggle) or the list is fully rebuilt (sort).
+function applyFilters() {
   const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
   if (!list) return;
-  const showSubsOnly = !!(subToggle && subToggle.checked);
   let visibleCount = 0;
   for (const li of list.children) {
-    const visible = !showSubsOnly || li.dataset.hasSubscription === 'true';
+    const visible = isAccountVisible(li);
     li.style.display = visible ? '' : 'none';
     if (visible) visibleCount++;
   }
-  updateAccountCount(visibleCount);
+  visibleAccountCount = visibleCount;
+  updateAccountCount(visibleAccountCount);
 }
 
 
@@ -389,8 +401,7 @@ function rerenderAllAccounts(sortOrder) {
       existingKeys.get(key).li = li;
     }
   });
-  applyConfidenceFilter();
-  applySubscriptionFilter();
+  applyFilters();
 }
 
 function renderAccountList(accounts) {
@@ -403,9 +414,13 @@ function renderAccountList(accounts) {
     if (key && existingKeys.has(key)) {
       existingKeys.get(key).li = li;
     }
+    // Only filter-check the newly appended row — during streaming, re-checking
+    // every previously rendered row on each batch is wasted work.
+    const visible = isAccountVisible(li);
+    li.style.display = visible ? '' : 'none';
+    if (visible) visibleAccountCount++;
   });
-  applyConfidenceFilter();
-  applySubscriptionFilter();
+  updateAccountCount(visibleAccountCount);
 }
 
 // Enrich accounts with justdeleteme data
@@ -475,6 +490,21 @@ function createAccountListItem(account) {
       link.title = account.justDeleteMeData.url;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
+      // Opening a link normally (or via a plain target="_blank" navigation) shifts
+      // focus to the new tab, which makes the browser auto-close this popup —
+      // losing the whole scanned list. Opening the tab in the background keeps
+      // focus here so the popup stays open while the user works through the list.
+      link.addEventListener('click', (event) => {
+        if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.tabs.create) return;
+        event.preventDefault();
+        chrome.tabs.create({ url: link.href, active: false }, () => {
+          const err = chrome.runtime.lastError;
+          if (err) {
+            console.error('Failed to open tab:', err);
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+          }
+        });
+      });
       actionDiv.appendChild(link);
     } else {
       actionDiv.textContent = '-';
@@ -531,19 +561,6 @@ function createSubscriptionBadge(subscription) {
   const statusLabel = subscription.status ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1) : 'Active';
   badge.title = `Subscription · ${statusLabel}`;
   return badge;
-}
-
-function applyConfidenceFilter() {
-  const list = document.getElementById(DOM_ID.ACCOUNT_LIST);
-  if (!list) return;
-  let visibleCount = 0;
-  for (const li of list.children) {
-    const conf = li.dataset.confidence;
-    const visible = !conf || activeConfidenceFilters.has(conf);
-    li.style.display = visible ? '' : 'none';
-    if (visible) visibleCount++;
-  }
-  updateAccountCount(visibleCount);
 }
 
 function createConfidenceBadge(confidence) {
@@ -633,6 +650,15 @@ function deduplicateAccounts(batchedEnrichedAccounts) {
         if (confCell) {
           confCell.innerHTML = '';
           confCell.appendChild(createConfidenceBadge(newConf));
+        }
+
+        // The confidence change may flip this row's filter visibility, so
+        // re-check just this row rather than re-filtering the whole list.
+        const wasVisible = entry.li.style.display !== 'none';
+        const nowVisible = isAccountVisible(entry.li);
+        if (wasVisible !== nowVisible) {
+          entry.li.style.display = nowVisible ? '' : 'none';
+          visibleAccountCount += nowVisible ? 1 : -1;
         }
       }
     }
