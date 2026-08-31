@@ -20,6 +20,7 @@ let startScanBtn;
 let progress;
 let progressBar;
 let downloadButton;
+let showSubscriptionsToggle;
 let importUiState = IMPORT_UI_STATE.IDLE;
 
 const INSTRUCTION_LINKS = [
@@ -330,10 +331,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Subscription filter toggle
-  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
-  if (subToggle && SUBSCRIPTION_UI_ENABLED) {
-    subToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
-    subToggle.addEventListener('change', applyFilters);
+  showSubscriptionsToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
+  if (showSubscriptionsToggle && SUBSCRIPTION_UI_ENABLED) {
+    showSubscriptionsToggle.closest('.sub-toggle-bar')?.removeAttribute('hidden');
+    showSubscriptionsToggle.addEventListener('change', applyFilters);
   }
 
   // Bug report email (assembled at runtime to deter scrapers)
@@ -365,8 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Shared visibility check used both by the full re-filter (applyFilters) and by
 // the incremental per-row checks during streaming (renderAccountList, deduplicateAccounts).
 function isAccountVisible(li) {
-  const subToggle = document.getElementById(DOM_ID.SHOW_SUBSCRIPTIONS);
-  const showSubsOnly = SUBSCRIPTION_UI_ENABLED && !!(subToggle && subToggle.checked);
+  const showSubsOnly = SUBSCRIPTION_UI_ENABLED && !!(showSubscriptionsToggle && showSubscriptionsToggle.checked);
   const conf = li.dataset.confidence;
   const confidenceOk = !conf || activeConfidenceFilters.has(conf);
   const subscriptionOk = !showSubsOnly || li.dataset.hasSubscription === 'true';
